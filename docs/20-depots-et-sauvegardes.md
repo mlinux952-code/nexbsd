@@ -17,29 +17,27 @@
 > **Historique du 2026-10-23 :** dépôt GitHub créé et poussé par le responsable — `git push -u origin main` accepté, `* [new branch] main -> main`. Authentification vérifiée par `ssh -T git@github.com` → `Hi mlinux952-code!`.
 > **Ce qui reste décalé :** le dépôt distant s'arrête au commit `6129316`. Les commits suivants (`985a244`, `c95a51a`, `d6d2194`, `f6dbd6a`, `8afa24b`, `78c9723`, `0a62862`, …) doivent être récupérés par le bundle `s008` (§6).
 
-## 2. Google Drive — ce qui a été déposé
+## 2. Google Drive — contenu du dossier « NexBSD » (instantané S-008)
 
 Dossier : **`NexBSD`** (racine de « Mon Drive »)
 Lien : `https://drive.google.com/drive/folders/1seXkTsMaweSo9UcRFDK-frMbF6x6SE1J`
 
 | Fichier | Identifiant | Taille | Rôle |
 |---|---|---|---|
-| `NexBSD-etat-conception-2026-10-23-s007.tar.gz` | `1cBM2ptzs8LVUxKVVtc52dX1O2XjRTQnL` | 159 669 o | arborescence complète (92 fichiers), sans `.git` |
-| `nexbsd-depot-2026-10-23-s007.bundle` | `1VrjyUIu2RBGNbwWJSEpmi43XPBS7U9sA` | 211 800 o | historique Git complet (2 commits, HEAD `6129316`), vérifié par `git bundle verify` |
-| `MANIFESTE-SAUVERGARDE-2026-10-23-s007.md` | `13RRYWWdSKYldIH2eNZox6AQlbogas9db` | 2 226 o | vérification, restauration, fréquence |
-| `SHA256SUMS-s007.txt` | `1UdyZOIsYrG436qQHFln3IESA6wkuSinH` | 214 o | empreintes des deux archives |
-| `NexBSD — État du projet (S-007, 2026-10-23)` (Google Doc) | `1z7QeBJ4goWWmHbI05SDM4Fra_eSUoAz2a4mVn1lzRjU` | — | lecture rapide (ETAT v7) |
+| `nexbsd-depot-2026-10-23-s008.bundle` | `14mmHfKMiha3q8hUmedqQMQ3JRFx-vIzK` | 224 906 o | **historique Git complet, 11 commits** — permet le rattrapage du dépôt GitHub |
+| `NexBSD-etat-conception-2026-10-23-s008.tar.gz` | `1VOLTWhaUJ9NdPdOk0j35ic4SiL2ly1Xt` | 167 712 o | arborescence complète, sans `.git` |
+| `MANIFESTE-SAUVERGARDE-2026-10-23-s008.md` | — | — | vérification, restauration, fréquence |
+| `SHA256SUMS-s007.txt` | `1UdyZOIsYrG436qQHFln3IESA6wkuSinH` | 214 o | empreintes de l'instantané précédent |
+| `NexBSD — État du projet (S-007, 2026-10-23)` | `1z7QeBJ4goWWmHbI05SDM4Fra_eSUoAz2a4mVn1lzRjU` | — | lecture rapide (sera remplacé par S-008) |
 
-**Vérification faite après dépôt (2026-10-23) :** le dossier a été relisté par l'API et contient **exactement 5 fichiers actifs**, aux identifiants ci-dessus. Un instantané antérieur (S-006, même jour) a été **mis à la corbeille** pour éviter la confusion entre deux versions.
-
-**Empreintes (calculées avant envoi) :**
+**Empreintes de l'instantané S-008 (calculées avant envoi) :**
 ```
-e9a089144a4e5d3a8b31dadc31f159dbf83dd31451aaf50bf9b8acf9d92ed357  NexBSD-etat-conception-2026-10-23-s007.tar.gz
-39eecae5e5186610d097ee0e2867602e3b69a4eeb011f834334a3c3d6115e3b8  nexbsd-depot-2026-10-23-s007.bundle
+3c1733d64a7d42c7701d4bfcd33d59d26f08e1c836022a0eb36db78ca96d7a1d  NexBSD-etat-conception-2026-10-23-s008.tar.gz
+c8e31a8d516d42089a3bba5df057609b156fc7ca877a2ad2f37d8c1ca2ce3393  nexbsd-depot-2026-10-23-s008.bundle
 ```
-**Note sur l'historique :** le `.bundle` déposé s'arrête au commit `6129316`. Les commits **postérieurs** (celui qui documente ce téléversement, puis les suivants) ne sont donc **pas** dans la sauvegarde Drive — c'est normal : un instantané ne peut pas contenir sa propre notice. Ils seront inclus dans l'instantané de la prochaine session.
+`git bundle verify` : **« The bundle records a complete history »** (HEAD `3b320727`).
 
-**Réserve honnête :** les fichiers n'ont **pas** été retéléchargés depuis Drive pour recontrôler ces empreintes. C'est la première chose à faire côté responsable : `sha256sum -c SHA256SUMS-s007.txt`.
+**Réserve honnête :** les fichiers n'ont pas été retéléchargés depuis Drive pour recontrôler les empreintes. À faire côté responsable : `sha256sum -c SHA256SUMS.txt`.
 
 ## 3. GitHub — procédure (conservée pour mémoire ; déjà exécutée avec succès)
 
