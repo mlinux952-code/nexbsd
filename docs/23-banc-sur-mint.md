@@ -146,6 +146,37 @@ virt-install --connect qemu:///session --name nexbsd-test \
 
 Si `virt-install` se plaint de la version de FreeBSD, retirer l'option correspondante : elle n'est qu'indicative.
 
+
+### 4 quater. Erreurs réelles de `virt-install` (2026-10-23) — et les corrections
+
+**Erreur 1 (observée) :**
+```
+ERROR  --os-variant/--osinfo OS name is required, but no value was set or detected.
+```
+Cause : `virt-install` 4.x exige une identification du système invité.
+Correction : `--osinfo name=freebsd13.0` (nom générique le plus proche de notre base).
+Si ce nom n'existe pas dans votre base libosinfo :
+```bash
+virt-install --osinfo list | grep -i freebsd
+```
+puis reprendre le nom affiché, ou utiliser `--osinfo detect=on,require=off` (comportement permissif).
+
+**Erreur 2 (non encore observée, mais certaine en session utilisateur) :**
+`--network network=default` désigne un réseau **libvirt système** (`qemu:///system`), qui n'existe pas dans une session utilisateur (`qemu:///session`). Le lancement échouerait sur « Network not found ».
+Correction : `--network user,model=virtio` (réseau utilisateur QEMU, NAT, sans privilège).
+
+**Commande corrigée :**
+```bash
+virt-install --connect qemu:///session --name nexbsd-test \
+  --osinfo name=freebsd13.0 \
+  --memory 1536 --vcpus 2 --import \
+  --disk path=$HOME/nexbsd-vm/disque-test.qcow2,format=qcow2,bus=virtio \
+  --graphics spice \
+  --network user,model=virtio
+```
+
+**Remarque :** c'est exactement le genre d'erreur où l'interface graphique (`virt-manager`) coûte moins cher que la ligne de commande — elle pose les questions une par une et coche des valeurs par défaut sûres.
+
 ### Ce que ça change pour la suite
 
 - Connexion : `root`, mot de passe vide → **`passwd`** immédiatement.
