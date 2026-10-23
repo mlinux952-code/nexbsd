@@ -123,6 +123,44 @@ git push -u origin main     # identifiant = compte GitHub, mot de passe = jeton
 
 ---
 
+### 3 ter. « Key is invalid. You must supply a key in OpenSSH public key format »
+
+Message vu sur GitHub au moment de coller la clé. Les causes possibles, par fréquence :
+
+| # | Cause | Comment le reconnaître |
+|---|---|---|
+| 1 | on a copié la **clé privée** (`id_ed25519`) au lieu de la publique (`id_ed25519.pub`) | la ligne commence par `-----BEGIN OPENSSH PRIVATE KEY-----` |
+| 2 | le fichier n'existe pas et `cat` a échoué : c'est autre chose qui a été copié | `ls -l ~/.ssh` ne montre pas `id_ed25519.pub` |
+| 3 | la copie est **coupée** ou contient un retour à la ligne au milieu | la ligne est incomplète, ou n'a pas de seconde partie `AAAA…` |
+| 4 | on a collé une **empreinte** (`SHA256:…`) ou la sortie de `ssh-keygen -l` | ça commence par `256 SHA256:` ou par un nombre |
+| 5 | espaces ou caractères parasites ajoutés par le terminal | la ligne contient des espaces au début |
+
+**Diagnostic en trois commandes** (la sortie dit tout) :
+```bash
+ls -l ~/.ssh
+head -c 40 ~/.ssh/id_ed25519.pub ; echo
+ssh-keygen -l -f ~/.ssh/id_ed25519.pub
+```
+- ligne 2 doit commencer par **`ssh-ed25519 AAAA`** ;
+- ligne 3 doit afficher une empreinte **et le commentaire** (`nexbsd-mint`). Si elle affiche « is not a public key file », le fichier n'est pas le bon.
+
+**Copie fiable** (évite les coupures du copier-coller à la souris) :
+```bash
+sudo apt install -y xclip
+xclip -selection clipboard < ~/.ssh/id_ed25519.pub
+```
+ou, sans installer quoi que ce soit, ouvrir le fichier dans un éditeur de texte et faire Ctrl+A puis Ctrl+C :
+```bash
+gedit ~/.ssh/id_ed25519.pub
+```
+La clé publique est **une seule ligne**, de la forme `ssh-ed25519 AAAAC3Nza… nexbsd-mint`.
+
+**Si aucune clé n'existe :** `ssh-keygen -t ed25519 -C "nexbsd-mint"` puis Entrée (le `.pub` est créé en même temps).
+
+**Plan B immédiat, sans aucune clé :** le jeton HTTPS (§3 bis). C'est la voie la plus rapide si les clés résistent.
+
+---
+
 ## 4. Cas particuliers
 
 | Situation | Solution |
