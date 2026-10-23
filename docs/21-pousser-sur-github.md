@@ -186,6 +186,31 @@ xclip -selection clipboard < ~/.ssh/*.pub
 
 ---
 
+### 3 quinquies. « Key is invalid » alors que la clé générée est correcte
+
+Séquence réelle du 2026-10-23 : clé créée (`id_ed25519.pub`, 93 octets, empreinte `SHA256:QMjZ5F8h8kpIkT7ww0nweb7ADYHb2ef4/zykdb5rhI0`), `cat` affiche une ligne `ssh-ed25519` parfaitement valide, et GitHub refuse quand même.
+
+Conclusion : **le problème n'est pas la clé, c'est ce qui arrive dans la page GitHub.** Trois causes restantes :
+
+1. **le presse-papiers ne contient pas ce qu'on croit** (xclip n'a pas pris, ou autre chose a écrasé le presse-papiers depuis) ;
+2. **le collage atterrit dans le mauvais champ** (le champ « Title » au lieu de la zone « Key », ou la page *GPG keys* au lieu de *SSH keys*) ;
+3. **du texte parasite accompagne la clé** (invite de commande, retour à la ligne, guillemets).
+
+**Contrôle du presse-papiers — la commande qui tranche :**
+```bash
+xclip -selection clipboard -o | diff - ~/.ssh/*.pub && echo "PRESSE-PAPIERS IDENTIQUE AU FICHIER"
+```
+- `PRESSE-PAPIERS IDENTIQUE AU FICHIER` → le contenu est bon, le problème est côté page GitHub (cause 2 ou 3).
+- une différence s'affiche → le presse-papiers est mauvais (cause 1) : recommencer le `xclip`.
+
+**Contrôle du collage :** coller d'abord dans `gedit` (éditeur de texte), vérifier qu'il y a **une seule ligne** sans blanc au début, puis recopier de là vers GitHub.
+
+**Contrôle après ajout :** dans *Settings → SSH and GPG keys*, GitHub affiche l'empreinte de la clé. Elle doit être **`SHA256:QMjZ5F8h8kpIkT7ww0nweb7ADYHb2ef4/zykdb5rhI0`** (… ou celle de la clé réellement ajoutée). Si l'empreinte diffère, ce n'est pas cette clé qui a été enregistrée.
+
+**Quand arrêter d'essayer les clés :** après deux échecs de collage, passer au **jeton HTTPS** (§3 bis, plan B). Le résultat est identique et cela ne dépend d'aucun presse-papiers.
+
+---
+
 ## 4. Cas particuliers
 
 | Situation | Solution |
