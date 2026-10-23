@@ -11,10 +11,11 @@
 |---|---|---|
 | **Espace de travail (workspace)** | ✅ **source de vérité** | ~90 fichiers + dépôt Git local (1 commit `5e7c789`) |
 | **Google Drive** | ✅ **sauvegarde effectuée ce jour** | dossier « NexBSD », 4 fichiers + 1 Doc de lecture |
-| **GitHub** | ❌ **non fait — impossible depuis cette session** | aucun connecteur GitHub disponible ; **action du responsable** |
-| Disque local du responsable | ❌ non fait | à faire depuis Drive (téléchargement) |
+| **GitHub** | ✅ **fait le 2026-10-23 à 21h (par le responsable)** | dépôt **privé** `mlinux952-code/nexbsd`, branche `main`, `refs/heads/main = 61293162a2ec…` (2 commits), clé SSH `Mint NexBSD` (`SHA256:QMjZ5F8h…`) |
+| Disque local du responsable | ✅ partiel | clone de travail dans `~/Projets/nexbsd` ; `.bundle` téléchargé dans `~/Téléchargements` |
 
-> **Aucun dépôt GitHub n'a été créé. Aucun `git remote` n'est configuré.** Ne pas dire le contraire.
+> **Historique du 2026-10-23 :** dépôt GitHub créé et poussé par le responsable — `git push -u origin main` accepté, `* [new branch] main -> main`. Authentification vérifiée par `ssh -T git@github.com` → `Hi mlinux952-code!`.
+> **Ce qui reste décalé :** le dépôt distant s'arrête au commit `6129316`. Les commits suivants (`985a244`, `c95a51a`, `d6d2194`, `f6dbd6a`, `8afa24b`, `78c9723`, `0a62862`, …) doivent être récupérés par le bundle `s008` (§6).
 
 ## 2. Google Drive — ce qui a été déposé
 
@@ -40,7 +41,7 @@ e9a089144a4e5d3a8b31dadc31f159dbf83dd31451aaf50bf9b8acf9d92ed357  NexBSD-etat-co
 
 **Réserve honnête :** les fichiers n'ont **pas** été retéléchargés depuis Drive pour recontrôler ces empreintes. C'est la première chose à faire côté responsable : `sha256sum -c SHA256SUMS-s007.txt`.
 
-## 3. GitHub — procédure exacte, à exécuter par le responsable
+## 3. GitHub — procédure (conservée pour mémoire ; déjà exécutée avec succès)
 
 ### 3.1 Prérequis
 - Un compte GitHub (le nom du dépôt doit être **libre** — voir Q7, antériorité du nom).
@@ -83,7 +84,20 @@ git push -u origin master  # ou 'main' selon la branche affichée
 3. Sans Git : décompresser le `.tar.gz`.
 4. Lire `docs/ETAT.md` **puis** `reports/` — l'état et la prochaine action y sont écrits.
 
-## 6. Ce que cette page ne garantit pas
+## 6. Remettre à jour le dépôt GitHub après un nouvel instantané
+
+Depuis un clone existant, sans rien perdre :
+```bash
+cd ~/Projets/nexbsd
+git remote add bundle ~/Téléchargements/nexbsd-depot-2026-10-23-s008.bundle
+git fetch bundle main
+git merge --ff-only bundle/main      # avance vite, sans fusion, si l'historique est continu
+git push
+git remote remove bundle
+```
+`--ff-only` est volontaire : si la fusion n'est pas possible, mieux vaut s'arrêter que créer un commit de fusion involontaire.
+
+## 7. Ce que cette page ne garantit pas
 
 - Aucune redondance hors Drive : si le compte Google est perdu, il ne reste que le workspace.
 - Aucune sauvegarde chiffrée : les documents ne contiennent ni secret ni donnée personnelle, mais ils sont lisibles par quiconque accède au compte.

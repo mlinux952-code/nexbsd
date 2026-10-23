@@ -5,6 +5,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-23 — Session S-008 : GitHub enregistré
+- **Fait (par le responsable)** : dépôt **privé** `mlinux952-code/nexbsd`, branche `main`, push accepté (`* [new branch] main -> main`), authentification SSH vérifiée.
+- **Ajouté** : `docs/21-pousser-sur-github.md` — les erreurs réelles rencontrées (bundle introuvable, mauvais dossier, `origin` étranger, `Permission denied (publickey)`, `Key is invalid`, presse-papiers contenant la commande) et leur correction.
+- **Ajouté** : `scripts/51-installer-depot-github.sh` — installation du dépôt depuis un bundle (testé 3 cas).
+- **Corrigé** : `docs/20-depots-et-sauvegardes.md` — GitHub passe de « inexistant » à « fait », + procédure de rattrapage par bundle.
+
 ### 2026-10-23 — Session S-007 : sauvegarde, dépôt, cahier des charges
 - **Ajouté** : dépôt **Git local** (1 commit initial, 90 fichiers) + `.gitignore`.
 - **Ajouté** : sauvegarde **Google Drive** vérifiée (dossier « NexBSD » : archive, bundle Git, manifeste, empreintes, Doc de lecture).
