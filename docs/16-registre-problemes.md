@@ -39,6 +39,7 @@ Légende statut : **ouvert** · **contourné** · **clos**
 | C-05 | Conclusion erronée « NCP impossible sans IPX » | corrigée : NCP sur UDP/TCP 524 depuis NetWare 5 (ADR-0018) | 2026-10-23 |
 | C-06 | « Aucun client NCP testable » (inquiétude V-1) | Client for Open Enterprise Server 26.2.1 identifié (ADR-0019) | 2026-10-23 |
 | C-07 | **Aucune sauvegarde hors de l'espace de travail** | dépôt Git local (1 commit) + archives + téléversement Google Drive vérifié par l'API (S-007) | 2026-10-23 |
+| C-09 | **Mode terminal QEMU imposé par erreur sur la station du responsable** (une session perdue) | cause : l'environnement de l'assistant n'a pas d'écran, ce n'est pas une contrainte de la station ; remplacé par `virt-manager` en session utilisateur (`docs/23-banc-sur-mint.md` §4 ter) | 2026-10-23 |
 | C-08 | Livrable 2 (cahier des charges fonctionnel) absent | `docs/02-cahier-des-charges-fonctionnel.md` : 33 exigences avec critères d'acceptation | 2026-10-23 |
 
 ## 3. Contradictions détectées entre documents

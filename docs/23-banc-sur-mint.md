@@ -101,6 +101,57 @@ Différences avec le script :
 
 Arrêt propre : `shutdown -p now` dans la VM, ou `Ctrl-A x` en dernier recours (l'équivalent d'une coupure de courant).
 
+
+## 4 ter. VOIE RECOMMANDÉE : virt-manager (interface graphique)
+
+**Décision du 2026-10-23 (soir) :** le mode terminal (`-nographic`) est **abandonné** comme méthode de travail sur la station. Il a coûté une session entière pour une raison simple : le chargeur FreeBSD affiche son menu sur l'écran vidéo, et la touche `5` (bascule console série) doit être pressée **pendant le décompte de 10 s**, ce qui est fragile. Une interface graphique supprime entièrement ce problème.
+
+**Note honnête sur l'origine de l'erreur :** le mode terminal avait été choisi parce que l'environnement de travail de l'assistant **n'a pas d'écran**. Ce n'est pas une contrainte de votre machine. Sur un poste avec affichage, `virt-manager` est l'outil juste.
+
+### Installation
+
+```bash
+sudo apt update
+sudo apt install -y virt-manager virtinst
+```
+
+`virt-manager` fournit : fenêtre graphique, clavier et souris, redimensionnement de la console, capture d'écran, instantanés, et gestion des ressources.
+
+### Point important : session utilisateur, pas root
+
+On travaille en **session utilisateur** (`qemu:///session`) : pas de mot de passe à chaque lancement, et aucun problème de droits sur les images stockées dans votre dossier personnel.
+
+```bash
+virt-manager --connect qemu:///session
+```
+
+### Créer la VM depuis l'interface
+
+1. **Fichier → Nouvelle machine virtuelle**
+2. **Importer une image de disque existante** → `~/nexbsd-vm/disque-test.qcow2`
+   *(si ce fichier n'existe pas encore : `qemu-img create -f qcow2 -b FreeBSD-15.1-RELEASE-amd64-ufs.qcow2 -F qcow2 disque-test.qcow2`)*
+3. Système d'exploitation : **FreeBSD** (la version exacte n'a pas d'importance)
+4. Mémoire : **1536 Mo** — Processeurs : **2**
+5. Nom : `nexbsd-test` → **Terminer**
+6. La fenêtre de la VM s'ouvre : **là, la touche `5` devient inutile**, l'affichage vidéo est natif.
+
+### Ou en une seule commande
+
+```bash
+virt-install --connect qemu:///session --name nexbsd-test \
+  --memory 1536 --vcpus 2 --import \
+  --disk path=$HOME/nexbsd-vm/disque-test.qcow2,format=qcow2,bus=virtio \
+  --graphics spice --network network=default
+```
+
+Si `virt-install` se plaint de la version de FreeBSD, retirer l'option correspondante : elle n'est qu'indicative.
+
+### Ce que ça change pour la suite
+
+- Connexion : `root`, mot de passe vide → **`passwd`** immédiatement.
+- Arrêt propre : menu *Virtuelle* → **Éteindre** (équivalent de `shutdown -p now`).
+- Les instantanés permettent de **revenir en arrière** avant un test risqué : c'est un avantage réel pour les essais LDAP/NCP à venir.
+
 ## 5. Étape 4 — commander la VM sans clavier graphique
 
 Dans un second terminal :
