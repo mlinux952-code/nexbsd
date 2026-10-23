@@ -183,6 +183,46 @@ virt-install --connect qemu:///session --name nexbsd-test \
 - Arrêt propre : menu *Virtuelle* → **Éteindre** (équivalent de `shutdown -p now`).
 - Les instantanés permettent de **revenir en arrière** avant un test risqué : c'est un avantage réel pour les essais LDAP/NCP à venir.
 
+
+## 4 quinquies. Se connecter a l'image FreeBSD officielle (identifiants)
+
+Source : annonce officielle FreeBSD 15.1-RELEASE (https://www.freebsd.org/releases/15.1R/announce/), consultee le 2026-10-23 :
+> « a freebsd user with a password of freebsd is available by default for ssh access. Additionally, the root user password is set to root »
+
+| Acces | Identifiant | Mot de passe |
+|---|---|---|
+| **Console** (fenetre virt-manager) | `root` | `root` — **et si refuse, appuyer simplement sur Entree** (certaines images n'ont aucun mot de passe) |
+| **SSH** | `freebsd` | `freebsd` |
+
+**Les deux cas existent selon les images** : nos essais du 2026-10-23 (qemu, meme image ufs.qcow2) ont accepte `root` avec un mot de passe vide, tandis que l'annonce 15.1 documente `root`/`root`. Essayer donc **`root` puis `root`**, et si « Login incorrect », **`root` puis Entree**.
+
+### Piege de la fenetre graphique
+
+Si les touches ne vont pas dans la VM : **cliquer une fois dans la fenetre de la VM** avant de taper. virt-manager capture le clavier a ce moment-la. Pour le liberer : `Ctrl-Alt` (ou `Ctrl-Alt-L` selon la version).
+
+### Si aucun identifiant ne fonctionne — reinitialisation par le mode mono-utilisateur
+
+1. Eteindre la VM (menu *Virtuelle -> Eteindre*).
+2. Redemarrer et, **au menu « Welcome to FreeBSD »**, choisir **`2. Boot Single user`**.
+3. A l'invite `Enter full pathname of shell or RETURN for /bin/sh:`, **appuyer sur Entree**.
+4. Puis, dans l'ordre :
+   ```
+   mount -u -w /
+   mount -a
+   passwd root
+   ```
+   (taper deux fois le nouveau mot de passe — rien ne s'affiche pendant la saisie, c'est normal)
+5. `sync` puis `reboot`.
+
+Le mode mono-utilisateur donne un acces root **sans mot de passe** par conception (Handbook FreeBSD §3.2.2) : c'est precisement pour cela qu'il faut en definir un immediatement apres.
+
+### Apres la connexion, deux commandes
+
+```
+passwd            # definir un vrai mot de passe root
+adduser           # creer un compte utilisateur (ne pas travailler en root)
+```
+
 ## 5. Étape 4 — commander la VM sans clavier graphique
 
 Dans un second terminal :
