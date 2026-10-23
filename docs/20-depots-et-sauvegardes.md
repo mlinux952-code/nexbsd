@@ -17,24 +17,23 @@
 > **Historique du 2026-10-23 :** dépôt GitHub créé et poussé par le responsable — `git push -u origin main` accepté, `* [new branch] main -> main`. Authentification vérifiée par `ssh -T git@github.com` → `Hi mlinux952-code!`.
 > **Ce qui reste décalé :** le dépôt distant s'arrête au commit `6129316`. Les commits suivants (`985a244`, `c95a51a`, `d6d2194`, `f6dbd6a`, `8afa24b`, `78c9723`, `0a62862`, …) doivent être récupérés par le bundle `s008` (§6).
 
-## 2. Google Drive — contenu du dossier « NexBSD » (instantané S-009)
+## 2. Google Drive — contenu du dossier « NexBSD » (instantané S-011)
 
 Dossier : **`NexBSD`** — `https://drive.google.com/drive/folders/1seXkTsMaweSo9UcRFDK-frMbF6x6SE1J`
 
 | Fichier | Identifiant | Rôle |
 |---|---|---|
-| `nexbsd-depot-2026-10-23-s009.bundle` | `1MsfgckBzqMwv7DvD9MVSDoYUzFadmjRq` | historique Git complet (restauration `git clone`) |
-| `NexBSD-etat-conception-2026-10-23-s009.tar.gz` | `1JMEs0sAv-pgdyUBYVDowqfHOb64GIo3t` | arborescence complète, `tests/results/` inclus |
-| `SHA256SUMS-s009.txt` | `1L9eTTM7jAnKUx_9P-smYPDfxLOahxslk` | empreintes |
-| `NexBSD — État du projet (S-009)` | `1nYr1xuHhTokZ16DDI7NTQeZTYr3UXa7vN-FfHNYivsQ` | lecture rapide (ETAT v9) |
-| `Résultats de tests — T-01 et T-03` | `18bT3UW9givXmEbi_Tzms0rwypxvbJTrAMwzDnM-xjZo` | premier test réel réussi |
+| `nexbsd-depot-2026-10-23-s011.bundle` | `1gzUSFNMJPigrp_kCP_rFNRcxkl7nZVV2` | historique Git complet, **20 commits** — contient le script VM avec KVM |
+| `NexBSD-etat-conception-2026-10-23-s011.tar.gz` | `1fWUz4oCA6ovOeQMulFLbK3WUH5o7Htk0` | arborescence complète, delta NexBSD inclus |
+| `SHA256SUMS-s011.txt` | `1d9aTSLbM6iTcozPoxTGRnJtqIrMx-lFd` | empreintes |
+| `NexBSD — État du projet (S-011)` | `1kRiS3ctZ-CkzESFUBT_7ICWwqRsUMoVBThnGIxd3p9g` | lecture rapide (ETAT v10) |
 
 **Empreintes (calculées avant envoi) :**
 ```
-79b30daf710a98dca14b4d869033ef6ab2eb95dd30b5ada859523d226c6bd012  NexBSD-etat-conception-2026-10-23-s009.tar.gz
-240bf1318530315af04c4203149c58e87cccb66749ab5d60356f55f8f27ee6ce  nexbsd-depot-2026-10-23-s009.bundle
+3ac0a017f11023ea492ba9bf7164f9a5bc08e791b20d210ed3566ac47f9c6215  NexBSD-etat-conception-2026-10-23-s011.tar.gz
+6fa8927f4785a1576c7ca9d82c697fdd7ce6d02765dca3b4d7244ef68dc409ca  nexbsd-depot-2026-10-23-s011.bundle
 ```
-`git bundle verify` → **is okay**. Les instantanés S-006, S-007 et S-008 ont été mis à la corbeille.
+`git bundle verify` → **is okay**. Les instantanés antérieurs (S-006 → S-009) sont à la corbeille.
 
 ## 3. GitHub — procédure (conservée pour mémoire ; déjà exécutée avec succès)
 
@@ -84,7 +83,7 @@ git push -u origin master  # ou 'main' selon la branche affichée
 Depuis un clone existant, sans rien perdre :
 ```bash
 cd ~/Projets/nexbsd
-git remote add bundle ~/Téléchargements/nexbsd-depot-2026-10-23-s008.bundle
+git remote add bundle ~/Téléchargements/nexbsd-depot-2026-10-23-s011.bundle
 git fetch bundle main
 git merge --ff-only bundle/main      # avance vite, sans fusion, si l'historique est continu
 git push
