@@ -52,6 +52,50 @@ done
 section "Périphériques USB amovibles"
 lsblk -o NAME,SIZE,TRAN,RM,MODEL 2>/dev/null | awk 'NR==1 || $3=="usb" || $4=="1"'
 
+
+section "Verdict pour le banc NexBSD (calcul automatique)"
+# Règles issues de docs/23-banc-sur-mint.md — dites franchement, sans optimisme.
+RAM_MO=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
+LIBRE_GO=$(df -BG --output=avail /home 2>/dev/null | tail -1 | tr -dc '0-9')
+[ -z "${LIBRE_GO:-}" ] && LIBRE_GO=0
+
+if grep -qiE '^flags.*(vmx|svm)' /proc/cpuinfo; then
+    VIRT="matérielle disponible (VT-x/AMD-V actif)"
+    VIRT_OK=oui
+else
+    VIRT="ABSENTE — soit le processeur ne la propose pas, soit elle est désactivée dans le BIOS"
+    VIRT_OK=non
+fi
+[ -e /dev/kvm ] && KVM="oui" || KVM="non"
+
+echo "Mémoire totale      : ${RAM_MO} Mo"
+echo "Espace libre /home  : ${LIBRE_GO} Go"
+echo "Virtualisation      : ${VIRT}"
+echo "KVM utilisable      : ${KVM}"
+echo
+echo "┌─────────────────────────────────────────────────────────────┐"
+
+# 1. Héberger une VM FreeBSD pour les tests : 2 Go de RAM et 20 Go libres suffisent.
+if [ "$RAM_MO" -ge 3500 ] && [ "$LIBRE_GO" -ge 20 ]; then
+    echo "│ 1. VM DE TEST (FreeBSD + Samba + LDAP) ............ POSSIBLE │"
+elif [ "$RAM_MO" -ge 2500 ] && [ "$LIBRE_GO" -ge 20 ]; then
+    echo "│ 1. VM DE TEST ................ POSSIBLE MAIS SERRÉ         │"
+else
+    echo "│ 1. VM DE TEST ............................. IMPOSSIBLE ICI │"
+fi
+
+# 2. Construire une image NexBSD (buildworld) : >= 8 Go RAM, >= 40 Go, plusieurs heures.
+if [ "$RAM_MO" -ge 7500 ] && [ "$LIBRE_GO" -ge 40 ]; then
+    echo "│ 2. CONSTRUCTION D'IMAGE NEXBSD .................... POSSIBLE │"
+else
+    echo "│ 2. CONSTRUCTION D'IMAGE NEXBSD ...... IMPOSSIBLE SUR CETTE  │"
+    echo "│    MACHINE (il faut >= 8 Go de RAM et >= 40 Go libres)      │"
+fi
+echo "└─────────────────────────────────────────────────────────────┘"
+echo
+echo "Ces deux verdicts sont calculés, pas devinés. Le premier ouvre les tests ;"
+echo "le second ouvre NexBSD lui-même (docs/22-delta-nexbsd.md §6)."
+
 section "Résumé à reporter dans docs/hardware.md"
 echo "Date du relevé : $(date -I)"
 echo "À remplir : CPU / cœurs / RAM / espace libre /home / KVM oui-non"
