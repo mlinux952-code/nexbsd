@@ -39,6 +39,7 @@
 | `docs/17-procedure-mise-a-jour.md` | **SQUELETTE NON TESTÉ** | 3 niveaux de mise à jour, règles non négociables, retour arrière |
 | `docs/19-guide-contribution.md` | référence | lire d'abord, 5 règles, ce qui est accepté/refusé, format ADR et CR |
 | `docs/02-cahier-des-charges-fonctionnel.md` | **PROPOSITION** | livrable 2 : 4 acteurs, 33 exigences (S/N/C/F) avec critère d'acceptation, 8 exigences non fonctionnelles opposables |
+| `docs/21-pousser-sur-github.md` | **dépannage** | les 4 erreurs réelles du 2026-10-23, leur cause, procédure en 6 étapes, configuration SSH |
 | `docs/20-depots-et-sauvegardes.md` | ÉTAT | où vit le projet : Drive (fait), GitHub (à faire, procédure exacte), rythme de sauvegarde, restauration d'urgence |
 | `docs/vision.md` | **PROPOSITION** | livrable 1 : problème, apports, non-objectifs, 3 principes, question Q9 |
 | `docs/etude-faisabilite.md` | **PROVISOIRE** | livrable 3 : 4 axes, 5 critères de conclusion, score actuel **0/5** |
@@ -106,7 +107,7 @@
 |---|---|
 | `plan-tests.md` | 15 tests (T-01 → T-13 + variantes), **aucun exécuté**, format de compte rendu, mesures à relever |
 
-## 7. `scripts/` — outillage (6 scripts + notice)
+## 7. `scripts/` — outillage (7 scripts + notice)
 
 | Script | Vérifié ? | Rôle |
 |---|---|---|
@@ -115,6 +116,7 @@
 | `20-ecrire-usb.sh` | ⚠️ **non testé sur matériel** | écrit une clé USB, 6 garde-fous |
 | `30-qemu-freebsd.sh` | ⚠️ syntaxe seulement | lance FreeBSD en VM (1 Go) |
 | `40-verifier-frontiere-licence.sh` | ✅ exécuté (3 cas) | contrôle T-13 : copyleft hors de la base |
+| `51-installer-depot-github.sh` | ✅ exécuté (3 cas, push testé vers un dépôt local factice) | installe le dépôt depuis le bundle et prépare GitHub ; refuse dossier existant ; ne pousse pas |
 | `50-sauvegarder-session.sh` | ✅ exécuté (2 cas : succès + mauvais répertoire) | instantané daté + `SHA256SUMS.txt` ; n'envoie rien par réseau |
 
 ## 8. `build/fork/` — delta propre (aucun fichier compilé)

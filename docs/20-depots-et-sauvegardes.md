@@ -48,6 +48,10 @@ e9a089144a4e5d3a8b31dadc31f159dbf83dd31451aaf50bf9b8acf9d92ed357  NexBSD-etat-co
 - `git` installé (sur le Mint : `sudo apt install git`).
 
 ### 3.2 Créer le dépôt distant
+
+> **Erreurs déjà rencontrées le 2026-10-23 :** voir `docs/21-pousser-sur-github.md` (dépannage pas à pas, erreurs réelles et leur cause).
+> **Méthode recommandée :** `scripts/51-installer-depot-github.sh` (vérifie, clone, renomme la branche, ajoute le remote — ne pousse pas).
+
 Sur GitHub : **New repository** → nom `nexbsd` → visibilité **Private** (recommandé, cf. `docs/13-publication-grand-public.md`) → **ne rien initialiser** (pas de README, pas de .gitignore).
 
 ### 3.3 Pousser depuis la sauvegarde
