@@ -1,0 +1,14 @@
+Composant,Version,Licence identifiée,Source de la vérification,Copyleft,Peut entrer dans NEXBSD BASE,Obligations principales,Risque juridique,Statut
+FreeBSD,15.1-RELEASE,BSD 2-Clause,freebsd.org (LICENSE),non,OUI,conserver la notice de copyright et la clause de non-approbation,faible,FAIT
+Samba,>= 4.23,GPL-3.0-or-later,FreshPorts net/samba419 (GPLv3+); samba.org,oui (fort),NON — Plateforme uniquement,fournir le code source correspondant en cas de redistribution; conserver les notices; ne pas ajouter de restriction,élevé si redistribué sans sources,FAIT
+OpenLDAP,2.6.x / 2.7.x,OpenLDAP Public License,openldap.org; Wikipédia,non (permissive type BSD),OUI (techniquement) — Plateforme recommandée,conserver notices,faible,FAIT
+WebKitGTK,2.46.6 / 2.54.x,GPLv2 + BSD-2-Clause (port); bibliothèque sous LGPL,LivePorts / Wikipédia,oui (faible pour LGPL),NON — Plateforme uniquement,respecter la liaison dynamique et fournir les modifications des fichiers LGPL,modéré,FAIT
+Firefox,149 / ESR 140,MPL-2.0,ports (fichier LICENSE non consulté),faible (par fichier),NON (non nécessaire dans la base),publier les modifications des fichiers MPL concernés,faible,FAIT (licence connue; fichier non consulté)
+Gaia (Firefox OS),2.2/2.5,Apache-2.0,fichier LICENSE du dépôt (consulté),non,OUI,conserver LICENSE et NOTICE; indiquer les modifications; incompatible avec GPL-2 dans une même œuvre,faible,FAIT
+MARS_NWE,0.99.pl23,GPL-2.0,README du dépôt; Repology,oui (fort),NON — et usage en laboratoire isolé seulement,redistribution des modifications sous GPLv2,élevé si intégré,FAIT
+KaiOS,4.0,Propriétaire (composants B2G en MPL; correctifs noyau GPLv2),Wikipédia; kaios.dev,partiel,NON,aucune redistribution des parties propriétaires,élevé,FAIT
+Gonk / Gecko B2G,2.2/2.5,MPL-2.0 (+ noyau GPLv2),Wikipédia,faible (par fichier),NON,notices MPL,faible mais code non maintenu,FAIT
+Clients et utilitaires Novell (Client32 + DOS Client Kit),1990-1999,Propriétaire Novell (libération partielle annoncée),zx.net.nz (source secondaire),—,NON,ne pas redistribuer sans licence explicite,élevé,A VERIFIER
+NexBSD (code propre à venir),—,à décider — proposition BSD-2-Clause,—,—,—,cohérente avec la base FreeBSD; à valider par un ADR,faible,PROPOSITION
+Marques : FreeBSD / NetWare / Novell / KaiOS / Firefox / Mozilla,—,Marques de tiers ou non vérifiées,FreeBSD Foundation (Trademark Usage Terms),—,NON (jamais dans le nom),FreeBSD ne peut pas figurer dans le nom d un produit dérivé; notice d attribution obligatoire,élevé,FAIT pour FreeBSD ; A VERIFIER pour les autres
+Marque : NexBSD,—,antériorité non vérifiée,—,—,—,recherche d antériorité avant toute publication,élevé,A VERIFIER

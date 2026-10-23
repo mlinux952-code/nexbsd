@@ -1,0 +1,24 @@
+NexBSD — notices d'attribution
+================================================================
+STATUT : squelette. À COMPLÉTER à chaque composant tiers intégré.
+          Aucun composant tiers n'est encore intégré (aucune image construite).
+
+NexBSD est basé sur FreeBSD.
+  FreeBSD est une marque déposée de The FreeBSD Foundation.
+  Le code source de FreeBSD est distribué sous licence BSD 2-Clause.
+  NexBSD n'est ni affilié à, ni approuvé, ni sponsorisé par
+  The FreeBSD Foundation ni par le FreeBSD Project.
+
+Marques de tiers citées dans la documentation à titre descriptif uniquement
+(aucune affiliation, aucun parrainage) :
+  - FreeBSD(R) : The FreeBSD Foundation
+  - NetWare(TM), Novell(R) : titulaires successifs ; statut actuel à vérifier
+  - KaiOS(TM) : KaiOS Technologies
+  - Firefox, Mozilla(R) : Mozilla Foundation
+  - Open Enterprise Server(TM) : OpenText
+
+Composants tiers — ÉTAT : AUCUN INTÉGRÉ À CE JOUR.
+  Prévoir une entrée par composant lors de l'intégration :
+    <nom> <version> — <licence> — <URL du code source> — <modifications éventuelles>
+
+Rappel : NexBSD n'a produit aucune image système. Ce fichier est préparatoire.

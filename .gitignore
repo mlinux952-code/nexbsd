@@ -1,0 +1,9 @@
+# Archives de sauvegarde (volumineuses, régénérables)
+/archives/
+# Sorties de construction
+/build/world/
+/build/kernel/
+/build/release/
+# Divers système
+.DS_Store
+*~

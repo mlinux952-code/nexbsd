@@ -1,0 +1,26 @@
+ID,Risque,Catégorie,Probabilité,Impact,Niveau,Mitigation proposée,Responsable,Statut
+R-01,Altération du disque principal contenant Windows 7,matériel,faible,critique,CRITIQUE,support externe uniquement ; vérifier le périphérique 3 fois ; exercice de retour arrière (T-08),responsable,ouvert
+R-02,Le CPU du PC de 2011 n'est pas 64 bits → FreeBSD 15 impossible,matériel,faible,élevé,ÉLEVÉ,identification CPU en lecture seule avant tout ; repli sur autre machine ou VM,responsable,ouvert
+R-03,Matériel trop faible pour services + UI Web,performance,moyenne,moyen,MOYEN,mesurer avant d'ajouter ; profil Lab sans interface graphique au départ,assistant,ouvert
+R-04,Impossibilité de porter KaiOS → écart avec le concept initial,technique,quasi certaine,moyen,MOYEN,"reformuler : « expérience inspirée de KaiOS », jamais « portage »",assistant,ouvert
+R-05,Aucun pilote téléphonie/modem/senseurs sous FreeBSD,technique,quasi certaine,élevé,ÉLEVÉ,MobileExp = logiciel uniquement ; téléphonie hors périmètre,assistant,ouvert
+R-06,"MARS_NWE dangereux si mal isolé (code non maintenu, root)",sécurité,élevée,élevé,ÉLEVÉ,laboratoire isolé sans passerelle ; aucune donnée réelle ; jamais dans le produit,assistant,ouvert
+R-07,Samba 4.16 par défaut = version non maintenue,sécurité,sûre,élevé,ÉLEVÉ,épingler >= 4.23 ; suivre les avis,assistant,ouvert
+R-08,Aucune version OpenLDAP >= 2.6 packagée sous FreeBSD,technique,moyenne,moyen,MOYEN,vérifier avant de s'engager ; repli sur comptes locaux + tdbsam,assistant,ouvert
+R-09,Compilation impossible sur les postes faibles,technique,élevée,moyen,ÉLEVÉ,paquets binaires uniquement ; compilation réservée à L3,assistant,ouvert
+R-10,Fausse validation : déclarer fonctionnel ce qui n'a pas été testé,méthodologique,moyenne,critique,CRITIQUE,étiquetage FAIT/HYPOTHÈSE/PROPOSITION ; verdict obligatoire par test,assistant,ouvert
+R-11,Contamination par des licences incompatibles,juridique,moyenne,élevé,ÉLEVÉ,matrice des licences ; script 40 ; isolation des composants GPL,responsable + assistant,ouvert
+R-12,"Usage indu de marques (NetWare, Novell, KaiOS, Firefox) ou du nom NexBSD",juridique,moyenne,moyen,MOYEN,aucune marque tierce dans le nom ; recherche d'antériorité,responsable,ouvert
+R-13,Exposition réseau d'un service non audité,sécurité,moyenne,critique,ÉLEVÉ,réseau isolé ; pf en refus par défaut ; aucune redirection Internet,responsable,ouvert
+R-14,Perte du travail (documents uniquement dans un espace de travail),continuité,moyenne,élevé,ÉLEVÉ,dépôt GitHub + Drive ; compte rendu de session ; zéro dépendance à la conversation,responsable,ouvert
+R-15,Sous-estimation du coût du profil mobile,planification,élevée,moyen,ÉLEVÉ,mobile traité en phase 5+ ; livrer d'abord le réseau,assistant,ouvert
+R-16,Divergence entre documentation et réalité après modifications manuelles,traçabilité,moyenne,moyen,MOYEN,toute action matérielle consignée dans reports/ avec résultat observé,responsable,ouvert
+R-17,Le fork devient responsable des correctifs de sécurité de toute sa base,sécurité,élevée,critique,CRITIQUE,delta propre petit et fusionnable ; veille sur les avis FreeBSD ; sinon redescendre en mode hybride assumé,responsable + assistant,ouvert
+R-18,Ambition de fork non soutenable faute de machine de construction (L3),planification,élevée,élevé,ÉLEVÉ,ne rien promettre qui dépende de L3 ; sinon livrer une distribution de configuration en le disant,assistant,ouvert
+R-19,Contamination GPL de la base par copie accidentelle,juridique,moyenne,élevé,ÉLEVÉ,contrôle automatisé (script 40) dans la chaîne de construction ; revue de tout patch,assistant,"outillé (script écrit et testé), reste à intégrer au build"
+R-20,Dérive du chantier protocolaire NCP absorbant toutes les ressources,planification,élevée,moyen,ÉLEVÉ,"périmètre borné (login, attach, map, lecture/écriture, bindery) ; jalon de sortie ; abandon documenté",responsable,ouvert
+R-21,Usage indu de la marque FreeBSD dans le nom ou la communication,juridique,moyenne,moyen,MOYEN,notice d'attribution obligatoire ; jamais FreeBSD dans le nom,responsable,ouvert
+R-22,Publication prématurée avant que les portes G1-G10 soient franchies,réputation,élevée,critique,CRITIQUE,aucune date annoncée ; portes vérifiées une par une ; communication limitée au scénario A,responsable,ouvert
+R-23,Dérive GPL non détectée dans la base,juridique,moyenne,élevé,ÉLEVÉ,script 40 intégré au build ; vérification à chaque fusion amont,assistant,outillé
+R-24,Suspendre à tort le chantier protocolaire faute de vérification d'un client NCP 524,planification,moyenne,moyen,MOYEN,produire research/ncp-ip/fiche.md avant toute décision d'abandon,assistant,ouvert
+R-25,Dépendance à un client de test propriétaire (Client for OES) pour valider NCP,Technique / Juridique,moyenne,moyenne,"Le client disparaît, change de licence ou n'est plus installable sur un Windows accessible.",Prévoir le banc A (MARS_NWE) comme source de spécification indépendante ; conserver les captures de référence.,Ouvert,"ADR-0019, tests/plan-tests.md T-09 et T-14"
