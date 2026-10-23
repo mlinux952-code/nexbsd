@@ -5,6 +5,13 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-23 — Session S-010 : le delta NexBSD devient du code
+- **Ajouté** : `build/fork/reference/` — GENERIC, `src.conf.5`, `newvers.sh`, `config.5` officiels de `releng/15.1` (provenance et URL consignées).
+- **Ajouté** : `build/fork/tools/generer-kernel-conf.sh` — **exécuté** : produit `NEXBSD_L1` depuis GENERIC avec 4 retraits motivés et un rapport auditable.
+- **Ajouté** : `src.conf` avec **uniquement des options vérifiées** dans la documentation amont ; `release.conf`, `overlay/etc/*`, `patches/0001-identite-version.patch` (non appliqué), `build-nexbsd.sh` (garde-fous testés).
+- **Ajouté** : `docs/22-delta-nexbsd.md` — distinction socle/produit, inventaire du delta, 7 questions, Q4 reformulée.
+- **Aucun fichier compilé, aucune image produit.**
+
 ### 2026-10-23 — Session S-009 : **premiers tests réels en machine virtuelle**
 - **Exécuté** : T-01 **réussi** — FreeBSD 15.1-RELEASE démarre en VM QEMU (image officielle, SHA256 vérifié), 81 s jusqu'à `login:`.
 - **Exécuté** : T-03 **réussi** — Samba 4.23.11 installé depuis les dépôts, partage authentifié, fichier écrit depuis une autre machine et relu côté serveur.

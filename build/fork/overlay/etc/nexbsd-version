@@ -1,0 +1,5 @@
+NAME=NexBSD
+VERSION=0.0-dev
+PROFIL=L1
+BASE=FreeBSD 15.1-RELEASE
+STATUT=pre-alpha — image non publiée, non testée

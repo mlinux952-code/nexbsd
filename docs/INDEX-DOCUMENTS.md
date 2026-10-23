@@ -40,6 +40,7 @@
 | `docs/19-guide-contribution.md` | référence | lire d'abord, 5 règles, ce qui est accepté/refusé, format ADR et CR |
 | `docs/02-cahier-des-charges-fonctionnel.md` | **PROPOSITION** | livrable 2 : 4 acteurs, 33 exigences (S/N/C/F) avec critère d'acceptation, 8 exigences non fonctionnelles opposables |
 | `docs/21-pousser-sur-github.md` | **dépannage** | les 4 erreurs réelles du 2026-10-23, leur cause, procédure en 6 étapes, configuration SSH |
+| `docs/22-delta-nexbsd.md` | **CENTRAL** | ce qui fait de NexBSD un système : inventaire du delta, 7 questions, provenance des références, ce qui manque et pourquoi |
 | `docs/20-depots-et-sauvegardes.md` | ÉTAT | où vit le projet : Drive (fait), GitHub (à faire, procédure exacte), rythme de sauvegarde, restauration d'urgence |
 | `docs/vision.md` | **PROPOSITION** | livrable 1 : problème, apports, non-objectifs, 3 principes, question Q9 |
 | `docs/etude-faisabilite.md` | **PROVISOIRE** | livrable 3 : 4 axes, 5 critères de conclusion, score actuel **0/5** |
