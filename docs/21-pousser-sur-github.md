@@ -203,6 +203,8 @@ xclip -selection clipboard -o | diff - ~/.ssh/*.pub && echo "PRESSE-PAPIERS IDEN
 - `PRESSE-PAPIERS IDENTIQUE AU FICHIER` → le contenu est bon, le problème est côté page GitHub (cause 2 ou 3).
 - une différence s'affiche → le presse-papiers est mauvais (cause 1) : recommencer le `xclip`.
 
+**Cause observée juste après :** le `diff` a montré que le presse-papiers contenait **la commande elle-même** (`xclip -selection clipboard -o | diff - …`), et non la clé — le texte avait été recopié depuis la conversation. Conséquence : recharger le presse-papiers **à partir du fichier** avant tout collage, et ne coller sur GitHub que la ligne `ssh-ed25519 …`.
+
 **Contrôle du collage :** coller d'abord dans `gedit` (éditeur de texte), vérifier qu'il y a **une seule ligne** sans blanc au début, puis recopier de là vers GitHub.
 
 **Contrôle après ajout :** dans *Settings → SSH and GPG keys*, GitHub affiche l'empreinte de la clé. Elle doit être **`SHA256:QMjZ5F8h8kpIkT7ww0nweb7ADYHb2ef4/zykdb5rhI0`** (… ou celle de la clé réellement ajoutée). Si l'empreinte diffère, ce n'est pas cette clé qui a été enregistrée.
