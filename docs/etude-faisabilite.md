@@ -44,7 +44,17 @@ L'étude sera déclarée **concluante positivement** si, et seulement si :
 - [ ] une image NexBSD est construite par le projet et **démarre** *(mesuré)*
 - [ ] aucune contrainte de licence bloquante n'est identifiée
 
-**Score actuel : 0 / 5.** Ce n'est pas un échec : c'est le point de départ, trois semaines après le début de la conception.
+**Score actuel : 1,5 / 5** (au 2026-10-23, session S-009).
+
+| Critère | État | Preuve |
+|---|---|---|
+| FreeBSD démarre sur le matériel cible avec ≤ 256 Mo | ⬜ **non** — démarre en VM, matériel non testé | `tests/results/T-01-demarrage-freebsd.md` |
+| Partage Samba authentifié entre 2 machines | ✅ **OUI** — fichier écrit depuis une autre machine et relu | `tests/results/T-03-partage-samba.md` |
+| NCP-1 → NCP-3 contre le client de référence | ⬜ non | — |
+| Une image NexBSD construite et qui démarre | ⬜ non (exige le profil L3) | — |
+| Aucune contrainte de licence bloquante | 🟡 partiel : licences vérifiées, antériorité du nom non tranchée | `matrices/licences.csv` |
+
+Ce n'est plus un point de départ à zéro : la brique système et la brique fichiers sont démontrées. Les trois critères restants dépendent du matériel cible ou du profil L3.
 
 ## 5. Risque de l'étude elle-même
 

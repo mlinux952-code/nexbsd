@@ -5,6 +5,14 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-23 — Session S-009 : **premiers tests réels en machine virtuelle**
+- **Exécuté** : T-01 **réussi** — FreeBSD 15.1-RELEASE démarre en VM QEMU (image officielle, SHA256 vérifié), 81 s jusqu'à `login:`.
+- **Exécuté** : T-03 **réussi** — Samba 4.23.11 installé depuis les dépôts, partage authentifié, fichier écrit depuis une autre machine et relu côté serveur.
+- **Mesuré** : ≈ 100 Mo de RAM au repos sur système nu (objectif ENF-01 ≤ 128 Mo atteignable).
+- **Vérifié dans les dépôts FreeBSD** : samba 4.23.11 / 4.24.7 ; openldap 2.5.20 / 2.6.15 / 2.7.1 → **Q6 et V-4 résolues**.
+- **Ajouté** : `tests/results/T-01-demarrage-freebsd.md`, `tests/results/T-03-partage-samba.md`, `scripts/31-lancer-vm-freebsd.sh`.
+- **Corrigé** : doublon d'identifiant dans `matrices/compatibilite.csv` (K-15 → K-16).
+
 ### 2026-10-23 — Session S-008 : GitHub enregistré
 - **Fait (par le responsable)** : dépôt **privé** `mlinux952-code/nexbsd`, branche `main`, push accepté (`* [new branch] main -> main`), authentification SSH vérifiée.
 - **Ajouté** : `docs/21-pousser-sur-github.md` — les erreurs réelles rencontrées (bundle introuvable, mauvais dossier, `origin` étranger, `Permission denied (publickey)`, `Key is invalid`, presse-papiers contenant la commande) et leur correction.
