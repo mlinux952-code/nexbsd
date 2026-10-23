@@ -20,11 +20,13 @@
 
 ## 3. Contenu de la sauvegarde
 
-- `NexBSD-etat-conception-2026-10-23.tar.gz` — arborescence complète, sans `.git` ;
-- `nexbsd-depot-2026-10-23.bundle` — historique Git complet (`git clone <bundle>` restaure tout) ;
+- `NexBSD-etat-conception-2026-10-23-s007.tar.gz` — arborescence complète, sans `.git` ;
+- `nexbsd-depot-2026-10-23-s007.bundle` — historique Git complet (`git clone <bundle>` restaure tout) ;
 - `MANIFESTE-SAUVERGARDE-2026-10-23.md` — vérification SHA-256 et restauration ;
 - `SHA256SUMS.txt` — empreintes ;
 - `NexBSD — État du projet (2026-10-23)` — Google Doc lisible sur téléphone.
+
+**Contrôle effectué :** le dossier Drive a été relisté par l'API → 5 fichiers actifs, identifiants consignés dans `docs/20-depots-et-sauvegardes.md` §2. L'instantané S-006 du même jour a été mis à la corbeille.
 
 **Réserve honnête :** les empreintes ont été calculées avant l'envoi ; **personne n'a retéléchargé les fichiers pour les recontrôler**. Ce contrôle est la première chose à faire côté responsable (`sha256sum -c SHA256SUMS.txt`).
 
