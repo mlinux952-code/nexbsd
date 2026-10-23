@@ -11,33 +11,30 @@
 |---|---|---|
 | **Espace de travail (workspace)** | ✅ **source de vérité** | ~90 fichiers + dépôt Git local (1 commit `5e7c789`) |
 | **Google Drive** | ✅ **sauvegarde effectuée ce jour** | dossier « NexBSD », 4 fichiers + 1 Doc de lecture |
-| **GitHub** | ✅ **fait le 2026-10-23 à 21h (par le responsable)** | dépôt **privé** `mlinux952-code/nexbsd`, branche `main`, `refs/heads/main = 61293162a2ec…` (2 commits), clé SSH `Mint NexBSD` (`SHA256:QMjZ5F8h…`) |
+| **GitHub** | ✅ **fait** | dépôt **privé** `mlinux952-code/nexbsd`, branche `main` ; `6129316` poussé, puis rattrapage → `392541f` (`git merge --ff-only` réussi le 2026-10-23) |
 | Disque local du responsable | ✅ partiel | clone de travail dans `~/Projets/nexbsd` ; `.bundle` téléchargé dans `~/Téléchargements` |
 
 > **Historique du 2026-10-23 :** dépôt GitHub créé et poussé par le responsable — `git push -u origin main` accepté, `* [new branch] main -> main`. Authentification vérifiée par `ssh -T git@github.com` → `Hi mlinux952-code!`.
 > **Ce qui reste décalé :** le dépôt distant s'arrête au commit `6129316`. Les commits suivants (`985a244`, `c95a51a`, `d6d2194`, `f6dbd6a`, `8afa24b`, `78c9723`, `0a62862`, …) doivent être récupérés par le bundle `s008` (§6).
 
-## 2. Google Drive — contenu du dossier « NexBSD » (instantané S-008)
+## 2. Google Drive — contenu du dossier « NexBSD » (instantané S-009)
 
-Dossier : **`NexBSD`** (racine de « Mon Drive »)
-Lien : `https://drive.google.com/drive/folders/1seXkTsMaweSo9UcRFDK-frMbF6x6SE1J`
+Dossier : **`NexBSD`** — `https://drive.google.com/drive/folders/1seXkTsMaweSo9UcRFDK-frMbF6x6SE1J`
 
-| Fichier | Identifiant | Taille | Rôle |
-|---|---|---|---|
-| `nexbsd-depot-2026-10-23-s008.bundle` | `1FNOgeMm50he-0NS_CsV-2wqVxM8h-tIB` | 227 585 o | **historique Git complet, 13 commits, branche `main`** — permet le rattrapage du dépôt GitHub |
-| `NexBSD-etat-conception-2026-10-23-s008.tar.gz` | `10GbrAYtVOUMt9hFzKV-XLYB7ixiYWw_k` | 168 592 o | arborescence complète, sans `.git` |
-| `MANIFESTE-SAUVERGARDE-2026-10-23-s008.md` | `13ovKKB1VU1wNP7A2iXpBrfc0_oMAcZYv` | 2 294 o | vérification, restauration, fréquence |
-| `SHA256SUMS-s008.txt` | `1ikhQVe3Kit8k3quX5RGjYUhVgwV_wQaa` | 214 o | empreintes de l'instantané S-008 |
-| `NexBSD — État du projet (S-008, 2026-10-23)` | `1jJsKhcafT-Sssy1Jpe9mata4MX5vV7PLkIF0JoqzdWM` | — | lecture rapide (ETAT v8) |
+| Fichier | Identifiant | Rôle |
+|---|---|---|
+| `nexbsd-depot-2026-10-23-s009.bundle` | `1MsfgckBzqMwv7DvD9MVSDoYUzFadmjRq` | historique Git complet (restauration `git clone`) |
+| `NexBSD-etat-conception-2026-10-23-s009.tar.gz` | `1JMEs0sAv-pgdyUBYVDowqfHOb64GIo3t` | arborescence complète, `tests/results/` inclus |
+| `SHA256SUMS-s009.txt` | `1L9eTTM7jAnKUx_9P-smYPDfxLOahxslk` | empreintes |
+| `NexBSD — État du projet (S-009)` | `1nYr1xuHhTokZ16DDI7NTQeZTYr3UXa7vN-FfHNYivsQ` | lecture rapide (ETAT v9) |
+| `Résultats de tests — T-01 et T-03` | `18bT3UW9givXmEbi_Tzms0rwypxvbJTrAMwzDnM-xjZo` | premier test réel réussi |
 
-**Empreintes de l'instantané S-008 (calculées avant envoi) :**
+**Empreintes (calculées avant envoi) :**
 ```
-ec2459dfbb308c78ae779fb497103f24e5708fe3ee6a00138bc46c24cc456ea4  NexBSD-etat-conception-2026-10-23-s008.tar.gz
-8af1eed7b217e95736c31796a82a0f8e2e4f5add559d9fb0ba5bb857c911a9e2  nexbsd-depot-2026-10-23-s008.bundle
+79b30daf710a98dca14b4d869033ef6ab2eb95dd30b5ada859523d226c6bd012  NexBSD-etat-conception-2026-10-23-s009.tar.gz
+240bf1318530315af04c4203149c58e87cccb66749ab5d60356f55f8f27ee6ce  nexbsd-depot-2026-10-23-s009.bundle
 ```
-`git bundle verify` : **`is okay`**, « The bundle contains these 2 refs ». Le bundle s'arrête au commit qui précède cette mise à jour (un instantané ne peut pas contenir sa propre notice).
-
-**Réserve honnête :** les fichiers n'ont pas été retéléchargés depuis Drive pour recontrôler les empreintes. À faire côté responsable : `sha256sum -c SHA256SUMS.txt`.
+`git bundle verify` → **is okay**. Les instantanés S-006, S-007 et S-008 ont été mis à la corbeille.
 
 ## 3. GitHub — procédure (conservée pour mémoire ; déjà exécutée avec succès)
 
