@@ -76,6 +76,31 @@ sh ~/Projets/nexbsd/scripts/31-lancer-vm-freebsd.sh ~/nexbsd-vm
 
 Au menu du chargeur, **appuyez sur `5` puis `Entrée`** : la console passe sur le port série et vous pouvez piloter la VM depuis le terminal. Sans cela, la VM écrit sur un écran vidéo que QEMU n'affiche pas (`-display none`).
 
+
+## 4 bis. Sans le script — la commande QEMU brute (dépannage)
+
+Si `31-lancer-vm-freebsd.sh` n'est pas encore dans votre dépôt, la VM se lance sans lui.
+Deux commandes, équivalentes à ce que fait le script :
+
+```bash
+cd ~/nexbsd-vm
+qemu-img create -f qcow2 -b FreeBSD-15.1-RELEASE-amd64-ufs.qcow2 -F qcow2 disque-test.qcow2
+```
+
+```bash
+qemu-system-x86_64 -enable-kvm -cpu host -m 1536 -smp 2 -nographic -no-reboot \
+  -drive file=$HOME/nexbsd-vm/disque-test.qcow2,if=virtio,cache=writeback \
+  -netdev user,id=n0,hostfwd=tcp:127.0.0.1:4450-:445 \
+  -device virtio-net-pci,netdev=n0
+```
+
+Différences avec le script :
+- `-nographic` attache directement la console série au terminal → **pas besoin de `socat`** ;
+- `Ctrl-A c` ouvre le moniteur QEMU, `Ctrl-A x` quitte la VM ;
+- l'option `5` (console série) du menu du chargeur reste **indispensable**.
+
+Arrêt propre : `shutdown -p now` dans la VM, ou `Ctrl-A x` en dernier recours (l'équivalent d'une coupure de courant).
+
 ## 5. Étape 4 — commander la VM sans clavier graphique
 
 Dans un second terminal :
