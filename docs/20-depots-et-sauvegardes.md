@@ -24,18 +24,18 @@ Lien : `https://drive.google.com/drive/folders/1seXkTsMaweSo9UcRFDK-frMbF6x6SE1J
 
 | Fichier | Identifiant | Taille | Rôle |
 |---|---|---|---|
-| `nexbsd-depot-2026-10-23-s008.bundle` | `14mmHfKMiha3q8hUmedqQMQ3JRFx-vIzK` | 224 906 o | **historique Git complet, 11 commits** — permet le rattrapage du dépôt GitHub |
-| `NexBSD-etat-conception-2026-10-23-s008.tar.gz` | `1VOLTWhaUJ9NdPdOk0j35ic4SiL2ly1Xt` | 167 712 o | arborescence complète, sans `.git` |
-| `MANIFESTE-SAUVERGARDE-2026-10-23-s008.md` | — | — | vérification, restauration, fréquence |
-| `SHA256SUMS-s007.txt` | `1UdyZOIsYrG436qQHFln3IESA6wkuSinH` | 214 o | empreintes de l'instantané précédent |
-| `NexBSD — État du projet (S-007, 2026-10-23)` | `1z7QeBJ4goWWmHbI05SDM4Fra_eSUoAz2a4mVn1lzRjU` | — | lecture rapide (sera remplacé par S-008) |
+| `nexbsd-depot-2026-10-23-s008.bundle` | `1FNOgeMm50he-0NS_CsV-2wqVxM8h-tIB` | 227 585 o | **historique Git complet, 13 commits, branche `main`** — permet le rattrapage du dépôt GitHub |
+| `NexBSD-etat-conception-2026-10-23-s008.tar.gz` | `10GbrAYtVOUMt9hFzKV-XLYB7ixiYWw_k` | 168 592 o | arborescence complète, sans `.git` |
+| `MANIFESTE-SAUVERGARDE-2026-10-23-s008.md` | `13ovKKB1VU1wNP7A2iXpBrfc0_oMAcZYv` | 2 294 o | vérification, restauration, fréquence |
+| `SHA256SUMS-s008.txt` | `1ikhQVe3Kit8k3quX5RGjYUhVgwV_wQaa` | 214 o | empreintes de l'instantané S-008 |
+| `NexBSD — État du projet (S-008, 2026-10-23)` | `1jJsKhcafT-Sssy1Jpe9mata4MX5vV7PLkIF0JoqzdWM` | — | lecture rapide (ETAT v8) |
 
 **Empreintes de l'instantané S-008 (calculées avant envoi) :**
 ```
-3c1733d64a7d42c7701d4bfcd33d59d26f08e1c836022a0eb36db78ca96d7a1d  NexBSD-etat-conception-2026-10-23-s008.tar.gz
-c8e31a8d516d42089a3bba5df057609b156fc7ca877a2ad2f37d8c1ca2ce3393  nexbsd-depot-2026-10-23-s008.bundle
+ec2459dfbb308c78ae779fb497103f24e5708fe3ee6a00138bc46c24cc456ea4  NexBSD-etat-conception-2026-10-23-s008.tar.gz
+8af1eed7b217e95736c31796a82a0f8e2e4f5add559d9fb0ba5bb857c911a9e2  nexbsd-depot-2026-10-23-s008.bundle
 ```
-`git bundle verify` : **« The bundle records a complete history »** (HEAD `3b320727`).
+`git bundle verify` : **`is okay`**, « The bundle contains these 2 refs ». Le bundle s'arrête au commit qui précède cette mise à jour (un instantané ne peut pas contenir sa propre notice).
 
 **Réserve honnête :** les fichiers n'ont pas été retéléchargés depuis Drive pour recontrôler les empreintes. À faire côté responsable : `sha256sum -c SHA256SUMS.txt`.
 
