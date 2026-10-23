@@ -248,6 +248,60 @@ passwd
 | T-08 | isolation (jail + pf) | la sécurité de base | ⬜ à faire |
 | T-05 | journaux et supervision | l'administrabilité | ⬜ à faire |
 
+## 6. Transférer des commandes dans la VM SANS copier-coller
+
+**Problème constaté le 2026-10-23 :** le copier-coller depuis le Mint ne fonctionne pas dans la fenêtre de `virt-manager`. Cause : le presse-papiers partagé exige `spice-vdagent` **dans le système invité**, absent de l'image FreeBSD officielle.
+
+Trois solutions, de la plus simple à la plus durable.
+
+### 6.1 Servir les scripts depuis l'hôte (immédiat, aucune installation)
+
+Le copier-coller fonctionne **dans un terminal Mint normal**. On s'en sert donc côté hôte :
+
+```bash
+cd ~/Projets/nexbsd
+sh scripts/61-servir-vers-vm.sh
+```
+
+Ce script lance un petit serveur HTTP sur le dossier `scripts/`. Ensuite, **dans la VM**, on tape trois lignes courtes :
+
+```
+ifconfig vtnet0 inet
+fetch -o /tmp/t04.sh http://10.0.2.2:8000/60-banc-T04-ldap.sh
+sh /tmp/t04.sh
+```
+
+`10.0.2.2` est l'adresse de l'hôte vue depuis la VM en réseau « user » (vérifié par `ping` le 2026-10-23).
+
+Avantage : aucune frappe longue, et le script peut être corrigé côté hôte puis re-téléchargé.
+
+### 6.2 Console texte dans le terminal (le plus confortable)
+
+Si la VM possède un port série, `virsh console` ouvre la console **dans votre terminal Mint** — et là, le copier-coller fonctionne normalement.
+
+Vérifier la présence du port série :
+```bash
+virsh --connect qemu:///session dumpxml nexbsd-test | grep -A2 serial
+```
+
+S'il est absent, l'ajouter : fenêtre de la VM → *Afficher → Détails* → **Ajouter du matériel → Périphérique série (pty)** → redémarrer.
+
+Puis :
+```bash
+virsh --connect qemu:///session console nexbsd-test
+```
+*(sortie : `Ctrl-]`)*
+
+L'image FreeBSD 15.1 ouvre déjà un `getty` sur `ttyu0` : la console série fonctionne sans configuration côté invité.
+
+### 6.3 Partager un dossier (pour la suite)
+
+`virt-manager` sait exposer un dossier de l'hôte, mais FreeBSD n'a pas de client `virtiofs`/`9p` installé par défaut : à réserver au moment où la plateforme NexBSD sera montée.
+
+### 6.4 Ce qu'il ne faut pas faire
+
+Recopier un long script à la main dans la fenêtre graphique : source d'erreurs (tabulations, espaces, caractères perdus) et perte de temps. La règle du projet s'applique aussi ici : **une commande courte, un résultat vérifiable.**
+
 ## 7. Règles de sécurité du banc (non négociables)
 
 1. **La VM ne voit jamais un disque physique.** Elle n'a qu'un fichier `qcow2` dans votre dossier personnel.
