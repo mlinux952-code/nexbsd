@@ -5,6 +5,17 @@
 
 ---
 
+## 0. Verdict pour VOTRE machine (relevé du 2026-10-23)
+
+| | Résultat mesuré |
+|---|---|
+| Processeur | Intel i3-3110M, 4 threads |
+| RAM | 3,7 Gio |
+| KVM | **disponible** ✅ |
+| Espace libre sur le SSD | **68 Go** ✅ |
+| **Héberger les VM de test** | ✅ **OUI** — avec 1536 Mo de RAM alloués à la VM |
+| **Construire une image NexBSD** | ❌ **NON** — 8 Go de RAM exigés, la RAM bloque, pas le disque |
+
 ## 1. Ce que votre machine peut faire — et ce qu'elle ne pourra pas
 
 Il y a deux questions différentes, souvent confondues :

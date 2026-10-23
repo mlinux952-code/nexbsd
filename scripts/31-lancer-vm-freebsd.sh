@@ -19,6 +19,23 @@ SER="$DIR/console.sock"
 MON="$DIR/moniteur.sock"
 PORT=${PORT:-4450}
 
+# --- Ressources : surchargeables par l'environnement ---------------------
+# Sur une machine de 3,7 Go de RAM avec 4 threads (i3-3110M), 1536 Mo / 2 vCPU
+# laissent assez au systeme hote pour rester utilisable.
+RAM_MO=${RAM_MO:-1536}
+VCPU=${VCPU:-2}
+
+# --- Acceleration materielle --------------------------------------------
+# La recette du 2026-10-23 tournait en emulation pure (81 s de demarrage).
+# Avec KVM, le meme demarrage prend quelques secondes.
+if [ -r /dev/kvm ]; then
+    ACCEL="-enable-kvm -cpu host"
+    echo "-> acceleration KVM detectee : la VM tournera a pleine vitesse"
+else
+    ACCEL=""
+    echo "-> pas de KVM : emulation logicielle (lent, mais fonctionnel)"
+fi
+
 # --- Garde-fous ---------------------------------------------------------
 if [ ! -f "$IMAGE" ]; then
     echo "ERREUR : image absente : $IMAGE" >&2
@@ -42,11 +59,12 @@ rm -f "$SER" "$MON"
 # Pas de KVM sur cet hôte : émulation TCG, 1 vCPU, 768 Mo.
 # Le disque est en virtio (vtblk0) et le réseau en virtio avec redirection
 # de port, pour tester depuis la station Linux : 127.0.0.1:4450 → VM:445.
-echo "→ démarrage de la VM (Ctrl-A c pour le moniteur, Ctrl-A x pour quitter)"
+echo "→ démarrage : ${RAM_MO} Mo de RAM, ${VCPU} vCPU"
+echo "→ AU MENU DU CHARGEUR : taper 5 puis Entrée (sinon rien ne s'affiche)"
 echo "→ console série : socat - UNIX-CONNECT:$SER"
 echo "→ partage SMB testable sur 127.0.0.1:$PORT une fois samba démarré"
 exec qemu-system-x86_64 \
-    -m 768 -smp 1 -cpu max -display none -no-reboot \
+    $ACCEL -m "$RAM_MO" -smp "$VCPU" -display none -no-reboot \
     -serial "unix:$SER,server,nowait" \
     -monitor "unix:$MON,server,nowait" \
     -drive "file=$OVERLAY,if=virtio,cache=writeback" \

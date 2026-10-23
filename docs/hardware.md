@@ -86,3 +86,33 @@ Avant toute expérimentation (même non destructive), copier les fichiers person
 - Désactiver le Secure Boot ou une protection sans explication et sans accord du responsable.
 - Toute opération d'écriture disque sur le disque interne.
 - Installer un logiciel sur le Windows 7 (« portable » uniquement).
+
+## Station de préparation — relevé RÉEL du 2026-10-23
+
+Relevé produit par `scripts/00-diagnostic-hote.sh` sur la machine du responsable (Linux Mint). **Lecture seule, rien n'a été modifié.**
+
+| Élément | Valeur mesurée |
+|---|---|
+| Machine | Dell Inspiron 3520, Linux Mint 22.3, noyau 7.0.0-38 |
+| Processeur | **Intel Core i3-3110M @ 2,40 GHz**, 2 cœurs / 4 threads (x86_64) |
+| Virtualisation | **VT-x présent, `/dev/kvm` disponible** |
+| Mémoire | **3,7 Gio** (≈ 1,5 Gio disponibles au moment du relevé), 3,9 Gio de swap |
+| Disque interne | SSD SATA 119 Gio — **68 Go libres** sur `/` |
+| Disque externe | **HDD USB 931,5 Gio** (`TOSHIBA MQ04UBF100`) monté sur `/media/omrane/…` |
+| QEMU | **8.2.2** déjà installé, avec `qemu-utils` |
+
+### Ce que cette machine peut faire
+
+| Capacité | Verdict | Raison |
+|---|---|---|
+| **Héberger les VM de test** (FreeBSD + Samba + LDAP) | ✅ **OUI** | 3,7 Gio de RAM, KVM actif, 68 Go libres |
+| **Construire une image NexBSD** (`buildworld`) | ❌ **NON** | 3,7 Gio de RAM contre **8 Go minimum** (ADR-0010) et 40 Go d'objets — la RAM est le facteur bloquant, pas le disque |
+
+**Réglage retenu pour la VM** : 1536 Mo de RAM, 2 vCPU, disque image sur le SSD (plus rapide que l'USB). Avec KVM, un démarrage qui prenait 81 s en émulation doit tomber à quelques secondes — à mesurer et consigner.
+
+### Point important pour la suite
+
+Le **disque externe de 931 Go** satisfait la contrainte « support externe uniquement » du mur. Il peut accueillir :
+- les images de VM si le SSD se remplit ;
+- l'arbre source FreeBSD (1-3 Go) et `/usr/obj` (40 Go) **le jour où une machine avec 8 Go de RAM sera disponible** — le disque ne sera alors pas le problème.
+
