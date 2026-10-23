@@ -5,6 +5,15 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-23 — Session S-007 : sauvegarde, dépôt, cahier des charges
+- **Ajouté** : dépôt **Git local** (1 commit initial, 90 fichiers) + `.gitignore`.
+- **Ajouté** : sauvegarde **Google Drive** vérifiée (dossier « NexBSD » : archive, bundle Git, manifeste, empreintes, Doc de lecture).
+- **Ajouté** : `docs/20-depots-et-sauvegardes.md` — où vit le projet ; **GitHub : procédure exacte, non exécutée** (aucun connecteur disponible).
+- **Ajouté** : `scripts/50-sauvegarder-session.sh` — instantané daté (testé : 2 cas).
+- **Ajouté** : `docs/02-cahier-des-charges-fonctionnel.md` — livrable 2 : 33 exigences avec critères d'acceptation.
+- **Ajouté** : test **T-15** (découverte de services) pour la traçabilité de EF-N-10.
+- **Modifié** : `docs/ETAT.md` v7, `docs/INDEX-DOCUMENTS.md` v1.2, `docs/16-registre-problemes.md` (C-07, C-08, P-13 partiel).
+
 ### 2026-10-23 — Session S-006 : lecture du mur, conformité, NCP sur IP
 - **Ajouté** : `research/ncp-ip/fiche.md` — V-1 résolu : le *Client for Open Enterprise Server* (OpenText, v26.2.1, août 2026) parle NCP sur le port 524 et peut servir de client de test.
 - **Ajouté** : `docs/15-conformite-mega-prompt.md` — audit des 20 livrables exigés par le méga-prompt.

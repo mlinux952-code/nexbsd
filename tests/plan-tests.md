@@ -1,7 +1,7 @@
 # Plan de tests — prototype 0
 
 **Date :** 2026-10-23
-**Statut :** aucun test n'a été exécuté. Ce document décrit les tests **à venir** (15 tests, T-01 → T-15).
+**Statut :** aucun test n'a été exécuté. Ce document décrit les tests **à venir** (16 tests, T-01 → T-15).
 
 > **Deux bancs d'essai réseau (2026-10-23, `research/ncp-ip/fiche.md`)** :
 > - **Banc A** = T-14, comportement (MARS_NWE + IPX + DOSBox) — donne la **spécification**.
@@ -25,6 +25,7 @@
 | T-08 | Sensibilité du disque | vérifier que le disque interne est intact | après installation externe | retirer le support, démarrer Windows 7 | Windows 7 démarre normalement | — | NON EXÉCUTÉ |
 | T-09 | **Banc B — protocole NCP sur 524** | prouver qu'un client NCP réel se connecte à l'implémentation NexBSD | PC de test + VM Windows isolée + **Client for Open Enterprise Server 26.2.1** (ADR-0019) + service NCP NexBSD (NCP-1→NCP-6) | (1) réseau local isolé, sans passerelle ; (2) lancer le client, viser l'adresse NexBSD port TCP **524** (+ SLP 472) ; (3) exécuter login/attach, map volume, listing, lecture puis écriture d'un fichier ; (4) capturer chaque écran et le journal NexBSD | NCP-1→NCP-3 réussis ; NCP-4→NCP-6 documentés réussis ou échoués | — | NON EXÉCUTÉ (service NCP inexistant) |
 | T-14 | **Banc A — comportement NetWare observé** | documenter le comportement de référence à imiter | VM Linux isolée + module IPX hors arbre (`pasis/ipx`) + **MARS_NWE 0.99.pl23** + DOSBox (`ipxnet`, UDP 213) | monter MARS_NWE, connecter un client DOS par IPX sur UDP, exercer login/listage/écriture, relever chaque comportement visible | `docs/spec-netware-observee.md` rédigé, comportements listés sans invention | — | NON EXÉCUTÉ (compilation noyau requise, V-3) |
+| T-15 | Découverte de services (esprit SAP) | un client trouve le serveur sans saisir son adresse | NexBSD avec mDNS/DNS-SD actif + poste client | annoncer le service, puis rechercher depuis un poste Windows/Linux | le service apparaît dans la liste du client en < 30 s | — | NON EXÉCUTÉ |
 | T-10 | Interface petit écran | démontrer une UI navigable au clavier | phase 5 | lancer la coquille, naviguer uniquement au clavier, mesurer RAM et temps de lancement | navigation complète sans souris | — | NON EXÉCUTÉ |
 | T-12 | Construction de la base | NexBSD construit sa propre image (phase 4bis) | profil L3, arbre source | `make buildworld` puis `buildkernel`, `release.sh` | image amorçable, build reproductible | — | NON EXÉCUTÉ (L3 indisponible) |
 | T-13 | Frontière de licence | aucun code copyleft dans la base | arbre de base | recherche de `SPDX-License-Identifier: GPL` + revue | zéro occurrence non justifiée | — | À AUTOMATISER |

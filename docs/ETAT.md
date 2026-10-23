@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 6 · **Mise à jour :** 2026-10-23 (fin de session S-006)
+**Version de cette fiche :** 7 · **Mise à jour :** 2026-10-23 (fin de session S-007)
 **Rôle :** source de vérité en une page. En cas de contradiction avec un autre document, **c'est celui-ci qui décrit l'état**, car il est mis à jour à chaque session.
 
 ---
@@ -18,10 +18,11 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
 | Code NexBSD | **aucun** |
 | Installation FreeBSD | **aucune** (ni VM, ni matériel) |
-| Test d'exécution | **aucun** — le plan compte 15 tests (T-01→T-15), tous `NON EXÉCUTÉ` |
+| Test d'exécution | **aucun** — le plan compte 16 tests (T-01→T-15), tous `NON EXÉCUTÉ` |
 | Image système | **aucune** (et aucune possible sans profil L3) |
 | Décisions validées par le responsable | **aucune** — 19 ADR à l'état `proposition` |
-| Documents | ~85 fichiers, 5 matrices CSV, 5 scripts, index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
+| **Sauvegarde** | **Google Drive fait** (dossier « NexBSD », 5 fichiers) · **GitHub inexistant** (aucun connecteur) · dépôt Git local, 2 commits |
+| Documents | ~90 fichiers, 5 matrices CSV, 5 scripts, index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
 | Chemin NCP (différenciation) | **V-1 tranchée** : client NCP réel, gratuit et maintenu identifié (ADR-0019) ; V-2/V-3 en suspens |
 
@@ -108,6 +109,8 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Conformité aux 20 livrables du mur | `docs/15-conformite-mega-prompt.md` |
 | Problèmes connus | `docs/16-registre-problemes.md` |
 | Vision du produit | `docs/vision.md` |
+| Cahier des charges fonctionnel (33 exigences) | `docs/02-cahier-des-charges-fonctionnel.md` |
+| Où vit le projet (Drive, GitHub) | `docs/20-depots-et-sauvegardes.md` |
 
 ---
 
@@ -121,3 +124,4 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | S-004 | 2026-10-23 | Protocole de session, objectif grand public, outillage licence | `START-HERE.md`, `ETAT.md`, ADR-0016, `build/fork/`, script 40 |
 | S-005 | 2026-10-23 | **Réseau : rôle des 4 composants, NCP sur IP, index complet** | ADR-0017/0018, `docs/14-reseau-netware.md`, `docs/INDEX-DOCUMENTS.md` |
 | S-006 | 2026-10-23 | **V-1 tranchée (client NCP réel) + conformité aux 20 livrables du mur** | ADR-0019, `research/ncp-ip/fiche.md`, `docs/15-conformite-mega-prompt.md`, `docs/vision.md`, `docs/08-schema-flux.md`, `docs/16-registre-problemes.md`, `docs/17-procedure-mise-a-jour.md`, `docs/19-guide-contribution.md`, `LICENSE`, `NOTICE`, `CHANGELOG.md`, `docs/etude-faisabilite.md`, dossiers `components/` `integration/` `release/` |
+| S-007 | 2026-10-23 | **Sauvegarde Drive + dépôt Git local + cahier des charges fonctionnel** | `docs/20-depots-et-sauvegardes.md`, `scripts/50-sauvegarder-session.sh`, `docs/02-cahier-des-charges-fonctionnel.md`, archives + bundle |

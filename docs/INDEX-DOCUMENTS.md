@@ -1,6 +1,6 @@
 # Index complet des documents NexBSD
 
-**Version :** 1.1 — 2026-10-23 (session S-006)
+**Version :** 1.2 — 2026-10-23 (session S-007)
 **Rôle :** « noter tous » — inventaire exhaustif, avec statut et résumé en une ligne. Mis à jour à chaque session.
 
 **Légende des statuts :**
@@ -38,6 +38,8 @@
 | `docs/16-registre-problemes.md` | ÉTAT | 14 problèmes ouverts (P-01→P-14), 6 clos, 3 contradictions résolues |
 | `docs/17-procedure-mise-a-jour.md` | **SQUELETTE NON TESTÉ** | 3 niveaux de mise à jour, règles non négociables, retour arrière |
 | `docs/19-guide-contribution.md` | référence | lire d'abord, 5 règles, ce qui est accepté/refusé, format ADR et CR |
+| `docs/02-cahier-des-charges-fonctionnel.md` | **PROPOSITION** | livrable 2 : 4 acteurs, 33 exigences (S/N/C/F) avec critère d'acceptation, 8 exigences non fonctionnelles opposables |
+| `docs/20-depots-et-sauvegardes.md` | ÉTAT | où vit le projet : Drive (fait), GitHub (à faire, procédure exacte), rythme de sauvegarde, restauration d'urgence |
 | `docs/vision.md` | **PROPOSITION** | livrable 1 : problème, apports, non-objectifs, 3 principes, question Q9 |
 | `docs/etude-faisabilite.md` | **PROVISOIRE** | livrable 3 : 4 axes, 5 critères de conclusion, score actuel **0/5** |
 | `docs/prototypes.md` | PROPOSITION | 3 prototypes comparés (23 / 15 / 10), critères Go-NoGo |
@@ -104,7 +106,7 @@
 |---|---|
 | `plan-tests.md` | 15 tests (T-01 → T-13 + variantes), **aucun exécuté**, format de compte rendu, mesures à relever |
 
-## 7. `scripts/` — outillage (5 scripts + notice)
+## 7. `scripts/` — outillage (6 scripts + notice)
 
 | Script | Vérifié ? | Rôle |
 |---|---|---|
@@ -113,6 +115,7 @@
 | `20-ecrire-usb.sh` | ⚠️ **non testé sur matériel** | écrit une clé USB, 6 garde-fous |
 | `30-qemu-freebsd.sh` | ⚠️ syntaxe seulement | lance FreeBSD en VM (1 Go) |
 | `40-verifier-frontiere-licence.sh` | ✅ exécuté (3 cas) | contrôle T-13 : copyleft hors de la base |
+| `50-sauvegarder-session.sh` | ✅ exécuté (2 cas : succès + mauvais répertoire) | instantané daté + `SHA256SUMS.txt` ; n'envoie rien par réseau |
 
 ## 8. `build/fork/` — delta propre (aucun fichier compilé)
 
@@ -125,7 +128,7 @@
 | `exceptions-licence.txt` | vide (état souhaité) | exemptions justifiées du contrôle T-13 |
 | `build-nexbsd.sh` | syntaxe OK, **non exécuté** | chaîne garde-fou (refuse hors FreeBSD, <8 Go, <40 Go) |
 
-## 9. `reports/` — 6 comptes rendus
+## 9. `reports/` — 7 comptes rendus
 
 | Fichier | Session | Objet |
 |---|---|---|
@@ -135,6 +138,7 @@
 | `session-2026-10-23-protocole.md` | S-004 | protocole anti-dérive, publication, outillage licence |
 | `session-2026-10-23-reseau.md` | S-005 | **réseau : rôles des 4 composants, NCP sur IP** |
 | `session-2026-10-23-conformite.md` | S-006 | V-1 tranchée, audit des 20 livrables, comblement des manques documentaires |
+| `session-2026-10-23-sauvegarde.md` | S-007 | sauvegarde Drive vérifiée, dépôt Git local, cahier des charges fonctionnel |
 
 ---
 

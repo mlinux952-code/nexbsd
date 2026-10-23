@@ -95,6 +95,7 @@ Quand une session s'écarte (sujet hors périmètre, envie d'ajouter un composan
 4. Mettre à jour les **matrices** (`matrices/*.csv`) si un composant, une licence ou un risque change.
 5. **Vérifier par `ls`** que chaque fichier annoncé existe réellement.
 6. Écrire la **prochaine action concrète** — une seule, faisable, vérifiable.
+7. **Sauvegarder** : `git commit` puis `sh scripts/50-sauvegarder-session.sh`, puis téléverser l'instantané dans le dossier Drive « NexBSD » (voir `docs/20-depots-et-sauvegardes.md`).
 
 ---
 
@@ -105,7 +106,7 @@ Quand une session s'écarte (sujet hors périmètre, envie d'ajouter un composan
 | **État actuel, en une page** | `docs/ETAT.md` |
 | Règles imposées par le responsable | `docs/source/nexbsd-mega-prompt-maitre-v1.0.md` |
 | Synthèse lisible des phases 0-1 | `00-SYNTHESE-PHASE-0-1.md` |
-| Décisions (16 ADR) | `docs/decisions/` |
+| Décisions (19 ADR) | `docs/decisions/` |
 | Modèle de système (fork) | `docs/11-fork-pas-surcouche.md` |
 | Licences et frontières | `docs/12-licences-et-frontieres.md` |
 | Objectif grand public et conditions | `docs/13-publication-grand-public.md` |
@@ -115,11 +116,16 @@ Quand une session s'écarte (sujet hors périmètre, envie d'ajouter un composan
 | Scripts de préparation | `scripts/` |
 | Squelette du delta propre (fork) | `build/fork/` |
 | Historique des sessions | `reports/` |
+| **Où vit le projet (Drive, GitHub)** | `docs/20-depots-et-sauvegardes.md` |
+| **Sauvegarder la session** | `scripts/50-sauvegarder-session.sh` |
+| Cahier des charges fonctionnel | `docs/02-cahier-des-charges-fonctionnel.md` |
+| Conformité aux 20 livrables du mur | `docs/15-conformite-mega-prompt.md` |
+| Problèmes connus | `docs/16-registre-problemes.md` |
 
 ---
 
 ## 8. Ce que NexBSD est, à la date du 2026-10-23
 
-**Un dossier de conception.** Pas de code, pas d'installation, pas de test d'exécution. Un modèle de système choisi (fork), un budget de ressources, trois domaines de licence, 16 décisions proposées, des recherches sourcées, et une trajectoire vers un système publiable — sous conditions.
+**Un dossier de conception, sauvegardé.** Pas de code, pas d'installation, pas de test d'exécution. Un modèle de système choisi (fork), un budget de ressources, trois domaines de licence, 19 décisions proposées, un cahier des charges fonctionnel, des recherches sourcées, et une trajectoire vers un système publiable — sous conditions. Le projet existe en trois endroits : l'espace de travail, un dépôt Git local, et un dossier Google Drive daté. **GitHub n'existe pas encore.**
 
 Toute personne qui lit ceci doit pouvoir dire, sans consulter la conversation : *où en est le projet, ce qui est décidé, ce qui est supposé, et quelle est la prochaine action.*
