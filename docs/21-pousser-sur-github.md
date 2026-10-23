@@ -161,6 +161,31 @@ La clé publique est **une seule ligne**, de la forme `ssh-ed25519 AAAAC3Nza… 
 
 ---
 
+### 3 quater. Cas du 2026-10-23 : aucune clé n'existait + noms de fichiers modifiés par le terminal
+
+Deux constats tirés de la sortie réelle :
+
+```
+~/.ssh  →  known_hosts, known_hosts.old        (aucune clé : ni privée, ni publique)
+head: impossible d'ouvrir '.../id_[ed25519.pub](http://ed25519.pub)'
+```
+
+1. **Aucune clé n'existait.** Le message « Key is invalid » de GitHub venait de là : rien de valide n'avait été collé.
+2. **Le terminal (ou le presse-papiers) a réécrit `id_ed25519.pub` en lien Markdown** `id_[ed25519.pub](http://ed25519.pub)`. Toute commande collée contenant ce nom échoue.
+
+**Parade :** éviter les noms exacts dans les commandes, utiliser des jokers.
+
+```bash
+ssh-keygen -t ed25519 -C "nexbsd-mint"   # Entrée, Entrée, Entrée (chemin par défaut, sans phrase)
+ls -l ~/.ssh                             # doit montrer id_ed25519 et id_ed25519.pub
+cat ~/.ssh/*.pub                         # le joker évite d'écrire le nom complet
+xclip -selection clipboard < ~/.ssh/*.pub
+```
+
+**Règle pratique :** si les commandes collées contiennent des noms de fichiers et que le terminal les affiche comme des liens, **taper la commande à la main** ou utiliser `*.pub`.
+
+---
+
 ## 4. Cas particuliers
 
 | Situation | Solution |
