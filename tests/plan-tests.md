@@ -1,7 +1,9 @@
 # Plan de tests — prototype 0
 
 **Date :** 2026-10-23
-**Statut :** aucun test n'a été exécuté. Ce document décrit les tests **à venir** (16 tests, T-01 → T-15).
+**Statut : 2 tests sur 16 exécutés (2026-10-23).** T-01 et T-03 sont réussis en machine virtuelle ; les 14 autres restent `NON EXÉCUTÉ`.
+
+> **Exécution du 2026-10-23 (VM QEMU, émulation pure)** : FreeBSD 15.1-RELEASE démarre (81 s jusqu'à `login:`), ~100 Mo de RAM occupés au repos, Samba 4.23.11 installé depuis les dépôts, partage authentifié accessible **depuis une autre machine** avec écriture et relecture. Détails : `tests/results/`.
 
 > **Deux bancs d'essai réseau (2026-10-23, `research/ncp-ip/fiche.md`)** :
 > - **Banc A** = T-14, comportement (MARS_NWE + IPX + DOSBox) — donne la **spécification**.
@@ -13,10 +15,10 @@
 
 | ID | Test | Objectif | Prérequis | Procédure (résumé) | Résultat attendu | Résultat observé | Verdict |
 |---|---|---|---|---|---|---|---|
-| T-01 | Démarrage | FreeBSD démarre sur le matériel | support externe amorçable | démarrer, attendre l'invite, exécuter `uname -a` et `dmesg` | système stable, aucun pilote bloquant | — | NON EXÉCUTÉ |
+| T-01 | Démarrage | FreeBSD démarre sur le matériel | support externe amorçable | démarrer, attendre l'invite, exécuter `uname -a` et `dmesg` | système stable, aucun pilote bloquant | — | **RÉUSSI (VM)** — `tests/results/T-01-demarrage-freebsd.md` |
 | T-01v | Démarrage en VM | FreeBSD démarre dans QEMU sur la station | image vérifiée, qemu installé | `30-qemu-freebsd.sh --create --from-installer --ram 1024` puis `uname -a` | système stable, RAM au repos ≤ 256 Mo | — | NON EXÉCUTÉ |
 | T-02 | Inventaire matériel | connaître la machine | démarrage réussi | `pciconf -lv`, `dmesg`, `sysctl hw`, `ifconfig -a`, `geom disk list` | CPU amd64, disques et NIC identifiés | — | NON EXÉCUTÉ |
-| T-03 | Partage SMB et droits | prouver un partage fonctionnel et des droits corrects | Samba ≥ 4.23 en jail | `alice` tente d'écrire (doit échouer) ; `bob` écrit et relit (doit réussir) | deux comportements conformes, preuves capturées | — | NON EXÉCUTÉ |
+| T-03 | Partage SMB et droits | prouver un partage fonctionnel et des droits corrects | Samba ≥ 4.23 en jail | `alice` tente d'écrire (doit échouer) ; `bob` écrit et relit (doit réussir) | deux comportements conformes, preuves capturées | — | **RÉUSSI (cœur)** — `tests/results/T-03-partage-samba.md` |
 | T-04 | Annuaire | authentifier via LDAP | OpenLDAP ≥ 2.6 disponible (sinon ADR de report) | `slapd` en jail, création d'un utilisateur, authentification d'un client, refus d'accès anonyme | authentification réussie, anonyme refusé | — | NON EXÉCUTÉ |
 | T-05 | Isolation et pare-feu | surface d'attaque minimale | `pf` configuré | scan depuis un autre poste (`nmap` ou équivalent) ; `jls` ; `sockstat` | seuls les ports déclarés sont ouverts | — | NON EXÉCUTÉ |
 | T-05a | Fermeture par défaut | vérifier `block all` | idem | arrêter le service, rescanner | tous les ports filtrés | — | NON EXÉCUTÉ |

@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 8 · **Mise à jour :** 2026-10-23 (fin de session S-008)
+**Version de cette fiche :** 9 · **Mise à jour :** 2026-10-23 (fin de session S-009)
 **Rôle :** source de vérité en une page. En cas de contradiction avec un autre document, **c'est celui-ci qui décrit l'état**, car il est mis à jour à chaque session.
 
 ---
@@ -17,13 +17,14 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 |---|---|
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
 | Code NexBSD | **aucun** |
-| Installation FreeBSD | **aucune** (ni VM, ni matériel) |
-| Test d'exécution | **aucun** — le plan compte 16 tests (T-01→T-15), tous `NON EXÉCUTÉ` |
+| Installation FreeBSD | **VM QEMU opérationnelle** (FreeBSD 15.1-RELEASE, émulation TCG) ; **matériel réel : aucune installation** |
+| Test d'exécution | **2 sur 16** : T-01 (FreeBSD 15.1 démarre) et T-03 (partage Samba écrit depuis une autre machine) **réussis en VM** le 2026-10-23 |
 | Image système | **aucune** (et aucune possible sans profil L3) |
 | Décisions validées par le responsable | **aucune** — 19 ADR à l'état `proposition` |
 | **Sauvegarde** | **Google Drive fait** (dossier « NexBSD ») · **GitHub fait** : dépôt privé `mlinux952-code/nexbsd`, branche `main` · dépôt Git local (8 commits) |
 | Documents | ~90 fichiers, 5 matrices CSV, 5 scripts, index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
+| Mesure RAM (ENF-01) | **≈ 100 Mo au repos** sur système nu en VM → objectif ≤ 128 Mo atteignable (à confirmer sur matériel) |
 | Chemin NCP (différenciation) | **V-1 tranchée** : client NCP réel, gratuit et maintenu identifié (ADR-0019) ; V-2/V-3 en suspens |
 
 ## 3. Ce qui est décidé (proposé) — les 19 ADR
@@ -59,7 +60,7 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Q3 | **Le fork est-il assumé, avec son coût ?** (sécurité, images, discipline) | ADR-0011, toute la trajectoire | responsable |
 | Q4 | **Quand le profil L3 (« PC fort ») sera-t-il disponible ?** | phase 4bis, toute image | responsable |
 | Q5 | Axe d'identité prioritaire : A (budget), B (réseau), ou A+B ? | positionnement | responsable |
-| Q6 | OpenLDAP ≥ 2.6 est-il packagé sous FreeBSD ? | décision annuaire | assistant (vérification) |
+| ~~Q6~~ | ~~OpenLDAP ≥ 2.6 packagé sous FreeBSD ?~~ → **RÉSOLU le 2026-10-23 : OUI** (2.6.15_1 et 2.7.1 dans les dépôts) | — | — |
 | Q7 | Le nom « NexBSD » est-il libre ? | publication | responsable (recherche d'antériorité) |
 | Q8 | Une **VM Windows** peut-elle être montée pour le banc B (client NCP) ? | T-09, validation NCP | responsable |
 | Q9 | Le projet vise-t-il d'abord l'**usage domestique** ou la **petite structure avec comptes** ? | priorité N-01…N-11, `docs/vision.md` §7 | responsable |
@@ -124,5 +125,6 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | S-004 | 2026-10-23 | Protocole de session, objectif grand public, outillage licence | `START-HERE.md`, `ETAT.md`, ADR-0016, `build/fork/`, script 40 |
 | S-005 | 2026-10-23 | **Réseau : rôle des 4 composants, NCP sur IP, index complet** | ADR-0017/0018, `docs/14-reseau-netware.md`, `docs/INDEX-DOCUMENTS.md` |
 | S-006 | 2026-10-23 | **V-1 tranchée (client NCP réel) + conformité aux 20 livrables du mur** | ADR-0019, `research/ncp-ip/fiche.md`, `docs/15-conformite-mega-prompt.md`, `docs/vision.md`, `docs/08-schema-flux.md`, `docs/16-registre-problemes.md`, `docs/17-procedure-mise-a-jour.md`, `docs/19-guide-contribution.md`, `LICENSE`, `NOTICE`, `CHANGELOG.md`, `docs/etude-faisabilite.md`, dossiers `components/` `integration/` `release/` |
+| S-009 | 2026-10-23 | **Premiers tests réels en VM : T-01 et T-03 réussis ; Samba 4.23.11 et OpenLDAP 2.6/2.7 vérifiés** | `tests/results/`, `scripts/31-lancer-vm-freebsd.sh`, matrices K-01/K-09/K-10, ETAT v9 |
 | S-008 | 2026-10-23 | **GitHub enregistré + dépannage du push (4 erreurs réelles) + rattrapage des commits** | `docs/21-pousser-sur-github.md`, `scripts/51-installer-depot-github.sh`, bundle `s008` |
 | S-007 | 2026-10-23 | **Sauvegarde Drive + dépôt Git local + cahier des charges fonctionnel** | `docs/20-depots-et-sauvegardes.md`, `scripts/50-sauvegarder-session.sh`, `docs/02-cahier-des-charges-fonctionnel.md`, archives + bundle |

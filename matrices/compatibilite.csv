@@ -1,5 +1,5 @@
 ID,Question de compatibilité,Réponse actuelle,Preuve / source,Confiance,Prochaine vérification
-K-01,FreeBSD 15.1 démarre-t-il sur le PC de 2011 ?,INCONNU,aucune identification matérielle réalisée,aucune,inventaire matériel (T-02)
+K-01,FreeBSD 15.1 démarre-t-il sur le PC de 2011 ?,OUI en VM / INCONNU sur le PC de 2011,T-01 exécuté le 2026-10-23 : FreeBSD 15.1-RELEASE démarre en VM QEMU (tests/results/T-01-demarrage-freebsd.md) ; matériel réel non testé,élevée (VM) / aucune (matériel),"T-02 sur le PC de 2011, par clé USB"
 K-02,Le CPU du PC de 2011 est-il 64 bits (amd64) ?,INCONNU,FreeBSD 15 n'existe plus en i386,aucune,commande CPU-Z ou BIOS en lecture seule
 K-03,KaiOS peut-il tourner sur un noyau FreeBSD ?,NON,"Gonk = noyau Linux + HAL Android (Wikipédia, kaios.dev)",élevée,—
 K-04,Une image KaiOS complète peut-elle être construite ?,NON,blobs OEM et RIL non distribués (kaiostech),élevée,—
@@ -7,11 +7,11 @@ K-05,Gaia peut-il tourner sur un moteur Web moderne ?,PARTIELLEMENT,"structure r
 K-06,Gecko B2G est-il intégrable dans une application tierce ?,NON,pas d'API d'intégration ; GeckoView = Android,élevée,—
 K-07,MARS_NWE fonctionne-t-il sous FreeBSD ?,NON,IPX retiré de FreeBSD 11.0 ; MARS_NWE exige IPX,élevée,expérience de laboratoire Linux (P2)
 K-08,MARS_NWE fonctionne-t-il sous Linux moderne ?,PROBABLEMENT,avec module IPX hors arbre (README davidrg/mars_nwe),élevée,expérience P2
-K-09,Samba >= 4.23 est-il disponible sous FreeBSD ?,"OUI (ports), mais pas par défaut",Ports / NetFence,élevée,vérifier l'arbre 2026Q4
-K-10,OpenLDAP >= 2.6 est-il disponible sous FreeBSD ?,INCONNU,seul openldap25-server identifié,faible,pkg search openldap (bloquant)
+K-09,Samba >= 4.23 est-il disponible sous FreeBSD ?,OUI — vérifié dans les dépôts,"pkg search (VM FreeBSD 15.1, 2026-10-23) : samba423-4.23.11_3, samba424-4.24.7_1 ; samba416-4.16.11_12 toujours présent",élevée,installé et testé : tests/results/T-03-partage-samba.md
+K-10,OpenLDAP >= 2.6 est-il disponible sous FreeBSD ?,OUI — vérifié dans les dépôts,"pkg search (VM FreeBSD 15.1, 2026-10-23) : openldap26-server-2.6.15_1, openldap27-server-2.7.1, openldap25-server-2.5.20_3",élevée,installer et tester l'authentification Samba via LDAP (T-04)
 K-11,Les services réseau tiennent-ils dans 4 Go avec l'UI Web ?,INCONNU,aucune mesure,aucune,mesures T-03 + T-10
 K-12,Les pilotes réseau du PC de 2011 sont-ils supportés ?,INCONNU,aucune identification,aucune,inventaire + test live USB
 K-13,NCP peut-il fonctionner sans IPX ?,OUI,"NCP sur TCP/UDP 524 depuis NetWare 5 (Wikipedia NetWare Core Protocol, doc Novell) ; research/ncp-ip/fiche.md",élevée,tester NCP-1 sur 524 (T-09)
 K-14,Un client NCP sur port 524 est-il disponible pour tester ?,OUI,"Client for Open Enterprise Server 26.2.1 (11/08/2026), OpenText, gratuit ; NCP = 524 TCP/UDP, SLP = 472 ; research/ncp-ip/fiche.md (V-1)",élevée,installer le client dans la VM Windows isolée (banc B)
 K-15,Un client SMB peut-il authentifier via OpenLDAP ?,OUI (schéma connu),documentation Samba/OpenLDAP (non consultée),moyenne,test T-04
-K-15,Un client NCP libre utilisable sous Linux existe-t-il ?,NON pour NCP sur IP,ncpfs retiré du noyau en 4.17 ; modules tiers maintenus mais IPX uniquement (research/ncp-ip/fiche.md),élevée,—
+K-16,Un client NCP libre utilisable sous Linux existe-t-il ?,NON pour NCP sur IP,ncpfs retiré du noyau en 4.17 ; modules tiers maintenus mais IPX uniquement (research/ncp-ip/fiche.md),élevée,—
