@@ -85,7 +85,41 @@ cat ~/.ssh/id_ed25519.pub                          # copier cette ligne
 Puis GitHub → **Settings → SSH and GPG keys → New SSH key** → coller → enregistrer.
 **Ne jamais** coller la clé privée (`id_ed25519`, sans `.pub`) nulle part.
 
-*Alternative HTTPS :* un mot de passe ne fonctionne plus ; il faut un **jeton personnel** (Settings → Developer settings → Personal access tokens). Le jeton ne doit jamais être écrit dans un fichier du projet.
+### 3 bis. Cas observé le 2026-10-23 (vérifié sur la machine du responsable)
+
+Symptôme exact, après un clone et un `remote add` corrects :
+```
+git@github.com: Permission denied (publickey).
+fatal: Impossible de lire le dépôt distant.
+```
+**Cause :** aucune clé SSH publique n'est déclarée sur le compte GitHub. Le message n'a **rien** à voir avec le dépôt, son nom ou ses droits : Git n'a même pas pu s'authentifier.
+
+Séquence de correction :
+```bash
+ls -l ~/.ssh                            # une clé existe-t-elle déjà ?
+ssh-keygen -t ed25519 -C "nexbsd-mint"  # sinon : accepter le chemin par défaut
+cat ~/.ssh/id_ed25519.pub               # copier TOUTE la ligne, en une fois
+```
+Puis GitHub → **Settings → SSH and GPG keys → New SSH key** → coller → **Add SSH key**.
+Vérifier :
+```bash
+ssh -T git@github.com
+```
+Attendu : `Hi <compte>! You've successfully authenticated, but GitHub does not provide shell access.`
+
+**Piège des comptes multiples :** une clé SSH est rattachée à **un seul** compte. Si la réponse est `Hi emailaymenomrane-cloud!` alors que le dépôt appartient à `mlinux952-code`, le push échouera avec `Repository not found` — la clé est sur le mauvais compte.
+
+**Clé protégée par une phrase de passe :** `ssh-agent` la redemandera à chaque session. Pour éviter la répétition :
+```bash
+eval "$(ssh-agent -s)" && ssh-add ~/.ssh/id_ed25519
+```
+Sur Mint avec GNOME, le trousseau le fait généralement tout seul.
+
+*Alternative HTTPS :* un mot de passe ne fonctionne plus ; il faut un **jeton personnel** (Settings → Developer settings → Personal access tokens), utilisé comme mot de passe. Le jeton ne doit jamais être écrit dans un fichier du projet.
+```bash
+git remote set-url origin https://github.com/mlinux952-code/nexbsd.git
+git push -u origin main     # identifiant = compte GitHub, mot de passe = jeton
+```
 
 ---
 
@@ -96,6 +130,9 @@ Puis GitHub → **Settings → SSH and GPG keys → New SSH key** → coller →
 | le dépôt distant existe déjà avec un README | `git push -u origin main --force-with-lease` **seulement** si le contenu distant est vide d'intérêt ; sinon `git pull --rebase origin main` puis push |
 | message « `src refspec master does not match any` » | la branche locale ne s'appelle pas `master` : `git branch` pour voir le nom réel, puis pousser ce nom |
 | message « `origin already exists` » | `git remote -v` pour voir où il pointe ; si c'est un autre projet, **on n'est pas dans le bon dossier** — revenir à l'étape 3 |
+| `Permission denied (publickey)` | aucune clé déclarée sur GitHub → §3 bis |
+| `Repository not found` alors que la clé marche | dépôt pas encore créé, ou clé rattachée à un **autre compte** → §3 bis |
+| `! [rejected] main -> main (fetch first)` | le dépôt distant a un commit (README coché à la création) → `git pull --rebase origin main` puis pousser |
 | vous voulez pousser dans `orbis-hybrid-os` | **ne pas le faire sans décision** : ce dépôt a son propre historique. Voir la question posée au responsable |
 
 ---
