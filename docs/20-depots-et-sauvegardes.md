@@ -36,6 +36,8 @@ Lien : `https://drive.google.com/drive/folders/1seXkTsMaweSo9UcRFDK-frMbF6x6SE1J
 e9a089144a4e5d3a8b31dadc31f159dbf83dd31451aaf50bf9b8acf9d92ed357  NexBSD-etat-conception-2026-10-23-s007.tar.gz
 39eecae5e5186610d097ee0e2867602e3b69a4eeb011f834334a3c3d6115e3b8  nexbsd-depot-2026-10-23-s007.bundle
 ```
+**Note sur l'historique :** le `.bundle` déposé s'arrête au commit `6129316`. Les commits **postérieurs** (celui qui documente ce téléversement, puis les suivants) ne sont donc **pas** dans la sauvegarde Drive — c'est normal : un instantané ne peut pas contenir sa propre notice. Ils seront inclus dans l'instantané de la prochaine session.
+
 **Réserve honnête :** les fichiers n'ont **pas** été retéléchargés depuis Drive pour recontrôler ces empreintes. C'est la première chose à faire côté responsable : `sha256sum -c SHA256SUMS-s007.txt`.
 
 ## 3. GitHub — procédure exacte, à exécuter par le responsable

@@ -21,7 +21,7 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Test d'exécution | **aucun** — le plan compte 16 tests (T-01→T-15), tous `NON EXÉCUTÉ` |
 | Image système | **aucune** (et aucune possible sans profil L3) |
 | Décisions validées par le responsable | **aucune** — 19 ADR à l'état `proposition` |
-| **Sauvegarde** | **Google Drive fait** (dossier « NexBSD », 5 fichiers) · **GitHub inexistant** (aucun connecteur) · dépôt Git local, 2 commits |
+| **Sauvegarde** | **Google Drive fait** (dossier « NexBSD », 5 fichiers) · **GitHub inexistant** (aucun connecteur) · dépôt Git local, 3 commits |
 | Documents | ~90 fichiers, 5 matrices CSV, 5 scripts, index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
 | Chemin NCP (différenciation) | **V-1 tranchée** : client NCP réel, gratuit et maintenu identifié (ADR-0019) ; V-2/V-3 en suspens |
