@@ -6,9 +6,9 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 ## [Non publié] — phase de conception
 
 ### 2026-10-24 — Session S-014 : reprise professionnelle du banc
-- **Ajouté** :  — mode opératoire en 5 étapes (mise à jour du dépôt, console dans le terminal, service de fichiers, T-04, consignation).
-- **Ajouté** : instantané  (29 commits) sur Google Drive, avec empreintes.
-- **Constat** : la VM du responsable tourne (virt-manager + KVM) et une invite root a été atteinte ; le copier-coller dans la fenêtre graphique ne fonctionne pas (absence de  dans l'invité) → contournement par  et serveur HTTP local.
+- **Ajouté** : `docs/24-reprise-banc.md` — mode opératoire en 5 étapes (mise à jour du dépôt, console dans le terminal, service de fichiers, T-04, consignation).
+- **Ajouté** : instantané `s014` (29 commits) sur Google Drive, avec empreintes SHA-256.
+- **Constat** : la VM du responsable tourne (virt-manager + KVM) et une invite root a été atteinte ; le copier-coller dans la fenêtre graphique ne fonctionne pas (absence de `spice-vdagent` dans l'invité) → contournement par `virsh console` et serveur HTTP local.
 
 ### 2026-10-23 — Session S-010 : le delta NexBSD devient du code
 - **Ajouté** : `build/fork/reference/` — GENERIC, `src.conf.5`, `newvers.sh`, `config.5` officiels de `releng/15.1` (provenance et URL consignées).
