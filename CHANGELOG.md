@@ -14,6 +14,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Bilan des tests** : **4 sur 16** réussis (T-01, T-03, T-04, T-04-E).
 - **Ajouté** : `scripts/63-banc-T04F-droits-groupes.sh` — **T-04-F** : les droits décidés par des groupes de l'annuaire (`ldapsam:trusted = yes`, groupes `bureau`/`stagiaires`, compte `sara` créé **uniquement** dans l'annuaire). Syntaxe vérifiée ; **jamais exécuté**.
 - **Ajouté** : `tests/results/T-04F-droits-groupes.md` — fiche du test, avec la règle posée d'avance : un test de droits sans refus ne prouve rien.
+- **Exécuté** : T-04-F **essai 1 → ECHEC** (2026-10-24 13:04 UTC), journal verbatim consigné. Trois causes identifiées : **C-12** (LDIF invalide, ligne vide manquante — défaut du script), **C-13** (groupes sans identité Samba sous `ldapsam:trusted` → `NT_STATUS_INTERNAL_DB_CORRUPTION`, message trompeur), et fragile chemin d'ajout de compte par `smbpasswd -a`.
+- **Corrigé** : `scripts/63` **version 2** — groupes en `sambaGroupMapping` + `sambaSID`, `sara` créée directement avec `sambaSamAccount` et son SID, LDIF valides, `smbpasswd -s` limité au mot de passe, preuve 0 ajoutée (résolution `gid → SID`).
 
 ### 2026-10-24 — Session S-014 : reprise professionnelle du banc
 - **Ajouté** : `docs/24-reprise-banc.md` — mode opératoire en 5 étapes (mise à jour du dépôt, console dans le terminal, service de fichiers, T-04, consignation).

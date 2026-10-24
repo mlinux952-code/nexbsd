@@ -91,3 +91,39 @@ Légende statut : **ouvert** · **contourné** · **clos**
 **Correctif :** `scripts/62-banc-T04E-samba-ldap.sh` **version 3** — attente **active** de l'écoute sur `:445` (jusqu'à 90 s, contrôle toutes les secondes), preuve 3 avec **5 reprises** espacées de 3 s, **repli** sur l'adresse réseau de la VM, et messages différenciés `CONNECTION_REFUSED` (service) vs `LOGON_FAILURE` (identité).
 
 **Statut :** **clos** — la preuve 3 a été obtenue le 2026-10-24 (essai 3 : `smbclient` s'authentifie et liste le partage). Réserve de méthode : le script v3 n'a pas encore été rejoué de bout en bout, donc la **rejouabilité** reste à démontrer (tâche de suivi, sans effet sur le résultat).
+
+---
+
+## C-12 — LDIF d'appartenance refusé : ligne vide manquante après le séparateur `-`
+
+**Constaté :** 2026-10-24, essai 1 de T-04-F. `ldapmodify: modify operation type is missing at line 6`.
+
+**Cause :** défaut du script `63` v1. Dans un LDIF multi-enregistrements, chaque bloc `changetype: modify`
+doit être terminé par `-` **suivi d'une ligne vide** avant le `dn:` suivant. Sans la ligne vide, le second
+`dn:` est lu comme une opération du premier enregistrement et **tout le fichier est rejeté**.
+
+**Conséquence :** aucun `memberUid` écrit ; l'annuaire ne connaissait donc pas l'appartenance de `omrane` au
+groupe `bureau` (ce qui explique l'échec de la preuve 4 du même essai).
+
+**Correctif :** `scripts/63` version 2 — ligne vide après chaque `-`.
+
+**Statut :** corrigé, à revalider (essai 2).
+
+---
+
+## C-13 — Sous `ldapsam:trusted`, un groupe sans identité Samba casse l'ouverture de session
+
+**Constaté :** 2026-10-24, essai 1 de T-04-F. `session setup failed: NT_STATUS_INTERNAL_DB_CORRUPTION`
+pour `omrane`, alors que le même compte fonctionnait en T-04-E.
+
+**Cause :** les groupes créés n'étaient que `posixGroup`, sans `sambaSID` ni `sambaGroupMapping`. Avec
+`ldapsam:trusted = yes`, Samba résout `gid → SID` **via l'entrée de groupe de l'annuaire** ; sans identité
+Samba sur le groupe, la conversion échoue et `smbd` renvoie `INTERNAL_DB_CORRUPTION`.
+
+**Point de vigilance :** ce libellé **ne signifie pas** que la base est corrompue. Il désigne une
+conversion d'identifiant POSIX → SID impossible. Ne jamais l'interpréter littéralement.
+
+**Correctif :** `scripts/63` version 2 — les groupes portent `sambaSID` (RID 3001/3002), `sambaGroupType = 2`
+et `displayName`, avec un chemin de mise à niveau pour les groupes déjà existants.
+
+**Statut :** corrigé, à revalider (essai 2).
