@@ -5,6 +5,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-24 — Session S-016 : T-04-G essai 1 (7/11), ordre de démarrage en cause
+- **Exécuté** : T-04-G essai 1 avec **redémarrage réel** — 7 contrôles sur 11. Les services reviennent **seuls** (`slapd`, `smbd` à l'écoute), l'annuaire est **intact** (10 entrées, SID et appartenances conservés), le fichier témoin est retrouvé.
+- **Constaté (C-14)** : après redémarrage, **toutes** les ouvertures de session échouent en `NT_STATUS_LOGON_FAILURE` alors qu'elles fonctionnaient en T-04-F. Hypothèse principale : **`samba_server` démarre avant `slapd`** → initialisation `ldapsam` manquée.
+- **Corrigé (C-15)** : le script relisait son fichier d'état par *sourcing* ; une valeur avec espaces (`drwxrws--- 0 2001`) cassait le shell et provoquait un **faux échec**. La v2 lit l'état par clé.
+- **Ajouté** : diagnostic automatique dans `scripts/64` v2 (passdb, comparaison SID système/annuaire, ordre de démarrage, journal) quand une session échoue.
+
 ### 2026-10-24 — Session S-016 : prompt fondateur reçu, audit de conformité mis à jour
 - **Reçu** : le méga-prompt maître (930 lignes) et la présentation du projet, documents d'origine (Partie XX incluse).
 - **Corrigé** : `docs/15-conformite-mega-prompt.md` **v1.1** — livrables 11 (prototype minimal) et 12 (rapport de tests) passés de « non fait » à **« amorcé »** sur la foi des cinq tests réellement exécutés ; nouveau **§3 : audit de la Partie XX** (stockage externe, indépendance de l'IA).

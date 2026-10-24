@@ -1,4 +1,4 @@
-# T-04-G — Le banc revient seul après redémarrage — **À EXÉCUTER**
+# T-04-G — Le banc revient seul après redémarrage — **EN COURS**
 
 **Protocole exécutable :** `scripts/64-banc-T04G-persistance.sh`, en **deux phases** (`avant` puis `apres`).
 **Prérequis :** T-04 (annuaire), T-04-E (authentification par l'annuaire) et T-04-F (droits par groupes) réussis — acquis le 2026-10-24.
@@ -48,10 +48,48 @@ intervention.
 
 ## 4. Journal d'exécution
 
-### Essai 1 — à exécuter
+### Essai 1 — 2026-10-24 13:20 UTC — **ECHEC (7 contrôles sur 11)**
+
+Banc : VM `nexbsd-test`, FreeBSD 15.1-RELEASE, redémarrage réel (démarrage 13:20, `up 29 secs`).
+
+**Ce qui a réussi — et c'est l'essentiel :**
+
+| Contrôle | Résultat |
+|---|---|
+| R0 redémarrage réel | ✅ instant de démarrage différent |
+| R1 `slapd` revenu seul | ✅ aucune commande manuelle |
+| R2 `smbd` à l'écoute sur `:445` | ✅ |
+| R3 annuaire intact | ✅ **10 entrées avant, 10 après** |
+| R4 `sara` garde son SID | ✅ `…-1010` |
+| R5 appartenance `omrane → bureau` | ✅ conservée |
+| R6 fichier témoin | ✅ retrouvé, daté 13:16:27Z |
+
+**Deux échecs, de nature très différente :**
+
+| # | Symptôme | Nature | Analyse |
+|---|---|---|---|
+| 1 | `les droits ont change : (avant : )` — la valeur « avant » est **vide** | ❌ **faux échec : défaut du script** | La v1 relisait le fichier d'état par `. fichier` (sourcing). Or la valeur `drwxrws--- 0 2001` contient des espaces : le shell a donc tenté d'exécuter `0` comme commande → `nexbsd-t04g-etat.txt: 0: not found`. `DROITS_COMMUN` était vide **avant comparaison**. Les droits sont en réalité **identiques** : `drwxrws--- 0 2001` des deux côtés |
+| 2 | `NT_STATUS_LOGON_FAILURE` sur **omrane**, **sara** et la lecture du témoin | ⚠️ **vrai défaut du banc** | Le service répond (ce n'est pas un refus de connexion), l'annuaire est intact, mais **plus aucun mot de passe n'est validé**. C'est un changement d'état réel : ces mêmes accès fonctionnaient avant le redémarrage (T-04-F) |
+
+**Hypothèse principale pour l'échec 2 : l'ORDRE DE DÉMARRAGE.** Avec `ldapsam`, `smbd` doit joindre
+l'annuaire **au moment où il s'initialise**. Si `samba_server` démarre avant que `slapd` soit à l'écoute,
+l'initialisation de `passdb` échoue ; `smbd` reste ensuite vivant et à l'écoute, mais refuse toutes les
+ouvertures de session. C'est un défaut classique et **exactement le genre de chose qu'un serveur doit
+résoudre par sa configuration de démarrage**, pas par une commande manuelle.
+
+**Hypothèse secondaire :** perte ou régénération des secrets Samba (`secrets.tdb`) → SID du domaine
+différent de celui stocké dans l'annuaire. Le diagnostic automatique ajouté en v2 compare les deux.
+
+**Point de méthode :** l'échec 1 ne doit **pas** être compté comme un défaut du banc — mais il ne doit pas
+non plus être effacé. Il est consigné, corrigé, et le test sera rejoué : un journal de tests qui ne montre
+que des succès ne vaut rien.
+
+### Essai 2 — à exécuter
 
 _(vide)_
 
 ## 5. Verdict
 
-**NON EXÉCUTÉ** — protocole écrit et vérifié syntaxiquement le 2026-10-24, jamais passé sur le banc.
+**ECHEC à l'essai 1 (7/11)** — 2026-10-24 13:20 UTC. Les services reviennent seuls et les données sont
+intactes ; **l'authentification ne survit pas au redémarrage**. Script v2 écrit (lecture d'état corrigée,
+diagnostic automatique ajouté) ; diagnostic de la cause en cours, discriminant : redémarrer Samba seul.

@@ -127,3 +127,44 @@ conversion d'identifiant POSIX → SID impossible. Ne jamais l'interpréter litt
 et `displayName`, avec un chemin de mise à niveau pour les groupes déjà existants.
 
 **Statut :** **clos** — essai 2 de T-04-F réussi (2026-10-24) : `omrane` écrit dans `[commun]` et `sara` y est refusée. La règle est désormais écrite dans le protocole : sous `ldapsam:trusted`, **tout groupe référencé par un `gidNumber` doit porter son identité Samba**.
+
+---
+
+## C-14 — Après redémarrage, les comptes sont refusés (`NT_STATUS_LOGON_FAILURE`)
+
+**Constaté :** 2026-10-24, essai 1 de T-04-G. Avant le redémarrage, `omrane` écrit et `sara` est refusée
+comme attendu (T-04-F). Après le redémarrage : `slapd` et `smbd` tournent, `smbd` écoute sur `:445`,
+l'annuaire est intact (10 entrées, SID de `sara` et appartenances conservés) — mais **toutes** les
+ouvertures de session échouent en `NT_STATUS_LOGON_FAILURE`.
+
+**Ce que ce n'est pas :** ni une panne de service (le port répond), ni une perte de données (l'annuaire est
+intact), ni un refus de droits (`LOGON_FAILURE`, pas `ACCESS_DENIED`).
+
+**Hypothèse principale :** **ordre de démarrage**. Sous `ldapsam`, `smbd` doit joindre l'annuaire au moment
+de son initialisation ; si `samba_server` démarre avant que `slapd` écoute, l'initialisation de `passdb`
+échoue et `smbd` refuse ensuite toutes les sessions, tout en restant « vivant » aux yeux de `pgrep` et de
+`sockstat`.
+
+**Hypothèse secondaire :** `secrets.tdb` perdu ou régénéré → SID du domaine différent du `sambaSID` stocké
+dans l'annuaire.
+
+**Discriminant retenu :** redémarrer **uniquement** Samba, `slapd` étant déjà à l'écoute. Si les accès
+reviennent, l'ordre de démarrage est la cause.
+
+**Statut :** ouvert — diagnostic en cours (script `64` v2, bloc « DIAGNOSTIC (automatique) »).
+
+---
+
+## C-15 — Fichier d'état relu par *sourcing* : un faux échec de comparaison
+
+**Constaté :** 2026-10-24, essai 1 de T-04-G. `/root/nexbsd-t04g-etat.txt: 0: not found`,
+`sec: not found`, puis « les droits ont change » alors que les droits étaient identiques.
+
+**Cause :** la v1 du script `64` relisait son état par `. "$ETAT"` (sourcing). Des valeurs contiennent des
+espaces (`drwxrws--- 0 2001`) ou des accolades (`kern.boottime`), donc le shell tentait de les exécuter.
+La variable comparée était vide.
+
+**Correctif :** `scripts/64` version 2 — l'état est **lu par clé** (`sed -n "s/^clé=//p"`), jamais exécuté.
+
+**Statut :** corrigé. Leçon générale retenue : **un fichier d'état n'est pas du code** ; on le lit, on ne
+l'exécute pas.

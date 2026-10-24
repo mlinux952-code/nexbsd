@@ -12,6 +12,15 @@
 # Le script n'installe rien et ne cree rien : il CONTROLE. Si une phase de
 # controle devait reparer quelque chose, ce serait une defaillance a consigner.
 #
+# Version 2 (2026-10-24) — corrige deux defauts constates a l'essai 1 :
+#   1. le fichier d'etat etait relu par '. fichier' (sourcing). Une valeur
+#      contenant des espaces ("drwxrws--- 0 2001") cassait le shell :
+#      "/root/nexbsd-t04g-etat.txt: 0: not found". DROITS_COMMUN restait vide,
+#      d'ou un faux echec "les droits ont change".
+#      -> l'etat est desormais LU par cle (sed), jamais execute.
+#   2. aucun diagnostic n'etait produit quand les ouvertures de session
+#      echouaient apres redemarrage. -> bloc de diagnostic ajoute.
+#
 # Version 1 (2026-10-24).
 
 ok()   { echo "  [OK]    $*"; }
@@ -159,8 +168,17 @@ if [ ! -f "$ETAT" ]; then
     echo; echo "T-04-G : NON CONCLU - pas de point de comparaison."
     exit 1
 fi
-. "$ETAT"
-info "releve du $N_ENTREES entrees / SID sara=$SID_SARA"
+# v2 : on LIT les valeurs, on ne les execute pas (une valeur avec espaces
+# casserait le shell : c'etait le defaut de la v1).
+lire_etat() { sed -n "s/^$1=//p" "$ETAT" 2>/dev/null | head -1; }
+N_ENTREES=$(lire_etat N_ENTREES)
+SID_SARA=$(lire_etat SID_SARA)
+SID_BUREAU=$(lire_etat SID_BUREAU)
+MEMBERUID_BUREAU=$(lire_etat MEMBERUID_BUREAU)
+DROITS_COMMUN=$(lire_etat DROITS_COMMUN)
+DROITS_PUBLIC=$(lire_etat DROITS_PUBLIC)
+BOOTTIME=$(lire_etat BOOTTIME)
+info "releve : $N_ENTREES entrees / SID sara=$SID_SARA / droits commun=[$DROITS_COMMUN]"
 
 # 1. un redemarrage a-t-il vraiment eu lieu ?
 echo
@@ -279,6 +297,38 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# v2 : diagnostic automatique si une ouverture de session a echoue
+if [ "$R8" = "0" ] || [ "$R9" = "0" ] || [ "$R10" = "0" ]; then
+    echo
+    echo "########## DIAGNOSTIC (automatique) ##########"
+    if grep -q 'LOGON_FAILURE' /tmp/t04g-omrane.out 2>/dev/null; then
+        info "les comptes sont REFUSES : le service repond, mais ne valide plus le mot de passe."
+        echo
+        echo "--- 1. Samba sait-il encore lire la passdb de l'annuaire ? ---"
+        pdbedit -L -v omrane 2>&1 | head -6
+        echo
+        echo "--- 2. SID du domaine : celui du systeme doit egaler celui de l'annuaire ---"
+        SID_LOCAL=$(net getlocalsid 2>/dev/null | awk '{print $NF}')
+        SID_LDAP=$(ldapsearch -x -b "$SUFFIXE" '(objectClass=sambaDomain)' sambaSID 2>/dev/null | awk '/^sambaSID:/{print $2}' | head -1)
+        info "SID du systeme      : ${SID_LOCAL:-<vide>}"
+        info "SID dans l'annuaire : ${SID_LDAP:-<vide>}"
+        if [ -n "$SID_LOCAL" ] && [ -n "$SID_LDAP" ] && [ "$SID_LOCAL" != "$SID_LDAP" ]; then
+            info ">>> LES DEUX SID DIFFERENT : la base des secrets de Samba a ete perdue/regenernee."
+        fi
+        echo
+        echo "--- 3. Ordre de demarrage : slapd doit etre pret AVANT smbd ---"
+        info "slapd : $(grep -m1 slapd /var/log/messages 2>/dev/null | cut -c1-15)"
+        info "smbd  : $(grep -m1 'smbd version' /var/log/samba4/log.smbd 2>/dev/null | cut -c1-15)"
+        echo
+        echo "--- 4. Journal smbd (fin) ---"
+        tail -15 /var/log/samba4/log.smbd 2>/dev/null
+        echo
+        echo "--- 5. Discriminant : redemarrer SEULEMENT Samba, maintenant que slapd tourne ---"
+        info "si les acces reviennent, la cause est l'ORDRE DE DEMARRAGE (smbd avant slapd)."
+    fi
+fi
+
 echo
 echo "########## VERDICT ##########"
 TOTAL=$((R0+R1+R2+R3+R4+R5+R6+R7+R8+R9+R10))
