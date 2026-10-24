@@ -292,7 +292,24 @@ virsh --connect qemu:///session console nexbsd-test
 ```
 *(sortie : `Ctrl-]`)*
 
-L'image FreeBSD 15.1 ouvre déjà un `getty` sur `ttyu0` : la console série fonctionne sans configuration côté invité.
+**À vérifier, pas acquis (corrigé le 2026-10-24) :** la version précédente de ce document affirmait que l'image FreeBSD 15.1 ouvre déjà un `getty` sur `ttyu0`. C'était une **hypothèse non testée**. Dans `/etc/ttys`, `ttyu0` est réglé sur `onifconsole`, c'est-à-dire qu'il ne s'active **que si la console du noyau est le port série**. Tant que le chargeur démarre sur `vidconsole` (cas par défaut), `virsh console` risque d'afficher un écran vide.
+
+**Si l'écran reste vide**, activer la console série dans l'invité, **depuis la fenêtre graphique**, en root :
+
+```
+sysrc -f /boot/loader.conf boot_serial=YES
+sysrc -f /boot/loader.conf boot_multicons=YES
+sysrc console=comconsole,vidconsole
+```
+
+Attendu : `boot_serial:  -> YES`, `boot_multicons:  -> YES`, `console:  -> comconsole,vidconsole`.
+Puis `shutdown -r now`. Au redémarrage, la console apparaît **à la fois** sur l'écran graphique et sur le port série.
+
+### 6.5 Clavier AZERTY dans la VM (constat du 2026-10-24)
+
+- La **console série ne se sert pas de la table de clavier FreeBSD** : les caractères viennent du terminal Mint, déjà en AZERTY. Donc `virsh console` = frappe AZERTY naturelle **et** collage fonctionnel. C'est l'argument décisif en faveur de `virsh console`.
+- La table de clavier ne concerne que la **fenêtre graphique** de virt-manager. Noms exacts dans FreeBSD 15 (`share/syscons/keymaps`) : `fr.iso.kbd`, `fr.iso.acc.kbd`, `fr.macbook.acc.kbd`, `fr.dvorak*.kbd`. **`fr` et `fr.acc` seuls n'existent pas** → utiliser `kbdcontrol -l fr.iso.acc`.
+- Après passage en AZERTY, les touches `-`, `/`, `:`, `=` changent de place : **ne pas taper de commande longue dans la fenêtre graphique** à ce moment-là.
 
 ### 6.3 Partager un dossier (pour la suite)
 
