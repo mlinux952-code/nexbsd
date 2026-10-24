@@ -18,6 +18,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Corrigé** : `scripts/63` **version 2** — groupes en `sambaGroupMapping` + `sambaSID`, `sara` créée directement avec `sambaSamAccount` et son SID, LDIF valides, `smbpasswd -s` limité au mot de passe, preuve 0 ajoutée (résolution `gid → SID`).
 - **REUSSI** : T-04-F **essai 2** — « les droits sont décidés par les groupes de l'annuaire ». Un compte créé **uniquement** dans l'annuaire est authentifié ; son accès au partage dépend de son groupe, défini dans l'annuaire. C-12 et C-13 **clos**.
 - **Bilan des tests** : **5 sur 17** réussis (T-01, T-03, T-04, T-04-E, T-04-F).
+- **Ajouté** : `scripts/64-banc-T04G-persistance.sh` — **T-04-G** : le banc doit revenir **seul** après un redémarrage (11 contrôles, protocole en deux phases autour d'un `reboot`). Syntaxe vérifiée ; **jamais exécuté**.
+- **Ajouté** : `tests/results/T-04G-persistance.md` — fiche du test et règle de méthode : la phase `avant` *arme* les services (prérequis), le test porte sur ce qui revient **sans intervention**.
 
 ### 2026-10-24 — Session S-014 : reprise professionnelle du banc
 - **Ajouté** : `docs/24-reprise-banc.md` — mode opératoire en 5 étapes (mise à jour du dépôt, console dans le terminal, service de fichiers, T-04, consignation).
