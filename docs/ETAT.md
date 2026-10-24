@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 12 · **Mise à jour :** 2026-10-24 (session S-015)
+**Version de cette fiche :** 13 · **Mise à jour :** 2026-10-24 (session S-016)
 **Rôle :** source de vérité en une page. En cas de contradiction avec un autre document, **c'est celui-ci qui décrit l'état**, car il est mis à jour à chaque session.
 
 ---
@@ -16,12 +16,12 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Élément | État au 2026-10-24 |
 |---|---|
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
-| Code NexBSD | **delta écrit** (noyau `NEXBSD_L1` généré, `src.conf`, `release.conf`, overlay, patch d'identité) — **aucun fichier compilé, aucune image** |
+| Code NexBSD | **delta écrit** (noyau `NEXBSD_L1` généré, `src.conf`, `release.conf`, overlay, patch d'identité) — **aucun fichier compilé, aucune image**. Le banc d'identités (T-04→T-04-F) est **hors du dépôt produit** : il devra être transformé en composant de la couche Plateforme |
 | Installation FreeBSD | **VM opérationnelle chez le responsable** (virt-manager + KVM, FreeBSD 15.1-RELEASE, console série `ttyu0`) ; **matériel réel : aucune installation** |
-| Test d'exécution | **4 sur 16 réussis en VM** : T-01 (FreeBSD démarre), T-03 (partage Samba), T-04 (annuaire OpenLDAP), **T-04-E (Samba authentifie via l'annuaire, 2026-10-24)**. Réserve sur T-04-E : rejouabilité du script v3 non encore démontrée |
+| Test d'exécution | **5 sur 18 réussis en VM** : T-01 (FreeBSD démarre), T-03 (partage Samba), T-04 (annuaire OpenLDAP), T-04-E (Samba authentifie via l'annuaire), **T-04-F (droits décidés par des groupes de l'annuaire, 2026-10-24)**. T-04-G (persistance après redémarrage) écrit, non exécuté |
 | Image système | **aucune** (et aucune possible sans profil L3) |
 | Décisions validées par le responsable | **aucune** — 19 ADR à l'état `proposition` |
-| **Sauvegarde** | **Google Drive fait** (instantanés **s015b** puis **s015d**) · **GitHub** : dépôt privé `mlinux952-code/nexbsd` (poussé par le responsable) · dépôt Git local : **40 commits** |
+| **Sauvegarde** | **Google Drive fait** (instantanés **s015b** puis **s015d**) · **GitHub** : dépôt privé `mlinux952-code/nexbsd` (poussé par le responsable) · dépôt Git local : **45 commits** |
 | Documents | ~90 fichiers, 5 matrices CSV, **12 scripts** (dont 4 de banc), index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
 | Mesure RAM (ENF-01) | **≈ 100 Mo au repos** sur système nu en VM → objectif ≤ 128 Mo atteignable (à confirmer sur matériel) |
