@@ -140,18 +140,27 @@ ouvertures de session échouent en `NT_STATUS_LOGON_FAILURE`.
 **Ce que ce n'est pas :** ni une panne de service (le port répond), ni une perte de données (l'annuaire est
 intact), ni un refus de droits (`LOGON_FAILURE`, pas `ACCESS_DENIED`).
 
-**Hypothèse principale :** **ordre de démarrage**. Sous `ldapsam`, `smbd` doit joindre l'annuaire au moment
-de son initialisation ; si `samba_server` démarre avant que `slapd` écoute, l'initialisation de `passdb`
-échoue et `smbd` refuse ensuite toutes les sessions, tout en restant « vivant » aux yeux de `pgrep` et de
-`sockstat`.
+**Hypothèse 1 (ordre de démarrage) — ÉLIMINÉE le 2026-10-24 :** `pdbedit -L -v omrane` lancé **après** le
+redémarrage remonte correctement le compte (`init_sam_from_ldap: Entry found for user: omrane`,
+`User SID: …-1001`, `Primary Group SID: …-3001`). La base de comptes `ldapsam` s'initialise donc
+normalement : `smbd` joint bien l'annuaire. Si `samba_server` avait démarré avant `slapd`, `pdbedit`
+échouerait de la même façon.
 
-**Hypothèse secondaire :** `secrets.tdb` perdu ou régénéré → SID du domaine différent du `sambaSID` stocké
-dans l'annuaire.
+Détail révélateur : la recherche porte sur `(sambaDomainName=NEXBSDFS)` et elle **aboutit sans erreur** —
+alors qu'en T-04-E (essai 1, sans schéma) la même requête produisait `Invalid DN syntax`.
 
-**Discriminant retenu :** redémarrer **uniquement** Samba, `slapd` étant déjà à l'écoute. Si les accès
-reviennent, l'ordre de démarrage est la cause.
+**Hypothèse 2 (retenue) : les secrets de Samba ne survivent pas au redémarrage.** Si `secrets.tdb` est
+perdu ou régénéré, deux conséquences simultanées expliquent exactement ce qui est observé :
 
-**Statut :** ouvert — diagnostic en cours (script `64` v2, bloc « DIAGNOSTIC (automatique) »).
+- la **lecture** des comptes reste possible (les ACL de slapd autorisent la lecture anonyme) → `pdbedit` marche ;
+- la **validation de mot de passe** en session setup compare le SID calculé à partir du domaine **local** au
+  compte de l'annuaire → SID local régénéré ≠ SID de l'annuaire → `NT_STATUS_LOGON_FAILURE`.
+
+**Discriminant :** comparer `net getlocalsid` avec `S-1-5-21-692378897-511874203-3061570918` (SID de
+l'annuaire), et dater `secrets.tdb`. Un SID local différent, ou un `secrets.tdb` daté d'après le
+redémarrage, tranche.
+
+**Statut :** ouvert — hypothèse 1 éliminée, hypothèse 2 en cours de vérification.
 
 ---
 

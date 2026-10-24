@@ -71,7 +71,14 @@ Banc : VM `nexbsd-test`, FreeBSD 15.1-RELEASE, redémarrage réel (démarrage 13
 | 1 | `les droits ont change : (avant : )` — la valeur « avant » est **vide** | ❌ **faux échec : défaut du script** | La v1 relisait le fichier d'état par `. fichier` (sourcing). Or la valeur `drwxrws--- 0 2001` contient des espaces : le shell a donc tenté d'exécuter `0` comme commande → `nexbsd-t04g-etat.txt: 0: not found`. `DROITS_COMMUN` était vide **avant comparaison**. Les droits sont en réalité **identiques** : `drwxrws--- 0 2001` des deux côtés |
 | 2 | `NT_STATUS_LOGON_FAILURE` sur **omrane**, **sara** et la lecture du témoin | ⚠️ **vrai défaut du banc** | Le service répond (ce n'est pas un refus de connexion), l'annuaire est intact, mais **plus aucun mot de passe n'est validé**. C'est un changement d'état réel : ces mêmes accès fonctionnaient avant le redémarrage (T-04-F) |
 
-**Hypothèse principale pour l'échec 2 : l'ORDRE DE DÉMARRAGE.** Avec `ldapsam`, `smbd` doit joindre
+**Hypothèse 1 (ordre de démarrage) — ÉLIMINÉE après vérification :** `pdbedit -L -v omrane`, lancé après le
+redémarrage, affiche `init_sam_from_ldap: Entry found for user: omrane` et les bons SID. La base de comptes
+`ldapsam` s'initialise donc correctement — l'ordre de démarrage n'est pas la cause.
+
+**Hypothèse principale (révisée) : les secrets de Samba ne survivent pas au redémarrage** — cohérente avec
+les deux faits observés simultanément : lecture des comptes OK, validation du mot de passe impossible.
+
+**Hypothèse initialement envisagée : l'ORDRE DE DÉMARRAGE.** Avec `ldapsam`, `smbd` doit joindre
 l'annuaire **au moment où il s'initialise**. Si `samba_server` démarre avant que `slapd` soit à l'écoute,
 l'initialisation de `passdb` échoue ; `smbd` reste ensuite vivant et à l'écoute, mais refuse toutes les
 ouvertures de session. C'est un défaut classique et **exactement le genre de chose qu'un serveur doit
