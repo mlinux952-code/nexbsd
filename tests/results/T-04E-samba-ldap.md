@@ -82,10 +82,75 @@ T-04-E : ECHEC - voir les lignes [ECHEC] ci-dessus.
 **Provenance du schéma (vérifiée, jamais commitée dans le dépôt)** : `https://git.samba.org/?p=samba.git;a=blob_plain;f=examples/LDAP/samba.schema;hb=HEAD`
 → 23 182 octets, 82 `attributetype`, 27 `objectclass`, `sambaDomainName` présent, SHA256 `b9081b7234762c3fc02861fbb88ed8b52a523dced38e15051dc980f0b34b23dd`. Licence Samba (GPL-3.0+) : **reste hors du dépôt NexBSD** (frontière de licences, `docs/12`).
 
-### Essai 2 — à exécuter avec le script v2
+### Essai 2 — 2026-10-24 12:16 UTC — **PARTIEL**
+
+Script `62` **version 2**. Les trois causes de l'essai 1 sont corrigées.
+
+```
+########## BLOC A - prerequis ##########
+  [OK]    slapd tourne
+  [OK]    samba present : samba423-4.23.11_3-Free
+
+########## BLOC B - Samba a-t-il le support LDAP ? ##########
+  [OK]    smbd est lie a libldap
+
+########## BLOC C - schema samba dans l'annuaire ##########
+  ...     telechargement du schema depuis le depot officiel Samba
+  [OK]    schema telecharge, empreinte SHA256 verifiee
+  [OK]    include du schema ajoute a slapd.conf
+  [OK]    slaptest valide la configuration
+  [OK]    slapd redemarre avec le schema
+
+########## BLOC D - conteneurs et domaine dans l'annuaire ##########
+  [OK]    conteneurs deja presents (relance)
+
+########## BLOC E - configuration de Samba en ldapsam ##########
+  ...     smb4.conf sauvegarde dans /tmp
+  [OK]    smb4.conf ecrit (passdb = ldapsam)
+  [OK]    mot de passe d'administration LDAP enregistre dans secrets.tdb
+  [OK]    compte omrane ajoute a la passdb (stockee dans l'annuaire)
+  [OK]    smbd tourne
+
+########## BLOC F - PREUVES ##########
+
+----- preuve 1 : le compte vu par Samba (pdbedit) -----
+Unix username:        omrane
+NT username:          omrane
+Account Flags:        [U          ]
+User SID:             S-1-5-21-692378897-511874203-3061570918-1001
+Primary Group SID:    S-1-5-21-692378897-511874203-3061570918-513
+Full Name:            User &
+Home Directory:       \\NEXBSDFS\omrane
+Profile Path:         \\NEXBSDFS\omrane\profile
+Domain:               NEXBSDFS
+  [OK]    Samba connait omrane avec un SID
+
+----- preuve 2 : les attributs Samba sont DANS l'annuaire -----
+dn: uid=omrane,ou=people,dc=nexbsd,dc=local
+sambaSID: S-1-5-21-692378897-511874203-3061570918-1001
+result: 0 Success
+  [OK]    l'annuaire contient le SID du compte (le mot de passe vit dans l'annuaire)
+
+----- preuve 3 : authentification reelle en SMB -----
+  [ECHEC] authentification SMB refusee :
+do_connect: Connection to 127.0.0.1 failed (Error NT_STATUS_CONNECTION_REFUSED)
+
+########## VERDICT ##########
+T-04-E : PARTIEL - compte et SID dans l'annuaire, mais authentification SMB non prouvee.
+```
+
+**Acquis démontré à l'essai 2** (ne pas les rejouer) :
+- Samba est compilé avec LDAP (`smbd` lié à `libldap`).
+- `samba.schema` installé et validé par `slaptest`.
+- **`sambaSID` de `omrane` est stocké dans l'annuaire** — le compte n'est plus local, il vient de l'annuaire.
+- `smbpasswd -a` réussit : la table des mots de passe Samba vit dans **ldapsam**.
+
+**Reste à prouver :** qu'un client SMB puisse **s'authentifier** auprès du service. L'échec `NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1` signifie que le service n'a pas répondu sur la boucle locale — **pas** que le mot de passe est refusé. Deux pistes : `smbd` n'écoute pas sur `127.0.0.1` (restriction d'interface), ou il s'est arrêté juste après le démarrage.
+
+### Essai 3 — à exécuter après diagnostic
 
 _(vide)_
 
 ## 4. Verdict
 
-**ECHEC à l'essai 1** (2026-10-24 12:05 UTC), causes identifiées et corrigées dans le script **v2**. Essai 2 à exécuter.
+**PARTIEL à l'essai 2** (2026-10-24 12:16 UTC) : compte et SID dans l'annuaire ✅, authentification SMB non prouvée ❌ (`NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1`). Diagnostic en cours.
