@@ -90,4 +90,4 @@ Légende statut : **ouvert** · **contourné** · **clos**
 
 **Correctif :** `scripts/62-banc-T04E-samba-ldap.sh` **version 3** — attente **active** de l'écoute sur `:445` (jusqu'à 90 s, contrôle toutes les secondes), preuve 3 avec **5 reprises** espacées de 3 s, **repli** sur l'adresse réseau de la VM, et messages différenciés `CONNECTION_REFUSED` (service) vs `LOGON_FAILURE` (identité).
 
-**Statut :** corrigé, à revalider (essai 3).
+**Statut :** **clos** — la preuve 3 a été obtenue le 2026-10-24 (essai 3 : `smbclient` s'authentifie et liste le partage). Réserve de méthode : le script v3 n'a pas encore été rejoué de bout en bout, donc la **rejouabilité** reste à démontrer (tâche de suivi, sans effet sur le résultat).

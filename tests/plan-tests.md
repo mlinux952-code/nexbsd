@@ -1,7 +1,7 @@
 # Plan de tests — prototype 0
 
 **Date :** 2026-10-23
-**Statut : 2 tests sur 16 exécutés (2026-10-23).** T-01 et T-03 sont réussis en machine virtuelle ; les 14 autres restent `NON EXÉCUTÉ`.
+**Statut : 4 tests sur 16 exécutés (2026-10-24).** T-01, T-03, T-04 et T-04-E sont réussis en machine virtuelle ; les 12 autres restent `NON EXÉCUTÉ`.
 
 > **Exécution du 2026-10-23 (VM QEMU, émulation pure)** : FreeBSD 15.1-RELEASE démarre (81 s jusqu'à `login:`), ~100 Mo de RAM occupés au repos, Samba 4.23.11 installé depuis les dépôts, partage authentifié accessible **depuis une autre machine** avec écriture et relecture. Détails : `tests/results/`.
 
@@ -20,7 +20,7 @@
 | T-02 | Inventaire matériel | connaître la machine | démarrage réussi | `pciconf -lv`, `dmesg`, `sysctl hw`, `ifconfig -a`, `geom disk list` | CPU amd64, disques et NIC identifiés | — | NON EXÉCUTÉ |
 | T-03 | Partage SMB et droits | prouver un partage fonctionnel et des droits corrects | Samba ≥ 4.23 en jail | `alice` tente d'écrire (doit échouer) ; `bob` écrit et relit (doit réussir) | deux comportements conformes, preuves capturées | — | **RÉUSSI (cœur)** — `tests/results/T-03-partage-samba.md` |
 | T-04 | Annuaire | authentifier via LDAP | OpenLDAP ≥ 2.6 disponible (sinon ADR de report) | `slapd` en jail, création d'un utilisateur, authentification d'un client, refus d'accès anonyme | authentification réussie, anonyme refusé | — | **REUSSI** le 2026-10-24 sur la VM du responsable — journal verbatim dans `tests/results/T-04-ldap-annuaire.md` |
-| T-04-E | Annuaire + fichiers | Samba authentifie **via LDAP** | T-04 (annuaire) et T-03 (Samba) réussis | `smb4.conf` en `passdb backend = ldapsam`, `smbpasswd -a`, `smbclient` | `pdbedit` voit le compte, `sambaSID` présent dans l'annuaire, `smbclient` réussit | `scripts/62`, `tests/results/T-04E-samba-ldap.md` | **EN COURS** — essai 1 ECHEC (schéma absent du paquet), essai 2 PARTIEL (preuves 1 et 2 OK, preuve 3 victime d'une course de délai) ; script v3 prêt pour l'essai 3 |
+| T-04-E | Annuaire + fichiers | Samba authentifie **via LDAP** | T-04 (annuaire) et T-03 (Samba) réussis | `smb4.conf` en `passdb backend = ldapsam`, `smbpasswd -a`, `smbclient` | `pdbedit` voit le compte, `sambaSID` présent dans l'annuaire, `smbclient` réussit | `scripts/62`, `tests/results/T-04E-samba-ldap.md` | **RÉUSSI le 2026-10-24** (essai 3) — `sambaSID` dans l'annuaire, `smbclient` authentifié et partage lu. Réserve : rejouabilité du script v3 non encore démontrée |
 | T-05 | Isolation et pare-feu | surface d'attaque minimale | `pf` configuré | scan depuis un autre poste (`nmap` ou équivalent) ; `jls` ; `sockstat` | seuls les ports déclarés sont ouverts | — | NON EXÉCUTÉ |
 | T-05a | Fermeture par défaut | vérifier `block all` | idem | arrêter le service, rescanner | tous les ports filtrés | — | NON EXÉCUTÉ |
 | T-06 | Restauration | revenir à un état connu | sauvegarde existante | supprimer un fichier de configuration, restaurer, redémarrer | service fonctionnel, durée < 15 min | — | NON EXÉCUTÉ |

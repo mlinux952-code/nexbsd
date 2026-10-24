@@ -10,7 +10,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Acquis** : Samba compilé avec LDAP (`smbd` lié à `libldap`), `samba.schema` chargé et validé par `slaptest`, `sambaSID` de `omrane` **stocké dans l'annuaire**, `smbpasswd -a` opérant sur `ldapsam`.
 - **Diagnostiqué** : la preuve 3 échoue en `NT_STATUS_CONNECTION_REFUSED` **non** à cause d'une identité refusée, mais parce que `smbd` met ≈ 9 s à être à l'écoute alors que le script attendait un délai fixe de 3 s (`sockstat` montre `*:445` en écoute, journal : démarrage 12:16:15 → prêt 12:16:24). Consigné en **C-11** (`docs/16`), C-10 passé à **clos**.
 - **Corrigé** : `scripts/62-banc-T04E-samba-ldap.sh` **version 3** — attente active de l'écoute sur `:445` (90 s max), 5 reprises sur la preuve 3, repli sur l'adresse réseau de la VM, messages différenciés service / identité.
-- **Reste** : essai 3 pour prononcer le verdict de T-04-E.
+- **REUSSI** : T-04-E **essai 3** (2026-10-24) — `smbclient //127.0.0.1/partage -U 'omrane%omranelab'` s'authentifie et liste le partage ; les trois preuves sont réunies. Verdict consigné, réserves (rejouabilité, droits multi-utilisateurs, TLS) écrites.
+- **Bilan des tests** : **4 sur 16** réussis (T-01, T-03, T-04, T-04-E).
 
 ### 2026-10-24 — Session S-014 : reprise professionnelle du banc
 - **Ajouté** : `docs/24-reprise-banc.md` — mode opératoire en 5 étapes (mise à jour du dépôt, console dans le terminal, service de fichiers, T-04, consignation).

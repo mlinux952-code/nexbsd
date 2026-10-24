@@ -1,4 +1,4 @@
-# T-04-E — Samba authentifie via l'annuaire OpenLDAP — **EN COURS**
+# T-04-E — Samba authentifie via l'annuaire OpenLDAP — **RÉUSSI (2026-10-24)**
 
 **Protocole exécutable :** `scripts/62-banc-T04E-samba-ldap.sh` (blocs A→F, verdict en fin).
 **Prérequis :** T-04 réussi (slapd tourne, annuaire peuplé) — obtenu le 2026-10-24.
@@ -185,14 +185,68 @@ Journal `smbd` (extrait, horodatages décisifs) :
 
 **Correctif :** script `62` **version 3** — attente **active** de l'écoute sur `:445` (jusqu'à 90 s, contrôle chaque seconde), preuve 3 avec **5 reprises** espacées de 3 s, **repli** sur l'adresse réseau de la VM, et distinction explicite `CONNECTION_REFUSED` (service) / `LOGON_FAILURE` (identité). Consigné au registre : **C-11** (`docs/16`).
 
-### Essai 3 — à exécuter après diagnostic
+### Essai 3 — 2026-10-24 (après diagnostic) — **PREUVE 3 OBTENUE**
 
-_(à remplir : sortie verbatim de la version 3 du script, ou de la preuve manuelle)_
+Preuve 3 exécutée **à la main**, dans la VM, sans relancer le script : à cet instant `smbd` est
+réellement à l'écoute (vérifié par `sockstat` : `*:445`), donc la preuve ne peut plus être
+faussée par une course de délai.
+
+Commande :
+
+```
+smbclient //127.0.0.1/partage -U 'omrane%omranelab' -c 'ls'
+```
+
+Sortie **verbatim** :
+
+```
+  .                                   D        0  Sat Oct 24 12:10:16 2026
+  ..                                  D        0  Sat Oct 24 12:10:16 2026
+
+                5061648 blocks of size 1024. 1105816 blocks available
+```
+
+**Lecture du résultat :**
+
+| Indice dans la sortie | Ce qu'il démontre |
+|---|---|
+| `session setup` **réussi** (aucune erreur, la session s'ouvre) | l'identité `omrane` a été **acceptée par le service** |
+| aucune erreur `NT_STATUS_LOGON_FAILURE` | le mot de passe a été validé — donc trouvé dans **`ldapsam`**, c'est-à-dire dans l'annuaire |
+| listing du partage affiché (`.`, `..`) | l'arborescence de `[partage]` est bien servie sous cette identité |
+| `1105816 blocks available` | le volume est lisible : la session est pleinement fonctionnelle, pas seulement authentifiée |
+
+**Preuve de bout en bout désormais établie :** le compte existe **dans l'annuaire**
+(`sambaSID` vu à l'essai 2), Samba lit sa table de mots de passe **dans l'annuaire**
+(`passdb backend = ldapsam`), et un client SMB **s'authentifie** avec ce compte et accède au partage.
+
+**Réserve de méthode (à lever, non bloquante) :** cette preuve a été obtenue **manuellement**.
+Le script `62` **version 3** — qui automatise cette même preuve avec attente active de l'écoute,
+5 reprises et repli sur l'adresse réseau — n'a pas encore été rejoué de bout en bout. Tant que ce
+n'est pas fait, la **rejouabilité** du test n'est pas démontrée, même si le **résultat** l'est.
 
 
 
 ## 4. Verdict
 
-**PARTIEL à l'essai 2** (2026-10-24 12:16 UTC) : compte et SID dans l'annuaire ✅, authentification SMB non prouvée ❌ (`NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1`).
+**RÉUSSI** — 2026-10-24, VM `nexbsd-test` (FreeBSD 15.1-RELEASE, Samba `samba423-4.23.11_3`, OpenLDAP avec `samba.schema`).
 
-**Cause de cet échec : établie le 2026-10-24 à 13:21 UTC** — course de délai dans le script v2 (preuve 3 lancée pendant l'initialisation de `smbd`), et **non** un défaut d'identité, de `ldapsam` ou d'écoute réseau (voir §3, « Diagnostic de l'essai 2 »). Correctif v3 prêt ; le verdict définitif sera prononcé sur la sortie de l'essai 3.
+Les trois preuves exigées au §1 sont réunies :
+
+| Preuve | Résultat | Où |
+|---|---|---|
+| F1 — `pdbedit` voit le compte avec un SID | ✅ | essai 2 |
+| F2 — `sambaSID` présent **dans l'annuaire** | ✅ | essai 2 |
+| F3 — `smbclient` **s'authentifie** et lit le partage | ✅ | essai 3 |
+
+**Ce que ce test démontre pour NexBSD :** la brique « identités centralisées » de l'axe réseau
+(`docs/14-reseau-netware.md`) n'est plus une hypothèse de conception — elle fonctionne sur le banc,
+avec des composants sous licence libre épinglés (Samba 4.23, OpenLDAP).
+
+**Ce qu'il ne démontre pas encore :** la **rejouabilité** (script v3 non rejoué), les **droits**
+multi-utilisateurs via l'annuaire (T-04-E ne teste qu'un compte), le **chiffrement** LDAP/TLS
+(`ldap ssl = off` en laboratoire), et la tenue en **charge/réseau réel** (le banc est en réseau
+utilisateur QEMU).
+
+**Historique des essais :** essai 1 `ECHEC` (schéma absent du paquet → C-10) · essai 2 `PARTIEL`
+(course de délai → C-11) · essai 3 **preuve obtenue**. Aucun de ces échecs n'a été maquillé en
+succès : ils sont restés écrits, avec leur cause, comme l'exige la règle du projet.
