@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 10 · **Mise à jour :** 2026-10-23 (fin de session S-010)
+**Version de cette fiche :** 11 · **Mise à jour :** 2026-10-24 (session S-014)
 **Rôle :** source de vérité en une page. En cas de contradiction avec un autre document, **c'est celui-ci qui décrit l'état**, car il est mis à jour à chaque session.
 
 ---
@@ -17,11 +17,11 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 |---|---|
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
 | Code NexBSD | **delta écrit** (noyau `NEXBSD_L1` généré, `src.conf`, `release.conf`, overlay, patch d'identité) — **aucun fichier compilé, aucune image** |
-| Installation FreeBSD | **VM QEMU opérationnelle** (FreeBSD 15.1-RELEASE, émulation TCG) ; **matériel réel : aucune installation** |
+| Installation FreeBSD | **VM opérationnelle chez le responsable** (virt-manager + KVM, FreeBSD 15.1-RELEASE, invite root atteinte) ; **matériel réel : aucune installation** |
 | Test d'exécution | **2 sur 16** : T-01 (FreeBSD 15.1 démarre) et T-03 (partage Samba écrit depuis une autre machine) **réussis en VM** le 2026-10-23 |
 | Image système | **aucune** (et aucune possible sans profil L3) |
 | Décisions validées par le responsable | **aucune** — 19 ADR à l'état `proposition` |
-| **Sauvegarde** | **Google Drive fait** (dossier « NexBSD ») · **GitHub fait** : dépôt privé `mlinux952-code/nexbsd`, branche `main` · dépôt Git local (8 commits) |
+| **Sauvegarde** | **Google Drive fait** (instantané **s014**) · **GitHub fait** : dépôt privé `mlinux952-code/nexbsd` · dépôt Git local : **29 commits** |
 | Documents | ~90 fichiers, 5 matrices CSV, 5 scripts, index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
 | Mesure RAM (ENF-01) | **≈ 100 Mo au repos** sur système nu en VM → objectif ≤ 128 Mo atteignable (à confirmer sur matériel) |
@@ -126,6 +126,7 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | S-004 | 2026-10-23 | Protocole de session, objectif grand public, outillage licence | `START-HERE.md`, `ETAT.md`, ADR-0016, `build/fork/`, script 40 |
 | S-005 | 2026-10-23 | **Réseau : rôle des 4 composants, NCP sur IP, index complet** | ADR-0017/0018, `docs/14-reseau-netware.md`, `docs/INDEX-DOCUMENTS.md` |
 | S-006 | 2026-10-23 | **V-1 tranchée (client NCP réel) + conformité aux 20 livrables du mur** | ADR-0019, `research/ncp-ip/fiche.md`, `docs/15-conformite-mega-prompt.md`, `docs/vision.md`, `docs/08-schema-flux.md`, `docs/16-registre-problemes.md`, `docs/17-procedure-mise-a-jour.md`, `docs/19-guide-contribution.md`, `LICENSE`, `NOTICE`, `CHANGELOG.md`, `docs/etude-faisabilite.md`, dossiers `components/` `integration/` `release/` |
+| S-014 | 2026-10-24 | **Reprise du banc : méthode en 5 étapes, sans copier-coller, bundle s014 pour synchroniser le dépôt** | `docs/24-reprise-banc.md`, instantané s014 |
 | S-010 | 2026-10-23 | **Le delta NexBSD existe en fichiers : noyau NEXBSD_L1 généré depuis GENERIC, options vérifiées, identité, chaîne de construction** | `build/fork/` complet, `docs/22-delta-nexbsd.md` |
 | S-009 | 2026-10-23 | **Premiers tests réels en VM : T-01 et T-03 réussis ; Samba 4.23.11 et OpenLDAP 2.6/2.7 vérifiés** | `tests/results/`, `scripts/31-lancer-vm-freebsd.sh`, matrices K-01/K-09/K-10, ETAT v9 |
 | S-008 | 2026-10-23 | **GitHub enregistré + dépannage du push (4 erreurs réelles) + rattrapage des commits** | `docs/21-pousser-sur-github.md`, `scripts/51-installer-depot-github.sh`, bundle `s008` |
