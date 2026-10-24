@@ -140,11 +140,17 @@ ouvertures de session échouent en `NT_STATUS_LOGON_FAILURE`.
 **Ce que ce n'est pas :** ni une panne de service (le port répond), ni une perte de données (l'annuaire est
 intact), ni un refus de droits (`LOGON_FAILURE`, pas `ACCESS_DENIED`).
 
-**Hypothèse 1 (ordre de démarrage) — ÉLIMINÉE le 2026-10-24 :** `pdbedit -L -v omrane` lancé **après** le
-redémarrage remonte correctement le compte (`init_sam_from_ldap: Entry found for user: omrane`,
-`User SID: …-1001`, `Primary Group SID: …-3001`). La base de comptes `ldapsam` s'initialise donc
-normalement : `smbd` joint bien l'annuaire. Si `samba_server` avait démarré avant `slapd`, `pdbedit`
-échouerait de la même façon.
+**Hypothèse 1 (ordre de démarrage) — RÉOUVERTE, après avoir été éliminée à tort.**
+
+*Rectification de raisonnement (2026-10-24) :* j'avais d'abord éliminé cette hypothèse parce que
+`pdbedit -L -v omrane` réussissait après le redémarrage. **Ce raisonnement était faux.** `pdbedit` est un
+**processus séparé** qui ouvre **sa propre** connexion LDAP au moment où on le lance — alors que `slapd`
+tourne depuis longtemps. Il ne dit **rien** de l'état interne de `smbd`, qui tourne depuis le démarrage et a
+pu initialiser `ldapsam` **avant** que `slapd` soit à l'écoute. Les deux processus peuvent diverger : l'un neuf
+et connecté, l'autre ancien et mal initialisé.
+
+Le succès de `pdbedit` prouve donc que **l'annuaire et les données sont sains** — pas que `smbd` les voit
+correctement.
 
 Détail révélateur : la recherche porte sur `(sambaDomainName=NEXBSDFS)` et elle **aboutit sans erreur** —
 alors qu'en T-04-E (essai 1, sans schéma) la même requête produisait `Invalid DN syntax`.
@@ -184,11 +190,13 @@ bien avant les redémarrages de 13:20. Les secrets ont donc survécu et le domai
 | `smbclient` → `NT_STATUS_LOGON_FAILURE` (2 comptes) | la **validation du mot de passe** échoue, alors que la **lecture** du compte réussit |
 
 **Pistes restantes, à départager :**
-1. **Droits de lecture sur l'attribut `sambaNTPassword`** : Samba doit lire l'empreinte du mot de passe pour
-   vérifier une session ; si l'annuaire ne l'autorise qu'à une liaison privilégiée et que cette liaison échoue,
-   la lecture du compte réussit mais la vérification échoue.
-2. **État propre au démarrage** : quelque chose diffère entre un `smbd` lancé par `rc.d` au démarrage et un
-   `smbd` relancé à chaud. Test discriminant : relancer le service maintenant et réessayer.
+1. **État interne de `smbd` figé au démarrage** (hypothèse 1 réouverte) : `smbd` a initialisé `ldapsam` avant
+   que `slapd` écoute, et n'a jamais réessayé. **Test discriminant :** relancer `samba_server` maintenant que
+   `slapd` tourne ; si les sessions reviennent, la cause est établie.
+2. **Droits de lecture sur l'attribut `sambaNTPassword`** : la lecture du compte réussirait, mais pas celle de
+   l'empreinte du mot de passe.
+3. **Correction durable** : si (1) est vrai, le correctif n'est pas de relancer à la main, mais que le service
+   Samba **attende** que `slapd` réponde — une dépendance de démarrage, pas une manipulation.
 
 **Statut :** ouvert — diagnostic en cours, deux hypothèses éliminées.
 
