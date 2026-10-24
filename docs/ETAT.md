@@ -1,28 +1,28 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 11 · **Mise à jour :** 2026-10-24 (session S-014)
+**Version de cette fiche :** 12 · **Mise à jour :** 2026-10-24 (session S-015)
 **Rôle :** source de vérité en une page. En cas de contradiction avec un autre document, **c'est celui-ci qui décrit l'état**, car il est mis à jour à chaque session.
 
 ---
 
 ## 1. En trois phrases
 
-NexBSD est un projet de **système d'exploitation expérimental** pour **PC faibles**, dont l'**axe prioritaire est le réseau façon NetWare** (identités, droits, partages, administration unique), visant à terme une **publication grand public**. Le modèle retenu est celui d'un **fork de FreeBSD** (arbre source possédé, images construites par le projet), avec une base **100 % sous licence permissive** et les composants réseau (Samba, OpenLDAP) isolés dans la couche Plateforme. **Rien n'est encore construit** : le projet est en phase de conception et de préparation.
+NexBSD est un projet de **système d'exploitation expérimental** pour **PC faibles**, dont l'**axe prioritaire est le réseau façon NetWare** (identités, droits, partages, administration unique), visant à terme une **publication grand public**. Le modèle retenu est celui d'un **fork de FreeBSD** (arbre source possédé, images construites par le projet), avec une base **100 % sous licence permissive** et les composants réseau (Samba, OpenLDAP) isolés dans la couche Plateforme. **Un banc d'essai fonctionne désormais** : une VM FreeBSD 15.1 sur la station du responsable, où l'annuaire OpenLDAP et le partage Samba **s'authentifient ensemble** (T-04-E réussi le 2026-10-24). Aucune image NexBSD n'est encore construite : le produit lui-même reste à faire.
 
 ---
 
 ## 2. Où en est le projet
 
-| Élément | État au 2026-10-23 |
+| Élément | État au 2026-10-24 |
 |---|---|
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
 | Code NexBSD | **delta écrit** (noyau `NEXBSD_L1` généré, `src.conf`, `release.conf`, overlay, patch d'identité) — **aucun fichier compilé, aucune image** |
-| Installation FreeBSD | **VM opérationnelle chez le responsable** (virt-manager + KVM, FreeBSD 15.1-RELEASE, invite root atteinte) ; **matériel réel : aucune installation** |
-| Test d'exécution | **2 sur 16** : T-01 (FreeBSD 15.1 démarre) et T-03 (partage Samba écrit depuis une autre machine) **réussis en VM** le 2026-10-23 |
+| Installation FreeBSD | **VM opérationnelle chez le responsable** (virt-manager + KVM, FreeBSD 15.1-RELEASE, console série `ttyu0`) ; **matériel réel : aucune installation** |
+| Test d'exécution | **4 sur 16 réussis en VM** : T-01 (FreeBSD démarre), T-03 (partage Samba), T-04 (annuaire OpenLDAP), **T-04-E (Samba authentifie via l'annuaire, 2026-10-24)**. Réserve sur T-04-E : rejouabilité du script v3 non encore démontrée |
 | Image système | **aucune** (et aucune possible sans profil L3) |
 | Décisions validées par le responsable | **aucune** — 19 ADR à l'état `proposition` |
-| **Sauvegarde** | **Google Drive fait** (instantané **s014**) · **GitHub fait** : dépôt privé `mlinux952-code/nexbsd` · dépôt Git local : **29 commits** |
-| Documents | ~90 fichiers, 5 matrices CSV, 5 scripts, index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
+| **Sauvegarde** | **Google Drive fait** (instantanés **s015b** puis **s015d**) · **GitHub** : dépôt privé `mlinux952-code/nexbsd` (poussé par le responsable) · dépôt Git local : **40 commits** |
+| Documents | ~90 fichiers, 5 matrices CSV, **12 scripts** (dont 4 de banc), index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
 | Mesure RAM (ENF-01) | **≈ 100 Mo au repos** sur système nu en VM → objectif ≤ 128 Mo atteignable (à confirmer sur matériel) |
 | Chemin NCP (différenciation) | **V-1 tranchée** : client NCP réel, gratuit et maintenu identifié (ADR-0019) ; V-2/V-3 en suspens |
