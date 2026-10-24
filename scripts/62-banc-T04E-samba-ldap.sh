@@ -1,5 +1,13 @@
 #!/bin/sh
 # 62-banc-T04E-samba-ldap.sh — T-04-E : Samba authentifie via l'annuaire OpenLDAP.
+# Version 2 (2026-10-24) — corrige trois defauts constates lors du 1er essai :
+#   1. le paquet FreeBSD samba423 ne livre PAS samba.schema -> telechargement
+#      depuis le depot officiel Samba, avec empreinte SHA256 verifiee ;
+#   2. le script v1 ajoutait la ligne include meme sans schema -> slapd cassait ;
+#      desormais on valide slapd.conf avec slaptest AVANT tout redemarrage ;
+#   3. detection du support LDAP de Samba par ldd + liste du paquet, pas par 'smbd -b'.
+# Le schema reste GPL (Samba) : il n'entre jamais dans le depot NexBSD, il est
+# telecharge a l'execution dans la VM de laboratoire.
 # À exécuter DANS la VM FreeBSD, en root. Idempotent.
 # Prérequis : T-04 (scripts/60) déjà passé — slapd tourne, l'annuaire est peuplé.
 # Secrets de LABORATOIRE uniquement (VM jetable, non exposée au réseau).
@@ -13,6 +21,9 @@ ADMIN_DN="cn=admin,$SUFFIXE"
 ADMIN_PW="adminsecret"
 MDP_USER="omranelab"
 CONF="/usr/local/etc/smb4.conf"
+SCHEMA_URL="https://git.samba.org/?p=samba.git;a=blob_plain;f=examples/LDAP/samba.schema;hb=HEAD"
+SCHEMA_SHA="b9081b7234762c3fc02861fbb88ed8b52a523dced38e15051dc980f0b34b23dd"
+SCHEMA_DST="/usr/local/etc/openldap/schema/samba.schema"
 
 echo "################ T-04-E : Samba + annuaire ################"
 echo "# date : $(date -u +%FT%TZ) ; hote : $(uname -sr)"
@@ -44,52 +55,93 @@ fi
 
 echo
 echo "########## BLOC B - Samba a-t-il le support LDAP ? ##########"
-if smbd -b 2>/dev/null | grep -qi 'WITH_LDAP'; then
-    ok "support LDAP compile dans Samba"
+SUPPORT_LDAP=0
+if pkg info -l 2>/dev/null | grep -q 'libsmbldap.so'; then
+    ok "modules LDAP livres par le paquet (libsmbldap.so)"
     SUPPORT_LDAP=1
-else
-    info "smbd -b ne montre pas WITH_LDAP : la suite dira si ldapsam fonctionne"
-    SUPPORT_LDAP=0
+fi
+if ldd "$(command -v smbd)" 2>/dev/null | grep -qi 'libldap'; then
+    ok "smbd est lie a libldap"
+    SUPPORT_LDAP=1
+fi
+if [ "$SUPPORT_LDAP" = "0" ]; then
+    ko "ce Samba ne semble pas compile avec LDAP : passdb ldapsam impossible"
+    echo
+    echo "T-04-E : ECHEC - Samba sans support LDAP (paquet a reconstruire avec l'option LDAP)."
+    exit 1
 fi
 
 echo
 echo "########## BLOC C - schema samba dans l'annuaire ##########"
-SCHEMA=""
-for c in /usr/local/etc/openldap/schema/samba.schema \
-         /usr/local/share/examples/samba/samba.schema \
-         /usr/local/share/examples/samba4/samba.schema; do
-    [ -f "$c" ] && SCHEMA="$c" && break
-done
-if [ -z "$SCHEMA" ]; then
-    SCHEMA=$(find /usr/local -name samba.schema 2>/dev/null | head -1)
-fi
-if [ -n "$SCHEMA" ]; then
-    ok "schema trouve : $SCHEMA"
-    if [ "$SCHEMA" != "/usr/local/etc/openldap/schema/samba.schema" ]; then
-        cp "$SCHEMA" /usr/local/etc/openldap/schema/samba.schema
-        SCHEMA=/usr/local/etc/openldap/schema/samba.schema
-        info "copie vers /usr/local/etc/openldap/schema/"
-    fi
+if [ -f "$SCHEMA_DST" ] && grep -q 'sambaDomainName' "$SCHEMA_DST" 2>/dev/null; then
+    ok "schema deja present : $SCHEMA_DST"
 else
-    ko "samba.schema introuvable : le compte ne pourra pas etre stocke dans l'annuaire"
+    info "telechargement du schema depuis le depot officiel Samba"
+    fetch -q -o /tmp/samba.schema "$SCHEMA_URL" 2>/tmp/fetch-schema.log \
+        || curl -sL -o /tmp/samba.schema "$SCHEMA_URL" 2>>/tmp/fetch-schema.log
+    if [ -s /tmp/samba.schema ] && grep -q 'sambaDomainName' /tmp/samba.schema; then
+        GOT=$(sha256 -q /tmp/samba.schema 2>/dev/null)
+        if [ "$GOT" = "$SCHEMA_SHA" ]; then
+            ok "schema telecharge, empreinte SHA256 verifiee"
+            cp /tmp/samba.schema "$SCHEMA_DST"
+        else
+            ko "empreinte differente : attendu $SCHEMA_SHA"
+            info "obtenu : $GOT"
+            info "le schema n'est PAS installe (provenance non verifiee)"
+            SCHEMA_OK=0
+        fi
+    else
+        ko "telechargement du schema impossible (voir /tmp/fetch-schema.log)"
+        SCHEMA_OK=0
+    fi
 fi
+[ -f "$SCHEMA_DST" ] && grep -q 'sambaDomainName' "$SCHEMA_DST" 2>/dev/null && SCHEMA_OK=1
 
 SLAPDCONF=/usr/local/etc/openldap/slapd.conf
+if [ "${SCHEMA_OK:-0}" != "1" ]; then
+    ko "sans schema, Samba ne peut pas stocker le compte : arret propre"
+    echo
+    echo "T-04-E : ECHEC - schema samba indisponible (annuaire laisse intact)."
+    exit 1
+fi
+
 if ! grep -q 'samba.schema' "$SLAPDCONF" 2>/dev/null; then
-    cp "$SLAPDCONF" "/tmp/slapd.conf.avant-T04E" 2>/dev/null
+    cp "$SLAPDCONF" /tmp/slapd.conf.avant-T04E
     awk 'BEGIN{fait=0}
          /^database/ && !fait { print "include\t\t/usr/local/etc/openldap/schema/samba.schema"; fait=1 }
-         { print }' "/tmp/slapd.conf.avant-T04E" > "$SLAPDCONF"
+         { print }' /tmp/slapd.conf.avant-T04E > "$SLAPDCONF"
     ok "include du schema ajoute a slapd.conf"
 else
     ok "schema deja inclus (relance)"
 fi
+
+SLAPTEST=$(command -v slaptest || echo /usr/local/sbin/slaptest)
+if [ -x "$SLAPTEST" ]; then
+    if "$SLAPTEST" -f "$SLAPDCONF" -u >/tmp/slaptest.log 2>&1; then
+        ok "slaptest valide la configuration"
+    else
+        ko "slaptest refuse la configuration : restauration"
+        tail -5 /tmp/slaptest.log
+        cp /tmp/slapd.conf.avant-T04E "$SLAPDCONF" 2>/dev/null
+        echo
+        echo "T-04-E : ECHEC - configuration OpenLDAP invalide (restauree)."
+        exit 1
+    fi
+else
+    info "slaptest introuvable : on redemarre a l'aveugle"
+fi
+
 service slapd restart >/dev/null 2>&1
 sleep 2
-if pgrep -q slapd; then ok "slapd redemarre avec le schema"; else
-    ko "slapd ne redemarre pas avec le schema : restauration"
+if pgrep -q slapd; then
+    ok "slapd redemarre avec le schema"
+else
+    ko "slapd ne redemarre pas : restauration"
     cp /tmp/slapd.conf.avant-T04E "$SLAPDCONF" 2>/dev/null
     service slapd restart >/dev/null 2>&1
+    echo
+    echo "T-04-E : ECHEC - slapd refuse de demarrer (configuration restauree)."
+    exit 1
 fi
 
 echo

@@ -56,3 +56,17 @@ Légende statut : **ouvert** · **contourné** · **clos**
 
 - Les **risques** (événements possibles) : voir `matrices/risques.csv` (R-01→R-24).
 - Les **fonctions non implémentées** : voir `matrices/functions.csv` (état « À faire / À étudier »).
+
+---
+
+## C-10 — Le paquet FreeBSD `samba423` ne fournit pas `samba.schema`
+
+**Constaté :** 2026-10-24, essai 1 de T-04-E. `samba.schema` introuvable dans `/usr/local/etc/openldap/schema/`, `/usr/local/share/examples/samba*/`. Vérification dans le `pkg-plist` du port `net/samba423` : **aucun fichier `.schema` n'est livré**.
+
+**Conséquence :** `passdb backend = ldapsam` échoue à l'initialisation (`Invalid DN syntax` sur `sambaDomainName=…`), car les attributs Samba sont inconnus de l'annuaire.
+
+**Solution retenue :** téléchargement du schéma depuis le dépôt officiel Samba (`examples/LDAP/samba.schema`, HEAD) avec **empreinte SHA256 épinglée**, dans la VM de laboratoire uniquement. Le fichier étant sous **GPL-3.0+**, il n'entre **jamais** dans le dépôt NexBSD (frontière de licences, `docs/12`).
+
+**Correctif :** `scripts/62-banc-T04E-samba-ldap.sh` version 2.
+
+**Statut :** corrigé, à revalider (essai 2).
