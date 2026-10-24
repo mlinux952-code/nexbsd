@@ -69,4 +69,25 @@ Légende statut : **ouvert** · **contourné** · **clos**
 
 **Correctif :** `scripts/62-banc-T04E-samba-ldap.sh` version 2.
 
-**Statut :** corrigé, à revalider (essai 2).
+**Statut :** **clos** — vérifié à l'essai 2 de T-04-E (2026-10-24) : schéma téléchargé, empreinte conforme, `slaptest` accepte la configuration, `slapd` redémarre, `sambaSID` présent dans l'annuaire.
+
+---
+
+## C-11 — Attente fixe avant la preuve d'authentification SMB (course de délai)
+
+**Constaté :** 2026-10-24, essai 2 de T-04-E. La preuve 3 (`smbclient`) échoue en `NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1`, alors que le service est sain.
+
+**Diagnostic établi sur pièces, dans la VM :**
+
+| Élément observé | Ce qu'il prouve |
+|---|---|
+| `sockstat -4l` → `*:445` et `*:139` en écoute | `smbd` écoute sur **toutes** les adresses, boucle locale comprise : l'hypothèse « pas d'écoute sur 127.0.0.1 » est **éliminée** |
+| `pgrep -fl smbd` → démon + `cleanupd` + `notifyd` | le service n'est pas mort : l'hypothèse « arrêt après démarrage » est **éliminée** |
+| journal : `smbd version 4.23.11 started` à **12:16:15**, puis `file_init_global` à **12:16:24** | le service met **≈ 9 s** à être réellement prêt (initialisation `ldapsam`) |
+| aucune ligne de refus dans le journal à 12:16 | la connexion n'a jamais atteint `smbd` : personne n'écoutait encore |
+
+**Cause :** défaut du **script**, pas du banc. La v2 attendait un délai **fixe de 3 s** (`sleep 3`) avant la preuve 3, insuffisant. Le message `CONNECTION_REFUSED` est **trompeur** : il ne signifie pas « mot de passe refusé » mais « aucun service à l'écoute à cet instant ».
+
+**Correctif :** `scripts/62-banc-T04E-samba-ldap.sh` **version 3** — attente **active** de l'écoute sur `:445` (jusqu'à 90 s, contrôle toutes les secondes), preuve 3 avec **5 reprises** espacées de 3 s, **repli** sur l'adresse réseau de la VM, et messages différenciés `CONNECTION_REFUSED` (service) vs `LOGON_FAILURE` (identité).
+
+**Statut :** corrigé, à revalider (essai 3).

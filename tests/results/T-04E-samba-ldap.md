@@ -145,12 +145,54 @@ T-04-E : PARTIEL - compte et SID dans l'annuaire, mais authentification SMB non 
 - **`sambaSID` de `omrane` est stocké dans l'annuaire** — le compte n'est plus local, il vient de l'annuaire.
 - `smbpasswd -a` réussit : la table des mots de passe Samba vit dans **ldapsam**.
 
-**Reste à prouver :** qu'un client SMB puisse **s'authentifier** auprès du service. L'échec `NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1` signifie que le service n'a pas répondu sur la boucle locale — **pas** que le mot de passe est refusé. Deux pistes : `smbd` n'écoute pas sur `127.0.0.1` (restriction d'interface), ou il s'est arrêté juste après le démarrage.
+**Reste à prouver :** qu'un client SMB puisse **s'authentifier** auprès du service. L'échec `NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1` signifie que le service n'a pas répondu sur la boucle locale — **pas** que le mot de passe est refusé.
+
+### Diagnostic de l'essai 2 — 2026-10-24 13:21 UTC — **CAUSE ÉTABLIE : course de délai**
+
+Trois relevés faits **dans la VM, sans rien modifier**, pour ne pas juger sur un état arrangé :
+
+```
+root@freebsd:~ # pgrep -fl smbd
+5376 smbd: cleanupd
+5357 /usr/local/sbin/smbd --daemon --configfile=/usr/local/etc/smb4.conf
+5375 smbd: notifyd
+
+root@freebsd:~ # sockstat -4l | grep -E ':445|:139'
+root smbd       5357 27 tcp4  *:445                 *:*
+root smbd       5357 28 tcp4  *:139                 *:*
+```
+
+Journal `smbd` (extrait, horodatages décisifs) :
+
+```
+[2026/10/24 12:10:18] ... pdb backend ldapsam:ldap://127.0.0.1 did not correctly init
+                       (erreurs de l'ESSAI 1 — version 1 du script, déjà corrigées)
+[2026/10/24 12:16:15.766847] smbd version 4.23.11 started.      <- démarrage réel
+[2026/10/24 12:16:24.468485] file_init_global: Information only: requested 43119 open files
+                                                                <- service prêt ~9 s plus tard
+```
+
+**Conclusions, hypothèse par hypothèse :**
+
+| Hypothèse | Verdict | Preuve |
+|---|---|---|
+| `smbd` s'est arrêté après son démarrage | ❌ **éliminée** | 3 processus vivants, dont le démon `--configfile=/usr/local/etc/smb4.conf` |
+| `smbd` n'écoute pas sur `127.0.0.1` | ❌ **éliminée** | `*:445` et `*:139` : écoute sur **toutes** les adresses |
+| Problème d'identité / de `ldapsam` | ❌ **éliminée** | aucune erreur `ldapsam` à 12:16 (celles de 12:10 datent de l'essai 1) |
+| **La preuve 3 a été lancée avant que le service soit prêt** | ✅ **retenue** | démarrage 12:16:15 → prêt 12:16:24 ; la v2 attendait un **délai fixe de 3 s** |
+
+**Nature du défaut :** il est dans le **script** (v2), pas dans le banc. `NT_STATUS_CONNECTION_REFUSED` ne veut pas dire « authentification refusée » mais « aucun service à l'écoute à cet instant » — un message trompeur qu'il fallait interpréter, pas contourner.
+
+**Correctif :** script `62` **version 3** — attente **active** de l'écoute sur `:445` (jusqu'à 90 s, contrôle chaque seconde), preuve 3 avec **5 reprises** espacées de 3 s, **repli** sur l'adresse réseau de la VM, et distinction explicite `CONNECTION_REFUSED` (service) / `LOGON_FAILURE` (identité). Consigné au registre : **C-11** (`docs/16`).
 
 ### Essai 3 — à exécuter après diagnostic
 
-_(vide)_
+_(à remplir : sortie verbatim de la version 3 du script, ou de la preuve manuelle)_
+
+
 
 ## 4. Verdict
 
-**PARTIEL à l'essai 2** (2026-10-24 12:16 UTC) : compte et SID dans l'annuaire ✅, authentification SMB non prouvée ❌ (`NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1`). Diagnostic en cours.
+**PARTIEL à l'essai 2** (2026-10-24 12:16 UTC) : compte et SID dans l'annuaire ✅, authentification SMB non prouvée ❌ (`NT_STATUS_CONNECTION_REFUSED` sur `127.0.0.1`).
+
+**Cause de cet échec : établie le 2026-10-24 à 13:21 UTC** — course de délai dans le script v2 (preuve 3 lancée pendant l'initialisation de `smbd`), et **non** un défaut d'identité, de `ldapsam` ou d'écoute réseau (voir §3, « Diagnostic de l'essai 2 »). Correctif v3 prêt ; le verdict définitif sera prononcé sur la sortie de l'essai 3.
