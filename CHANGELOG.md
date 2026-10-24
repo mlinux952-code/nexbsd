@@ -5,6 +5,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-24 — Session S-016 : prompt fondateur reçu, audit de conformité mis à jour
+- **Reçu** : le méga-prompt maître (930 lignes) et la présentation du projet, documents d'origine (Partie XX incluse).
+- **Corrigé** : `docs/15-conformite-mega-prompt.md` **v1.1** — livrables 11 (prototype minimal) et 12 (rapport de tests) passés de « non fait » à **« amorcé »** sur la foi des cinq tests réellement exécutés ; nouveau **§3 : audit de la Partie XX** (stockage externe, indépendance de l'IA).
+- **Constaté** : deux manquements à la Partie XX — le dossier Drive n'est pas rangé selon l'arborescence exigée, et il n'existe pas de compte rendu de session normalisé. Actions correctives inscrites.
+
 ### 2026-10-24 — Session S-015 : T-04-E, diagnostic de la preuve 3 et script v3
 - **Exécuté** : T-04-E essai 1 (**ECHEC**) puis essai 2 (**PARTIEL**) sur la VM du banc — journals verbatim dans `tests/results/T-04E-samba-ldap.md`.
 - **Acquis** : Samba compilé avec LDAP (`smbd` lié à `libldap`), `samba.schema` chargé et validé par `slaptest`, `sambaSID` de `omrane` **stocké dans l'annuaire**, `smbpasswd -a` opérant sur `ldapsam`.
