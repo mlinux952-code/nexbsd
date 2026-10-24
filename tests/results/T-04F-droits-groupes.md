@@ -1,4 +1,4 @@
-# T-04-F — Les droits sont décidés par des groupes de l'annuaire — **EN COURS**
+# T-04-F — Les droits sont décidés par des groupes de l'annuaire — **RÉUSSI**
 
 **Protocole exécutable :** `scripts/63-banc-T04F-droits-groupes.sh` (blocs A→F, verdict en fin).
 **Prérequis :** T-04 réussi (annuaire) **et** T-04-E réussi (Samba authentifie via `ldapsam`) — acquis le 2026-10-24.
@@ -111,12 +111,43 @@ C'est le message que Samba renvoie quand il ne parvient pas à convertir un iden
 ici, un groupe sans identité Samba dans l'annuaire. Le nom du message est trompeur ; c'est le contexte
 (`ldapsam:trusted`) qui donne la clé.
 
-### Essai 2 — à exécuter
+### Essai 2 — 2026-10-24 — **RÉUSSI**
 
-_(vide)_
+Script `63` **version 2** (groupes porteurs d'un `sambaSID`, `sara` créée avec `sambaSamAccount`, LDIF
+valides). Verdict rendu par le script sur le banc :
+
+```
+T-04-F : REUSSI - les droits sont decides par les groupes de l'annuaire.
+```
+
+**Réserve de traçabilité, à lever :** le verdict et la ligne d'état des preuves ont été transmis, mais
+**pas la sortie intégrale** du script. Les preuves `P0`→`P4B` sont donc rapportées par le verdict du
+programme, non recopiées verbatim dans ce journal — contrairement aux essais 1 de T-04-E, 1 et 2 de
+T-04-F. Pour que ce journal soit au même niveau de preuve que les autres, il reste à coller la sortie
+complète de `sh /tmp/t04f.sh` (une réexécution produit exactement les mêmes preuves : le script est
+idempotent).
 
 ## 7. Verdict
 
-**ECHEC à l'essai 1** (2026-10-24 13:04 UTC). Trois causes identifiées le jour même, dont deux défauts du
-protocole de test lui-même ; script **v2** écrit et vérifié syntaxiquement, en attente d'exécution.
-Registre : **C-12** (LDIF invalide) et **C-13** (groupes sans identité Samba sous `ldapsam:trusted`).
+**RÉUSSI** — 2026-10-24, essai 2, VM `nexbsd-test` (FreeBSD 15.1-RELEASE, Samba `samba423-4.23.11_3`,
+OpenLDAP + `samba.schema`, `ldapsam:trusted = yes`).
+
+| Preuve exigée au §4 | Résultat |
+|---|---|
+| F0 — les groupes portent leur SID Samba (résolution `gid → SID`) | ✅ |
+| F1 — `omrane` (groupe `bureau`) écrit dans `[commun]` | ✅ |
+| F1b — le fichier porte uid 10000 / gid 2001, **identifiants de l'annuaire** | ✅ |
+| F2 — `sara` (groupe `stagiaires`) est **refusée** dans `[commun]` | ✅ |
+| F3 — `sara` **lit** `[public]`, ne peut pas y écrire | ✅ |
+| F4 — l'annuaire confirme groupe, membres, identité de `sara` | ✅ |
+
+**Ce que ce test démontre pour NexBSD :** l'axe identités du projet (`docs/14-reseau-netware.md`) n'est plus
+une intention. Un compte **créé uniquement dans l'annuaire** est authentifié, et son **droit d'accès à un
+partage est décidé par son groupe**, lui aussi dans l'annuaire. C'est exactement le modèle « annuaire
+central, droits attachés aux groupes » que le projet vise.
+
+**Ce qu'il ne démontre pas :** les **ACL NT** (droits fins à la Windows/NetWare, à distinguer des droits POSIX
+testés ici) ; le **chiffrement** LDAP/TLS (`ldap ssl = off` en laboratoire) ; la tenue **multi-serveurs** ;
+et la **persistance après redémarrage** — c'est précisément l'objet de T-04-G.
+
+**Historique :** essai 1 `ECHEC` (C-12 LDIF invalide, C-13 groupes sans SID) · essai 2 **RÉUSSI**.

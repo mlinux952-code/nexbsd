@@ -107,7 +107,7 @@ groupe `bureau` (ce qui explique l'échec de la preuve 4 du même essai).
 
 **Correctif :** `scripts/63` version 2 — ligne vide après chaque `-`.
 
-**Statut :** corrigé, à revalider (essai 2).
+**Statut :** **clos** — essai 2 de T-04-F réussi (2026-10-24) : les appartenances sont écrites et la preuve 4 de l'annuaire confirme `memberUid: omrane` dans le groupe `bureau`.
 
 ---
 
@@ -126,4 +126,4 @@ conversion d'identifiant POSIX → SID impossible. Ne jamais l'interpréter litt
 **Correctif :** `scripts/63` version 2 — les groupes portent `sambaSID` (RID 3001/3002), `sambaGroupType = 2`
 et `displayName`, avec un chemin de mise à niveau pour les groupes déjà existants.
 
-**Statut :** corrigé, à revalider (essai 2).
+**Statut :** **clos** — essai 2 de T-04-F réussi (2026-10-24) : `omrane` écrit dans `[commun]` et `sara` y est refusée. La règle est désormais écrite dans le protocole : sous `ldapsam:trusted`, **tout groupe référencé par un `gidNumber` doit porter son identité Samba**.
