@@ -1,7 +1,7 @@
 # Plan de tests — prototype 0
 
 **Date :** 2026-10-23
-**Statut : 4 tests sur 16 exécutés (2026-10-24).** T-01, T-03, T-04 et T-04-E sont réussis en machine virtuelle ; les 12 autres restent `NON EXÉCUTÉ`.
+**Statut : 4 tests réussis sur 17 (2026-10-24).** T-01, T-03, T-04 et T-04-E sont réussis en machine virtuelle ; T-04-F est écrit et attend son exécution ; les 12 autres restent `NON EXÉCUTÉ`.
 
 > **Exécution du 2026-10-23 (VM QEMU, émulation pure)** : FreeBSD 15.1-RELEASE démarre (81 s jusqu'à `login:`), ~100 Mo de RAM occupés au repos, Samba 4.23.11 installé depuis les dépôts, partage authentifié accessible **depuis une autre machine** avec écriture et relecture. Détails : `tests/results/`.
 
@@ -21,6 +21,7 @@
 | T-03 | Partage SMB et droits | prouver un partage fonctionnel et des droits corrects | Samba ≥ 4.23 en jail | `alice` tente d'écrire (doit échouer) ; `bob` écrit et relit (doit réussir) | deux comportements conformes, preuves capturées | — | **RÉUSSI (cœur)** — `tests/results/T-03-partage-samba.md` |
 | T-04 | Annuaire | authentifier via LDAP | OpenLDAP ≥ 2.6 disponible (sinon ADR de report) | `slapd` en jail, création d'un utilisateur, authentification d'un client, refus d'accès anonyme | authentification réussie, anonyme refusé | — | **REUSSI** le 2026-10-24 sur la VM du responsable — journal verbatim dans `tests/results/T-04-ldap-annuaire.md` |
 | T-04-E | Annuaire + fichiers | Samba authentifie **via LDAP** | T-04 (annuaire) et T-03 (Samba) réussis | `smb4.conf` en `passdb backend = ldapsam`, `smbpasswd -a`, `smbclient` | `pdbedit` voit le compte, `sambaSID` présent dans l'annuaire, `smbclient` réussit | `scripts/62`, `tests/results/T-04E-samba-ldap.md` | **RÉUSSI le 2026-10-24** (essai 3) — `sambaSID` dans l'annuaire, `smbclient` authentifié et partage lu. Réserve : rejouabilité du script v3 non encore démontrée |
+| T-04-F | Droits par **groupes de l'annuaire** | prouver qu'un compte qui n'existe que dans l'annuaire est authentifié et que ses droits viennent de son groupe | T-04-E réussi | `ldapsam:trusted = yes`, groupes `bureau`/`stagiaires` dans LDAP, `[commun]` en 2770 root:2001, `[public]` en lecture seule | `omrane` écrit et son fichier porte uid/gid de l'annuaire ; `sara` est **refusée** dans `[commun]` et lit `[public]` | `scripts/63`, `tests/results/T-04F-droits-groupes.md` | **À FAIRE** — protocole écrit, jamais exécuté |
 | T-05 | Isolation et pare-feu | surface d'attaque minimale | `pf` configuré | scan depuis un autre poste (`nmap` ou équivalent) ; `jls` ; `sockstat` | seuls les ports déclarés sont ouverts | — | NON EXÉCUTÉ |
 | T-05a | Fermeture par défaut | vérifier `block all` | idem | arrêter le service, rescanner | tous les ports filtrés | — | NON EXÉCUTÉ |
 | T-06 | Restauration | revenir à un état connu | sauvegarde existante | supprimer un fichier de configuration, restaurer, redémarrer | service fonctionnel, durée < 15 min | — | NON EXÉCUTÉ |

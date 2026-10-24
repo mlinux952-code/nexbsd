@@ -12,6 +12,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Corrigé** : `scripts/62-banc-T04E-samba-ldap.sh` **version 3** — attente active de l'écoute sur `:445` (90 s max), 5 reprises sur la preuve 3, repli sur l'adresse réseau de la VM, messages différenciés service / identité.
 - **REUSSI** : T-04-E **essai 3** (2026-10-24) — `smbclient //127.0.0.1/partage -U 'omrane%omranelab'` s'authentifie et liste le partage ; les trois preuves sont réunies. Verdict consigné, réserves (rejouabilité, droits multi-utilisateurs, TLS) écrites.
 - **Bilan des tests** : **4 sur 16** réussis (T-01, T-03, T-04, T-04-E).
+- **Ajouté** : `scripts/63-banc-T04F-droits-groupes.sh` — **T-04-F** : les droits décidés par des groupes de l'annuaire (`ldapsam:trusted = yes`, groupes `bureau`/`stagiaires`, compte `sara` créé **uniquement** dans l'annuaire). Syntaxe vérifiée ; **jamais exécuté**.
+- **Ajouté** : `tests/results/T-04F-droits-groupes.md` — fiche du test, avec la règle posée d'avance : un test de droits sans refus ne prouve rien.
 
 ### 2026-10-24 — Session S-014 : reprise professionnelle du banc
 - **Ajouté** : `docs/24-reprise-banc.md` — mode opératoire en 5 étapes (mise à jour du dépôt, console dans le terminal, service de fichiers, T-04, consignation).
