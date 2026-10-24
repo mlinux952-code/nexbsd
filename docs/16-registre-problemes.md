@@ -160,7 +160,37 @@ perdu ou régénéré, deux conséquences simultanées expliquent exactement ce 
 l'annuaire), et dater `secrets.tdb`. Un SID local différent, ou un `secrets.tdb` daté d'après le
 redémarrage, tranche.
 
-**Statut :** ouvert — hypothèse 1 éliminée, hypothèse 2 en cours de vérification.
+**Hypothèse 2 (secrets perdus) — ÉLIMINÉE le 2026-10-24 :**
+
+```
+root@freebsd:~ # net getlocalsid
+SID for domain NEXBSDFS is: S-1-5-21-692378897-511874203-3061570918
+
+root@freebsd:~ # ls -l /var/db/samba4/private/
+-rw-------  1 root wheel 425984 Oct 24 12:10 secrets.tdb
+```
+
+Le SID local est **identique** à celui de l'annuaire, et `secrets.tdb` porte la date du **12:10** — soit
+bien avant les redémarrages de 13:20. Les secrets ont donc survécu et le domaine n'a pas été régénéré.
+
+**État du diagnostic :** deux hypothèses éliminées par la preuve, aucune retenue à ce stade. Faits établis :
+
+| Fait vérifié | Conséquence |
+|---|---|
+| `pdbedit` lit le compte et les SID | `passdb`/`ldapsam` s'initialise après redémarrage |
+| `net getlocalsid` = SID de l'annuaire | le domaine est le bon |
+| `secrets.tdb` intact et ancien | pas de régénération de secrets |
+| `slapd` et `smbd` tournent, `:445` écoute | les services sont là |
+| `smbclient` → `NT_STATUS_LOGON_FAILURE` (2 comptes) | la **validation du mot de passe** échoue, alors que la **lecture** du compte réussit |
+
+**Pistes restantes, à départager :**
+1. **Droits de lecture sur l'attribut `sambaNTPassword`** : Samba doit lire l'empreinte du mot de passe pour
+   vérifier une session ; si l'annuaire ne l'autorise qu'à une liaison privilégiée et que cette liaison échoue,
+   la lecture du compte réussit mais la vérification échoue.
+2. **État propre au démarrage** : quelque chose diffère entre un `smbd` lancé par `rc.d` au démarrage et un
+   `smbd` relancé à chaud. Test discriminant : relancer le service maintenant et réessayer.
+
+**Statut :** ouvert — diagnostic en cours, deux hypothèses éliminées.
 
 ---
 
