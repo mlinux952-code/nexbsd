@@ -292,7 +292,9 @@ virsh --connect qemu:///session console nexbsd-test
 ```
 *(sortie : `Ctrl-]`)*
 
-**À vérifier, pas acquis (corrigé le 2026-10-24) :** la version précédente de ce document affirmait que l'image FreeBSD 15.1 ouvre déjà un `getty` sur `ttyu0`. C'était une **hypothèse non testée**. Dans `/etc/ttys`, `ttyu0` est réglé sur `onifconsole`, c'est-à-dire qu'il ne s'active **que si la console du noyau est le port série**. Tant que le chargeur démarre sur `vidconsole` (cas par défaut), `virsh console` risque d'afficher un écran vide.
+**VALIDÉ SUR LE BANC le 2026-10-24** : après application des trois commandes ci-dessous et redémarrage, `virsh console nexbsd-test` affiche `login:` dans un terminal Mint, `tty` renvoie `/dev/ttyu0`, et T-04 a été exécuté entièrement par ce canal. La fenêtre graphique n'est plus nécessaire.
+
+**Historique de la correction (2026-10-24) :** la version précédente de ce document affirmait que l'image FreeBSD 15.1 ouvre déjà un `getty` sur `ttyu0`. C'était une **hypothèse non testée**. Dans `/etc/ttys`, `ttyu0` est réglé sur `onifconsole`, c'est-à-dire qu'il ne s'active **que si la console du noyau est le port série**. Tant que le chargeur démarre sur `vidconsole` (cas par défaut), `virsh console` risque d'afficher un écran vide.
 
 **Si l'écran reste vide**, activer la console série dans l'invité, **depuis la fenêtre graphique**, en root :
 
