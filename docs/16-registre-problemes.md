@@ -198,7 +198,43 @@ bien avant les redémarrages de 13:20. Les secrets ont donc survécu et le domai
 3. **Correction durable** : si (1) est vrai, le correctif n'est pas de relancer à la main, mais que le service
    Samba **attende** que `slapd` réponde — une dépendance de démarrage, pas une manipulation.
 
-**Statut :** ouvert — diagnostic en cours, deux hypothèses éliminées.
+### CAUSE ÉTABLIE — 2026-10-25 19:18 UTC (démarrage à froid, journal exploité)
+
+```
+add_local_groups: SID S-1-5-21-692378897-511874203-3061570918-1001 -> getpwuid(10000) failed,
+                  is nsswitch configured?
+check_sam_security: make_server_info_sam() failed with 'NT_STATUS_NO_SUCH_USER'
+```
+
+**Traduction :** Samba trouve bien le compte dans l'annuaire et en déduit son identifiant POSIX
+(`uid 10000`). Il demande ensuite au **système local** « qui est l'utilisateur 10000 ? » — et le système
+répond **« personne »**, parce que le fichier `/etc/passwd` de la machine ne contient aucun compte d'uid
+10000. La construction du jeton d'authentification échoue, donc la session est refusée :
+`NT_STATUS_NO_SUCH_USER`.
+
+**Le défaut est donc architectural, pas technique :** l'annuaire **délivre** les identités, mais la
+machine **ne les résout pas**. Deux sources d'identités cohabitent sans se parler — c'est exactement ce
+qu'un serveur d'identités ne doit jamais faire.
+
+**Hypothèses formellement éliminées par cette sortie :**
+
+| Hypothèse | Preuve de son élimination |
+|---|---|
+| ordre de démarrage | le journal du 19:18 montre `smbldap_open_connection: connection opened` et la recherche du domaine **réussie** dès le démarrage ; le service attend ensuite les connexions |
+| secrets / domaine régénéré | SID local = SID de l'annuaire, `secrets.tdb` du 12:10 |
+| droits de lecture sur `sambaNTPassword` | l'attribut est **lisible** en anonyme : `sambaNTPassword: 4AD56ACE56BE3A9E9B6567B7B47EB0E8` |
+| mot de passe erroné | `check_sam_security` échoue sur `NT_STATUS_NO_SUCH_USER`, **pas** sur un échec de mot de passe |
+
+**Correctif retenu :** faire résoudre au système les identités de l'annuaire, via **`nss-pam-ldapd`
+(`nslcd`)** : `passwd` et `group` dans `/etc/nsswitch.conf` interrogent l'annuaire après les fichiers
+locaux. La machine et Samba partagent alors **une seule** source d'identités — c'est le modèle visé par
+le projet.
+
+**Point d'honnêteté :** la raison exacte pour laquelle T-04-F réussissait **avant** le redémarrage n'est
+pas encore établie avec certitude (état en mémoire/cache de jetons probable). Ce qui est établi : à froid,
+l'échec est systématique et sa cause est celle ci-dessus.
+
+**Statut :** cause établie — correctif en cours d'application (`scripts/65`).
 
 ---
 
