@@ -188,6 +188,19 @@ factuelle : **non**, ces 3,7 Go sont des **fichiers écrits sur le disque** (`/b
 les conserve tous et `make` reprend au fichier suivant. Seul le fichier **en cours de compilation** à
 l'instant de l'arrêt (quelques secondes de travail) est perdu.
 
+| 22:13:41 | 36 842 | 2 274 | ~758 | 3,8 Go |
+| 22:16:41 | 37 914 | 1 072 | ~357 | 3,8 Go |
+| 22:19:41 | 40 427 | 2 513 | ~838 | 3,9 Go |
+| 22:22:41 | 42 850 | 2 423 | ~808 | 3,9 Go |
+| 22:25:41 | 43 809 | 959 | ~320 | 4,0 Go |
+| 22:28:41 | 44 314 | 505 | ~168 | 4,0 Go |
+| 22:31:42 | 44 781 | 467 | ~156 | 4,0 Go |
+| **22:34:42** | **45 253** | 472 | ~157 | **4,0 Go** |
+
+**Seuil de 45 000 lignes atteint à 22:34:42**, conformément à la règle d'arrêt fixée par le responsable
+(`docs/30` §1 bis) : **arrêt propre décidé**, reprise le lendemain. Dernier relevé : **45 253 lignes**,
+**4,0 Go d'objets** sur `/build`, 23 Go libres, échange toujours négligeable.
+
 **Construction interrompue volontairement le 2026-10-25 vers 22:50 (heure locale)**, à la demande du
 responsable (fin de soirée). Arrêt **propre** de la VM (`virsh shutdown`), donc systèmes de fichiers
 synchronisés : les **3,1 Go d'objets déjà compilés sont conservés** et `make` **reprendra** au fichier
