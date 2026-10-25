@@ -343,5 +343,10 @@ qui détruit du travail**, puis en **push**.
 4. **Règle de méthode** : plus jamais de `git add -A` sans avoir lu `git status` ligne par ligne ; un commit
    ne doit contenir que ce que son message annonce (`git show --stat` obligatoire).
 
-**Statut :** correctifs appliqués le 2026-10-25 (instantané s027). **GitHub doit être remis d'aplomb par le
-responsable** avec cet instantané, qui contient la restauration.
+**Statut : CLOS le 2026-10-25.** Vérifié des deux côtés, verbatim :
+- sur la machine du responsable, le `git merge` de s027 affiche **17 lignes `create mode 100644 fork/…`** et
+  **aucune** ligne `delete mode` ; le `git push` réussit (`7d9fe1c..d999b1b  main -> main`) ;
+- `sh scripts/70-verifier-delta.sh` répond **`VERDICT : DELTA INTACT (17 fichiers, empreintes conformes)`**.
+
+Le delta est donc intact **localement, dans le dépôt Git, sur Mint et sur GitHub** : quatre lieux, une seule
+preuve rejouable.

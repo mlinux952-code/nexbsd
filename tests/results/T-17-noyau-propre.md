@@ -160,6 +160,15 @@ L'empreinte de la configuration compilée est bien `14c86800…eb301`, celle du 
 | 21:07:31 | 8 571 | 1 480 | ~493 | 2,3 Go |
 | 21:10:32 | 9 880 | 1 309 | ~436 | 2,3 Go |
 | 21:13:32 | 12 745 | 2 865 | **~955** | 2,4 Go |
+| 21:16:32 | 14 905 | 2 160 | ~720 | 2,4 Go |
+| 21:19:32 | 16 590 | 1 685 | ~562 | 2,5 Go |
+| 21:22:32 | 17 693 | 1 103 | ~368 | 2,6 Go |
+| 21:25:33 | 19 061 | 1 368 | ~456 | 2,7 Go |
+| 21:28:33 | 19 609 | 548 | ~183 | 2,7 Go |
+
+**Fin de la phase rapide** : le débit tombe de ~950 à ~183 lignes/min entre 21:13 et 21:28. Signature classique
+du passage aux tâches lourdes et silencieuses (`ctfmerge`, édition de liens, gros modules). Aucun signe
+d'erreur, échange toujours négligeable.
 
 **Lecture :** debit moyen ~650 lignes/min, avec une **acceleration** nette sur le dernier intervalle (phase des
 modules, composes de petits fichiers). Echange utilise : **56 K sur 3 Go** - la machine n'echange pas, donc
