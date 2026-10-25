@@ -124,3 +124,35 @@ service samba_server restart; sleep 12; smbclient //127.0.0.1/commun -U 'omrane%
 | 1 | Exécuter `scripts/66` (T-16, étage 1) | l'invite affiche `root@nexbsd`, les services répondent |
 | 2 | Regrouper les scripts `60`→`66` en **un composant** `components/identites/` | une machine nue devient serveur d'identités NexBSD par **une** commande |
 | 3 | Étages 2 et 3 de l'identité (chaîne de version, image propre) | bloqués par le profil **L3** (P-03) |
+
+---
+
+## Session S-018 — 2026-10-25 (soir)
+
+### Ce qui a changé
+
+- **Le responsable a tranché** : l'objectif est *un vrai système pour PC*, pas un FreeBSD modifié. Le projet
+  cesse donc d'empiler des tests de banc et **attaque la construction**.
+- **Poste mesuré** (verbatim, `docs/28` §2) : 3,7 Go de RAM, 4 fils, 67 Go libres. Verdict : **noyau oui,
+  monde/image non** — c'est la RAM qui bloque, pas le disque.
+- **ADR-0020** : dérogation **unique et bornée** à l'ADR-0010 pour un seul `buildkernel`, sous garde-fous,
+  avec disque de construction séparé (30 Go) et dérogation qui expire à la fin.
+- **Trois scripts d'étage 2** : `67` (préparer, empreinte SHA256 des sources épinglée), `68` (construire,
+  journalisé, `-j2` plafonné par la RAM), `69` (installer sans perdre le noyau d'origine).
+- **Provenance fermée** : `src.txz` de 15.1-RELEASE, 253 039 000 o, `cf5762da…a89e1`, `releng/15.1`,
+  révision `96841ea08dcf`. Et la régénération de `NEXBSD_L1` a été vérifiée **bit à bit** contre le dépôt.
+
+### Prochaine action
+
+| # | Action | Critère de réussite |
+|---|---|---|
+| 1 | Arrêter la VM, la porter à **2 048 Mo**, ajouter un **disque de 30 Go** | la VM démarre et voit `ada1` |
+| 2 | `scripts/67` dans la VM | `ETAT : PRET A CONSTRUIRE` |
+| 3 | `scripts/68 --lancer` puis `--verifier` (2 à 6 h) | `ETAT : NOYAU CONSTRUIT` |
+| 4 | `scripts/69`, `reboot`, T-17 | `uname -i` = `NEXBSD_L1` et banc **11/11** |
+| 5 | Regrouper `60`→`69` en `components/identites/` (livrable 11) | une machine nue devient serveur d'identités par une commande |
+
+### Point de méthode maintenu
+
+Une commande à la fois, sortie réelle collée, résultat **verbatim** dans `tests/results/`. Aucun résultat
+n'est annoncé avant d'avoir été lu à l'écran.

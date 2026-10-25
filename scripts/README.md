@@ -1,6 +1,6 @@
-# Scripts de préparation — Linux Mint
+# Scripts — préparation (Mint) et banc (VM FreeBSD)
 
-Quatre scripts, aucun ne compile quoi que ce soit (cf. ADR-0010). Tous ont été testés en syntaxe ; `00`, `10` ont été exécutés dans un environnement de test, `20` et `30` n'ont **pas** été exécutés sur du matériel réel.
+Les scripts `00` à `40` sont des outils de préparation **lecture seule** pour la station Mint. Les scripts `60` à `69` s'exécutent **dans la VM FreeBSD** (banc). Jusqu'à l'ADR-0020, aucun ne compilait quoi que ce soit ; depuis l'ADR-0020, **`68` compile un noyau** — c'est la seule exception, bornée, et le monde/l'image restent interdits sur ce poste. Tous ont été testés en syntaxe ; `00`, `10` ont été exécutés dans un environnement de test, `20` et `30` n'ont **pas** été exécutés sur du matériel réel.
 
 | Script | Ce qu'il fait | Modifie le système ? |
 |---|---|---|

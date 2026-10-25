@@ -5,6 +5,15 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-25 — Session S-018 : campagne de construction du noyau (étage 2)
+- **Poste du responsable mesuré, verbatim** : 3,7 Go de RAM (787 Mo disponibles), 4 fils, **67 Go libres**. Conclusion chiffrée : le **noyau est constructible**, le **monde et l'image ne le sont pas** sur ce poste.
+- **Ajouté** : `docs/decisions/ADR-0020-derogation-construction-noyau.md` — dérogation **unique et bornée** à l'ADR-0010 : un seul `buildkernel`, garde-fous mesurés, disque séparé, dérogation qui expire à la fin.
+- **Ajouté** : `docs/28-campagne-construction-noyau.md` — protocole complet en 8 étapes, provenance **épinglée** (`src.txz` 253 039 000 o, SHA256 `cf5762da…a89e1`, `releng/15.1`, révision `96841ea08dcf`), critères de réussite, retour arrière, et section « points sur les I ».
+- **Ajouté** : `scripts/67-preparer-construction-noyau.sh` (disque de construction, échange, sources vérifiées par empreinte, régénération de `NEXBSD_L1` **vérifiée bit à bit** contre le dépôt), `scripts/68-construire-noyau-nexbsd.sh` (garde-fous, `-j2` plafonné par la RAM, journal, modes `--etat`/`--suivre`/`--verifier`), `scripts/69-installer-noyau-nexbsd.sh` (sauvegarde du noyau d'origine, `installkernel`, `loader.conf`, **sans redémarrage automatique**).
+- **Ajouté** : `tests/results/T-17-noyau-propre.md` — protocole du test « le banc démarre sur un noyau construit par le projet » (`uname -i` = `NEXBSD_L1`, `uname -r` = `15.1-NEXBSD-L1`, rejeu 11/11).
+- **Vérifié** : la régénération de `NEXBSD_L1` depuis `GENERIC` 15.1 produit un fichier **identique au SHA256 près** à `build/fork/sys/amd64/conf/NEXBSD_L1`.
+- **Consigné** : synchronisation du dépôt par le responsable (`e7ede39..0193ec4` poussé sur GitHub), instantané **s020** rendu public sur Drive.
+
 ### 2026-10-25 — Session S-017 (suite) : le delta du fork retrouvé et restauré
 - **Découvert (C-16)** : `build/fork/` — 17 fichiers (noyau `NEXBSD_L1`, `src.conf`, `release.conf`, overlay, patch d'identité) — avait été **supprimé** par le commit `25ae838` (S-012, sans rapport), alors que la documentation continuait de le décrire.
 - **Restauré** depuis l'historique Git (`git checkout 3d4eceb -- build/`), vérifié fichier par fichier.

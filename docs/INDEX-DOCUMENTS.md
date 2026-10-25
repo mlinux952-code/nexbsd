@@ -25,6 +25,9 @@
 |---|---|---|
 | `docs/ETAT.md` | **ÉTAT** | l'état du projet en une page — source de vérité |
 | `docs/00-cadrage-phase0.md` | PROPOSITION | périmètre, hypothèses H-1→H-9, contraintes, critères S-1→S-9 |
+| `docs/28-campagne-construction-noyau.md` | PROPOSITION | **étage 2** : ressources mesurées du poste, provenance épinglée des sources, 8 étapes, points sur les I |
+| `docs/27-de-freebsd-a-nexbsd.md` | PROPOSITION | feuille de route en trois étages (identité · noyau propre · image propre) |
+| `docs/decisions/ADR-0020-derogation-construction-noyau.md` | PROPOSITION | dérogation unique et bornée à l'ADR-0010 pour un seul `buildkernel` |
 | `docs/09-cible-pc-faible.md` | PROPOSITION | cible L0-L3, budget de ressources opposable |
 | `docs/10-station-linux-mint.md` | PROPOSITION | station de préparation, VM QEMU, limites |
 | `docs/11-fork-pas-surcouche.md` | **PROPOSITION** | 3 modèles comparés, test des 7 questions, précédent HardenedBSD, 3 domaines |
