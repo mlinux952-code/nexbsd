@@ -44,6 +44,42 @@ L'étage 3 (l'image installable pour le PC de 2011) passera donc par la **voie B
 
 ---
 
+## 2 bis. La VM réelle du banc — identifiée le 2026-10-25 (ne plus deviner)
+
+| Élément | Valeur constatée |
+|---|---|
+| Hyperviseur | **KVM** (`/dev/kvm` présent), piloté par **libvirt en session utilisateur** |
+| Connexion | `qemu:///session` (**pas** `qemu:///system`, qui est vide) |
+| Domaine | **`nexbsd-test`**, état `running` |
+| Disque système | `~/nexbsd-vm/disque-test.qcow2` (1,3 Go, image sur copie-à-l'écriture) |
+| Image de base | `~/nexbsd-vm/FreeBSD-15.1-RELEASE-amd64-ufs.qcow2` (2,5 Go, **jamais modifiée**) |
+| Bus des disques | **virtio-blk** → dans FreeBSD les disques s'appellent **`vtbd0`, `vtbd1`** — *pas* `ada0`/`ada1` |
+| RAM actuelle | 1 536 Mo → **à porter à 2 048 Mo** |
+| Disque de construction | **absent** → à ajouter : 30 Go, qcow2, `vdb` |
+
+**Le piège évité :** avec virtio, `scripts/67` ne trouvera pas `ada1` mais `vtbd1`. Le script a été
+durci en conséquence : il **ignore** `cd*`/`md*`/`fd*` (un lecteur optique ne doit jamais être pris pour un
+disque de construction) et il **refuse** d'utiliser le disque qui porte la racine montée.
+
+**Commandes de la VM (hôte, une seule fois) :**
+
+```sh
+V="virsh --connect qemu:///session"
+$V destroy nexbsd-test                                  # extinction forcée si ACPI ne répond pas
+$V setmaxmem nexbsd-test 2048M --config                 # plafond
+$V setmem    nexbsd-test 2048M --config                 # valeur de travail
+qemu-img create -f qcow2 ~/nexbsd-vm/build-noyau.qcow2 30G
+$V attach-disk nexbsd-test --source ~/nexbsd-vm/build-noyau.qcow2 \
+   --target vdb --persistent --subdriver qcow2
+$V start nexbsd-test
+$V domblklist nexbsd-test ; $V dominfo nexbsd-test | grep -i memory
+```
+
+**Vérification dans la VM :** `geom disk list` doit montrer **deux** disques et `diskinfo -v vtbd1`
+doit annoncer ≈ 30 Go. C'est la preuve que le disque séparé existe (ADR-0020, point 5).
+
+---
+
 ## 3. Décision appliquée
 
 **ADR-0020** (nouveau) : dérogation **unique et bornée** à l'ADR-0010 pour ce seul noyau, sous garde-fous

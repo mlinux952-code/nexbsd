@@ -63,21 +63,43 @@ fi
 
 echo
 echo "########## BLOC B - disque de construction ##########"
+RACINE=$(df -k / | awk 'NR==2 {print $1}' | sed -E 's|^/dev/([a-z]+[0-9]+).*|\1|')
+info "disque systeme : $RACINE (il ne sera JAMAIS touche)"
+
 if [ -z "$DISQUE" ]; then
-  RACINE=$(df -k / | awk 'NR==2 {print $1}' | sed -E 's|^/dev/([a-z]+[0-9]+).*|\1|')
-  info "disque systeme : $RACINE (il ne sera PAS touche)"
+  # On ignore cd*/md*/fd* : un lecteur optique ou un disque memoire ne doit jamais
+  # etre pris pour le disque de construction (piege classique en VM).
   for D in $(geom disk list | sed -n 's/^Geom name: //p'); do
+    case "$D" in cd*|md*|fd*|acd*) info "ignore : $D (optique/memoire)"; continue ;; esac
     if [ "$D" != "$RACINE" ]; then DISQUE=$D; break; fi
   done
   [ -n "$DISQUE" ] || {
     ko "aucun disque de construction trouve."
     ko "Ajouter un disque de 30 Go a la VM (etape 2 de docs/28), puis relancer ce script."
+    ko "Ou nommer le disque explicitement : sh 67-preparer-construction-noyau.sh <nom>"
     exit 1
   }
-  info "disque retenu  : $DISQUE (detecte)"
+  info "disque retenu  : $DISQUE (detecte automatiquement)"
+else
+  info "disque fourni  : $DISQUE (choix explicite de l'operateur)"
 fi
 
-[ -c "/dev/$DISQUE" ] || { ko "/dev/$DISQUE n'existe pas"; exit 1; }
+[ -c "/dev/$DISQUE" ] || { ko "/dev/$DISQUE n'existe pas. Disques presents :"; geom disk list | sed -n 's/^Geom name: /  ...     /p'; exit 1; }
+
+# GARDE-FOU CRITIQUE : ne jamais toucher au disque du systeme.
+if [ "$DISQUE" = "$RACINE" ]; then
+  ko "REFUS : $DISQUE est le disque SYSTEME du banc (racine montee dessus)."
+  ko "Le disque de construction doit etre un disque SEPARE (ADR-0020)."
+  geom disk list | sed -n 's/^Geom name: /  ...     disque present : /p'
+  exit 1
+fi
+ok "disque de construction distinct du disque systeme"
+
+# Rappel utile : avec virtio, FreeBSD nomme les disques vtbd0/vtbd1, pas ada0/ada1.
+case "$DISQUE" in
+  vtbd*) info "disque virtio : $DISQUE (la VM du banc utilise virtio-blk)" ;;
+  ada*|da*) info "disque $DISQUE" ;;
+esac
 TAILLE_GO=$(diskinfo -v "$DISQUE" 2>/dev/null | awk '/mediasize in sectors/ {print int($1*512/1073741824)}')
 info "taille de $DISQUE : ${TAILLE_GO:-?} Go"
 if [ -n "${TAILLE_GO:-}" ] && [ "$TAILLE_GO" -lt 14 ]; then

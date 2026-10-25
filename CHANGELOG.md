@@ -5,6 +5,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-25 — Session S-018 (suite 2) : VM du banc identifiée, script 67 durci
+- **Identifié** : le banc est un domaine **libvirt `nexbsd-test` en session** (`qemu:///session`), disques dans `~/nexbsd-vm/`, bus **virtio** → les disques FreeBSD sont **`vtbd0`/`vtbd1`**, pas `ada0`/`ada1`.
+- **Durci** : `scripts/67` ignore désormais `cd*`/`md*`/`fd*` (piège du lecteur optique) et **refuse** le disque système de la racine ; message explicite si le nom est fourni en argument.
+- **Ajouté** : `docs/28` §2 bis — configuration réelle de la VM et commandes exactes d'agrandissement (RAM 2 048 Mo + disque de construction 30 Go).
+
 ### 2026-10-25 — Session S-018 (suite) : révision totale du projet
 - **Ajouté** : `docs/29-revision-totale.md` — audit contradictoire demandé par le responsable : chiffres vérifiables (58 commits, 136 fichiers, 20 tests dont **6 réussis**, 20 ADR dont **0 validée**, **0 noyau**, **0 image**, **0 installation réelle**), tableau « affirmation → preuve → verdict », risques ouverts, feuille de route **J1→J7** jusqu'à l'installation sur un PC.
 - **Consigné** : le poste est **KVM-capable** (`/dev/kvm`, `virsh`, `qemu-system-x86_64`) mais **aucune VM** n'est déclarée dans `qemu:///system` → mode de lancement de la VM à identifier avant tout agrandissement (on ne devine pas).
