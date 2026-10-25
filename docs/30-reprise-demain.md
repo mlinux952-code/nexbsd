@@ -21,6 +21,18 @@
 
 ---
 
+## 1 bis. Regle d'arret decidee le 2026-10-25 a 22:15 UTC
+
+Le responsable a fixe une regle simple pour la soiree : **attendre jusqu'a 45 000 lignes de journal**.
+- si la construction se termine avant ce seuil : `### code de retour : 0`, l'installation se fera le lendemain ;
+- si le seuil est atteint sans terminer : **arret propre de la VM** (`shutdown -p now`), reprise le lendemain.
+
+Rappel factuel qui justifie cette regle : les **3,7 Go d'objets deja compiles sont des fichiers sur disque**.
+Un arret propre les conserve tous ; `make` reprend au fichier suivant. On ne perd que le fichier en cours.
+C'est consigne ici pour que la decision soit lisible demain, et pas seulement dans une conversation.
+
+---
+
 ## 2. Ce matin, dans cet ordre
 
 ### ① 🖥️ MINT — démarrer la VM
