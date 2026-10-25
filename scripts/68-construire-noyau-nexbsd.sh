@@ -65,11 +65,24 @@ if [ "$MODE" = "--etat" ]; then
     attn "aucune construction en cours"
   fi
   if [ -n "$JOURNAL_EXISTANT" ]; then
-    info "journal    : $JOURNAL_EXISTANT ($(wc -l < "$JOURNAL_EXISTANT" | tr -d ' ') lignes)"
-    echo "  --- 12 dernieres lignes ---"
-    tail -12 "$JOURNAL_EXISTANT" | sed 's/^/  | /'
-    echo "  --- erreurs eventuelles ---"
-    grep -iE "(^|[^a-z])(error|erreur|panic|No space|Cannot allocate|signal 11)" "$JOURNAL_EXISTANT" | tail -5 | sed 's/^/  | /' || info "aucune ligne d'erreur detectee"
+    LIGNES=$(wc -l < "$JOURNAL_EXISTANT" | tr -d ' ')
+    info "journal    : $JOURNAL_EXISTANT ($LIGNES lignes)"
+    # Progression : le noyau est d'abord lie en kernel.full, puis devient kernel a la fin.
+    KF="$OBJ/build/src/amd64.amd64/sys/$KERNCONF/kernel.full"
+    KK="$OBJ/build/src/amd64.amd64/sys/$KERNCONF/kernel"
+    if [ -f "$KK" ]; then info "noyau final : PRESENT ($(du -h "$KK" | awk '{print $1}'))"
+    elif [ -f "$KF" ]; then info "noyau lie en kernel.full ($(du -h "$KF" | awk '{print $1}')) : phase des MODULES en cours"
+    else info "noyau pas encore lie : phase de compilation des sources du noyau"; fi
+    info "espace utilise sur /build : $(df -h /build | awk 'NR==2 {print $3" / "$2}')"
+    echo "  --- 6 dernieres lignes (raccourcies) ---"
+    tail -6 "$JOURNAL_EXISTANT" | cut -c1-150 | sed 's/^/  | /'
+    echo "  --- erreurs REELLES (le drapeau -Werror n'est pas une erreur) ---"
+    ERRLIGNES=$(grep -nE "(error:|Error code|Stop\.|No space left|Cannot allocate memory|out of swap|signal (6|11)|panic:)" "$JOURNAL_EXISTANT" 2>/dev/null | grep -v -e "-Werror" | tail -6)
+    if [ -n "$ERRLIGNES" ]; then
+      echo "$ERRLIGNES" | cut -c1-200 | sed 's/^/  | /'
+    else
+      info "aucune erreur reelle detectee"
+    fi
   fi
   echo
   info "noyau produit ?"

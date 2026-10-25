@@ -293,3 +293,25 @@ par fichier (17 fichiers, 149 Ko). Commit de restauration dédié.
 et une affirmation documentaire doit être **vérifiable par une commande**, pas par la mémoire.
 
 **Statut :** **clos** le 2026-10-25 (delta restauré).
+
+---
+
+## C-17 — La détection d'erreur de `scripts/68` criait au loup sur `-Werror`
+
+**Constaté :** 2026-10-25, pendant la première construction du noyau. La section « erreurs éventuelles »
+de `--etat` affichait **dix lignes de commandes `cc`** parfaitement normales, ce qui a légitimement alarmé
+le responsable (« il y a une merde quelque part ? »).
+
+**Cause :** le filtre était `grep -iE "(^|[^a-z])(error|…)"`. Or chaque ligne de compilation contient
+`-Werror` et `-Wno-error=…` : le mot « error » y apparaît par construction. Le filtre détectait donc
+**toutes** les lignes de compilation, pas les erreurs.
+
+**Correctif :** motifs réels uniquement (`error:`, `Error code`, `Stop.`, `No space left`,
+`Cannot allocate memory`, `out of swap`, `signal 6/11`, `panic:`) et **exclusion explicite** de `-Werror`.
+Ajout au passage d'un vrai indicateur de progression : présence de `kernel.full` (noyau lié, phase des
+modules) puis de `kernel` (fichier final), espace consommé, temps écoulé.
+
+**Leçon :** un filtre d'erreur trop large est **plus dangereux** qu'aucun filtre : il apprend à ignorer
+les alertes. Une alerte doit être fiable, sinon elle ne vaut rien.
+
+**Statut :** corrigé le 2026-10-25 (dépôt), à livrer dans l'instantané s026.
