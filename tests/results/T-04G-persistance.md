@@ -1,4 +1,4 @@
-# T-04-G — Le banc revient seul après redémarrage — **EN COURS**
+# T-04-G — Le banc revient seul après redémarrage — **RÉUSSI (11/11)**
 
 **Protocole exécutable :** `scripts/64-banc-T04G-persistance.sh`, en **deux phases** (`avant` puis `apres`).
 **Prérequis :** T-04 (annuaire), T-04-E (authentification par l'annuaire) et T-04-F (droits par groupes) réussis — acquis le 2026-10-24.
@@ -91,19 +91,64 @@ différent de celui stocké dans l'annuaire. Le diagnostic automatique ajouté e
 non plus être effacé. Il est consigné, corrigé, et le test sera rejoué : un journal de tests qui ne montre
 que des succès ne vaut rien.
 
-### Entracte — 2026-10-25 : C-14 corrigé, rejeu imminent
+### Entracte — 2026-10-25 : C-14 corrigé
 
 Après établissement de la cause, `scripts/65` a été appliqué avec succès (`nss-pam-ldapd`) et toutes les
 preuves SMB ont été retrouvées **sans redémarrage** : `omrane` lit `[commun]`, `sara` lit `[public]` et
 reste **refusée** dans `[commun]`. Le test est rejoué en entier (essai 2) pour vérifier que ce correctif
 **survit lui-même** à une coupure — ce qui est précisément l'objet de T-04-G.
 
-### Essai 2 — à exécuter
+### Essai 2 — 2026-10-25 19:34 UTC — **RÉUSSI (11 contrôles sur 11)**
 
-_(en cours)_
+Redémarrage réel (`up 22 secs`), script `64` **version 2**, correctif NSS (`scripts/65`) en place.
+
+```
+  ...     releve : 10 entrees / SID sara=…-1010 / droits commun=[drwxrws--- 0 2001]
+----- 1. redemarrage effectif -----        [OK] la machine a bien redemarre
+----- 2. services revenus sans intervention -----
+  [OK] slapd tourne, sans commande manuelle
+  [OK] smbd ecoute sur :445 sans commande manuelle
+----- 3. donnees de l'annuaire intactes -----
+  [OK] aucune entree perdue          [OK] sara garde son SID
+  [OK] l'appartenance omrane -> bureau est conservee
+----- 4. donnees des partages conservees -----
+  [OK] fichier temoin retrouve : temoin ecrit avant redemarrage : 2026-10-25T19:32:43Z
+  [OK] les droits des partages sont inchanges   (avant : drwxrws--- 0 2001 — identique)
+----- 5. service reellement utilisable -----
+  [OK] omrane ecrit dans [commun] apres redemarrage
+  [OK] sara est toujours refusee dans [commun] : les droits survivent au redemarrage
+  [OK] sara lit le fichier temoin par le reseau : le partage fonctionne
+
+Controles reussis : 11 / 11
+T-04-G : REUSSI - le banc revient seul apres redemarrage, donnees et droits compris.
+```
+
+**Ce que ce test démontre :** le banc d'identités **survit à une coupure**. Trois services (`slapd`,
+`nslcd`, `samba_server`) reviennent **sans aucune commande manuelle**, l'annuaire conserve ses 10 entrées,
+son SID de domaine, l'appartenance `omrane → bureau`, les mots de passe, les droits POSIX des partages —
+et **les droits sont toujours appliqués** : `omrane` écrit, `sara` est refusée.
+
+**Note sur le faux échec de l'essai 1 :** il est désormais derrière nous (`drwxrws--- 0 2001` affiché
+**des deux côtés**), ce qui confirme que la v1 du script en était seule responsable (C-15).
 
 ## 5. Verdict
 
-**ECHEC à l'essai 1 (7/11)** — 2026-10-24 13:20 UTC. Les services reviennent seuls et les données sont
-intactes ; **l'authentification ne survit pas au redémarrage**. Script v2 écrit (lecture d'état corrigée,
-diagnostic automatique ajouté) ; diagnostic de la cause en cours, discriminant : redémarrer Samba seul.
+**RÉUSSI à l'essai 2 (11/11)** — 2026-10-25 19:34 UTC, VM `nexbsd-test`.
+
+| Preuve | Résultat |
+|---|---|
+| R0 redémarrage réel | ✅ |
+| R1 `slapd` revenu seul | ✅ |
+| R2 `smbd` écoute sur `:445` sans intervention | ✅ |
+| R3 annuaire intact (10 entrées) | ✅ |
+| R4 `sara` garde son SID | ✅ |
+| R5 `omrane → bureau` conservé | ✅ |
+| R6 fichier témoin retrouvé | ✅ |
+| R7 droits des partages inchangés | ✅ |
+| R8 `omrane` écrit dans `[commun]` | ✅ |
+| R9 `sara` refusée dans `[commun]` | ✅ |
+| R10 `sara` lit `[public]` par le réseau | ✅ |
+
+**Historique :** essai 1 `ECHEC 7/11` (défaut réel **C-14** : la machine ne résolvait pas les identités de
+l'annuaire ; plus un faux échec **C-15** dû au script) · **essai 2 : RÉUSSI 11/11** après correctif
+`nss-pam-ldapd`.
