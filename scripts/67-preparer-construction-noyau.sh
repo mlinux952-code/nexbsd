@@ -49,7 +49,8 @@ RAM_MO=$(sysctl -n hw.physmem | awk '{print int($1/1048576)}')
 NCPU=$(sysctl -n hw.ncpu)
 info "RAM totale      : ${RAM_MO} Mo"
 info "processeurs     : ${NCPU} fils (le poste a 2 coeurs physiques)"
-info "echange actuel  : $(swapinfo -h | awk 'NR==2 {print $2" utilises / "$3" libres"}')"
+SWAPLISTE=$( { swapinfo -h 2>/dev/null || pstat -s 2>/dev/null; } )
+info "echange actuel  : $(echo "$SWAPLISTE" | awk 'NR==2 {print $0}')"
 
 if [ "$RAM_MO" -lt 1800 ]; then
   ko "RAM ${RAM_MO} Mo < 1800 Mo : refus (garde-fou ADR-0020)."
@@ -154,7 +155,7 @@ ok "espace suffisant pour un noyau (>= 12000 Mo)"
 echo
 echo "########## BLOC C - echange sur le disque de construction ##########"
 mkdir -p "$BASE/logs" "$BASE/txz" "$BASE/obj"
-if [ -f "$BASE/logs/md_swap" ] && swapinfo | grep -q "^/dev/$(cat "$BASE/logs/md_swap")"; then
+if [ -f "$BASE/logs/md_swap" ] && echo "$SWAPLISTE" | grep -q "^/dev/$(cat "$BASE/logs/md_swap")"; then
   ok "echange deja actif sur /dev/$(cat "$BASE/logs/md_swap")"
 else
   if [ ! -f "$BASE/swap0" ]; then
@@ -169,7 +170,7 @@ else
     attn "echange non active : la construction reste possible mais plus risquee"
   fi
 fi
-info "echange total : $(swapinfo -h | awk 'NR>1 {t+=$2} END {print t" Mo"}')"
+info "echange total :"; echo "$SWAPLISTE" | sed 's/^/  ...     /' 
 
 echo
 echo "########## BLOC D - sources FreeBSD 15.1-RELEASE, empreinte verifiee ##########"

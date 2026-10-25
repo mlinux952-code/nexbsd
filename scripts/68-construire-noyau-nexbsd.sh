@@ -103,7 +103,7 @@ ok "arbre source et configuration presents"
 
 RAM_MO=$(sysctl -n hw.physmem | awk '{print int($1/1048576)}')
 NCPU=$(sysctl -n hw.ncpu)
-SWAP_MO=$(swapinfo -h | awk 'NR>1 {t+=$2} END {print t+0}')
+SWAP_MO=$( { swapinfo -k 2>/dev/null || pstat -s 2>/dev/null; } | awk 'NR>1 && $2 ~ /^[0-9]+$/ {t+=$2} END {print int(t/1024)}')
 LIBRE_MO=$(df -k "$OBJ" | awk 'NR==2 {print int($4/1024)}')
 info "RAM ${RAM_MO} Mo · echange ${SWAP_MO} Mo · ${NCPU} fils · ${LIBRE_MO} Mo libres dans $OBJ"
 
