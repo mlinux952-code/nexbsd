@@ -78,6 +78,11 @@ $V domblklist nexbsd-test ; $V dominfo nexbsd-test | grep -i memory
 **Vérification dans la VM :** `geom disk list` doit montrer **deux** disques et `diskinfo -v vtbd1`
 doit annoncer ≈ 30 Go. C'est la preuve que le disque séparé existe (ADR-0020, point 5).
 
+**Fait le 2026-10-25 (verbatim)** : `Disk attached successfully` · `vda` = `disque-test.qcow2`,
+`vdb` = `build-noyau.qcow2` · `Max memory: 2097152 KiB` · `Used memory: 2097152 KiB` ·
+`formatting … size=32212254720` (30 Gio, creux). La VM a été **arrêtée proprement** avant modification
+(`domaine arrete (id) : -`) : aucune modification à chaud, aucun risque pour le banc validé.
+
 ---
 
 ## 3. Décision appliquée

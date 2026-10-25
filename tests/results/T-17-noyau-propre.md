@@ -51,9 +51,35 @@ sh /tmp/64-banc-T04G-persistance.sh          # doit rejouer 11/11
 
 ## 5. Journal d'exécution
 
-### Essai 1 — à exécuter
+### Essai 1 — en cours (2026-10-25, S-018)
 
-_(vide — les sorties seront collées ici **verbatim**, y compris en cas d'échec)_
+#### Étape 0 — préparation de la VM (hôte 🖥️ MINT), **exécutée**
+
+Commandes (libvirt en session) : `shutdown`, `setmaxmem 2048M --config`, `setmem 2048M --config`,
+`qemu-img create -f qcow2 ~/nexbsd-vm/build-noyau.qcow2 30G`, `attach-disk --target vdb --persistent`,
+`start`. Sortie **verbatim** :
+
+```
+Domain 'nexbsd-test' is being shutdown
+domaine arrete (id) : -
+Formatting '/home/omrane/nexbsd-vm/build-noyau.qcow2', fmt=qcow2 cluster_size=65536 extended_l2=off
+  compression_type=zlib size=32212254720 lazy_refcounts=off refcount_bits=16
+Disk attached successfully
+Domain 'nexbsd-test' started
+ Target   Source
+----------------------------------------------------
+ vda      /home/omrane/nexbsd-vm/disque-test.qcow2
+ vdb      /home/omrane/nexbsd-vm/build-noyau.qcow2
+Max memory:     2097152 KiB
+Used memory:    2097152 KiB
+```
+
+Lecture : arrêt **propre** (id `-`), disque de construction **32 212 254 720 o = 30 Gio** (qcow2 creux),
+disque attaché **de façon persistante**, RAM **2 097 152 Kio = 2 048 Mo**. Étape 0 : **RÉUSSIE**.
+
+#### Étape 1 — `scripts/67` dans la VM
+
+_(à remplir : sortie verbatim, y compris en cas d'échec)_
 
 | Étape | Résultat | Verdict |
 |---|---|---|
