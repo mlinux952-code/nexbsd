@@ -40,6 +40,16 @@ KERNCONF=NEXBSD_L1
 SURVERSION=NEXBSD-L1
 MODE=${1:---lancer}
 
+# Un fichier .pid peut survivre a un redemarrage ; le numero peut alors appartenir a
+# un processus SANS RAPPORT (recyclage de pid). On verifie donc AUSSI la commande.
+construction_vivante() {
+  [ -f "$LOGS/buildkernel.pid" ] || return 1
+  P=$(cat "$LOGS/buildkernel.pid" 2>/dev/null)
+  [ -n "$P" ] || return 1
+  kill -0 "$P" 2>/dev/null || return 1
+  ps -p "$P" -o command= 2>/dev/null | grep -q "buildkernel"
+}
+
 echo "########## ETAGE 2 / ETAPE 2 : construire le noyau $KERNCONF ##########"
 echo "# date : $(date -u +%FT%TZ) ; hote : $(hostname) ; systeme : $(uname -sr)"
 
@@ -58,11 +68,15 @@ JOURNAL_EXISTANT=$(ls -t "$LOGS"/buildkernel-*.log 2>/dev/null | head -1)
 
 if [ "$MODE" = "--etat" ]; then
   echo
-  if [ -f "$LOGS/buildkernel.pid" ] && kill -0 "$(cat "$LOGS/buildkernel.pid")" 2>/dev/null; then
+  if construction_vivante; then
     ok "construction EN COURS (pid $(cat "$LOGS/buildkernel.pid"))"
     info "depuis : $(cat "$LOGS/buildkernel.debut" 2>/dev/null)"
   else
-    attn "aucune construction en cours"
+    attn "aucune construction en cours (un pid residuel a pu etre recycle : ignore)"
+    if [ -f "$LOGS/buildkernel.pid" ]; then
+      info "pid enregistre : $(cat "$LOGS/buildkernel.pid") — sa commande n'est pas un buildkernel"
+      info "pour reprendre : sh 68-construire-noyau-nexbsd.sh --lancer (make repart ou il s'est arrete)"
+    fi
   fi
   if [ -n "$JOURNAL_EXISTANT" ]; then
     LIGNES=$(wc -l < "$JOURNAL_EXISTANT" | tr -d ' ')
@@ -128,9 +142,14 @@ if [ "$RAM_MO" -ge 6000 ]; then J=$NCPU; fi
 if [ "$NCPU" -lt 2 ]; then J=1; fi
 ok "parallelisme retenu : -j$J (plafonne par la RAM, pas par la bonne volonte)"
 
-if [ -f "$LOGS/buildkernel.pid" ] && kill -0 "$(cat "$LOGS/buildkernel.pid")" 2>/dev/null; then
+if construction_vivante; then
   ko "une construction tourne deja (pid $(cat "$LOGS/buildkernel.pid")) — voir --etat"
   exit 1
+fi
+# Reprise apres arret ou redemarrage : les objets deja compiles sont conserves.
+if [ -d "$OBJ/build/src/amd64.amd64/sys/$KERNCONF" ]; then
+  DEJA=$(du -sh "$OBJ/build/src/amd64.amd64/sys/$KERNCONF" 2>/dev/null | awk '{print $1}')
+  info "reprise : $DEJA d'objets deja construits seront reutilises (make ne recommence pas)"
 fi
 
 echo

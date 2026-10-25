@@ -166,6 +166,18 @@ L'empreinte de la configuration compilée est bien `14c86800…eb301`, celle du 
 | 21:25:33 | 19 061 | 1 368 | ~456 | 2,7 Go |
 | 21:28:33 | 19 609 | 548 | ~183 | 2,7 Go |
 
+| 21:31:33 | 20 687 | 1 078 | ~359 | 2,8 Go |
+| 21:34:33 | 21 557 | 870 | ~290 | 2,8 Go |
+| 21:37:33 | 23 101 | 1 544 | ~515 | 2,9 Go |
+| 21:40:33 | 23 693 | 592 | ~197 | 3,0 Go |
+| 21:43:33 | 24 897 | 1 204 | ~401 | 3,0 Go |
+| 21:46:33 | 27 228 | 2 331 | ~777 | 3,1 Go |
+
+**Construction interrompue volontairement le 2026-10-25 vers 22:50 (heure locale)**, à la demande du
+responsable (fin de soirée). Arrêt **propre** de la VM (`virsh shutdown`), donc systèmes de fichiers
+synchronisés : les **3,1 Go d'objets déjà compilés sont conservés** et `make` **reprendra** au fichier
+suivant, sans rien recommencer. Aucune perte de travail : c'est la propriété d'un `build` incrémental.
+
 **Fin de la phase rapide** : le débit tombe de ~950 à ~183 lignes/min entre 21:13 et 21:28. Signature classique
 du passage aux tâches lourdes et silencieuses (`ctfmerge`, édition de liens, gros modules). Aucun signe
 d'erreur, échange toujours négligeable.
