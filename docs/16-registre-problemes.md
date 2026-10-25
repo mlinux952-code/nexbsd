@@ -270,3 +270,26 @@ La variable comparée était vide.
 
 **Statut :** corrigé. Leçon générale retenue : **un fichier d'état n'est pas du code** ; on le lit, on ne
 l'exécute pas.
+
+---
+
+## C-16 — Le delta du fork avait été supprimé par un commit sans rapport
+
+**Constaté :** 2026-10-25, en cherchant le delta pour répondre à la demande « un système à part entière ».
+Les dossiers `build/`, `components/`, `release/` étaient **absents ou vides**, alors que `docs/22` et
+`docs/15` décrivaient un delta complet (noyau `NEXBSD_L1`, `src.conf`, `release.conf`, overlay, patch).
+
+**Cause :** le commit `25ae838` (« S-012 : abandon du mode terminal, virt-manager recommandé ») a **supprimé
+17 fichiers** de `build/fork/` — sans aucun rapport avec son objet. Suppression accidentelle, non détectée
+pendant deux sessions.
+
+**Aggravant :** la documentation a continué d'affirmer l'existence de ce delta. C'est précisément la faute
+que le projet interdit : décrire comme existant ce qui n'existe plus.
+
+**Résolution :** restauration depuis l'historique Git (`git checkout 3d4eceb -- build/`), vérifiée fichier
+par fichier (17 fichiers, 149 Ko). Commit de restauration dédié.
+
+**Leçon retenue :** un commit doit être **relu** (`git show --stat`) avant d'être considéré comme anodin ;
+et une affirmation documentaire doit être **vérifiable par une commande**, pas par la mémoire.
+
+**Statut :** **clos** le 2026-10-25 (delta restauré).

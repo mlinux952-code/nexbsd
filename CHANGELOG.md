@@ -5,6 +5,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-25 — Session S-017 (suite) : le delta du fork retrouvé et restauré
+- **Découvert (C-16)** : `build/fork/` — 17 fichiers (noyau `NEXBSD_L1`, `src.conf`, `release.conf`, overlay, patch d'identité) — avait été **supprimé** par le commit `25ae838` (S-012, sans rapport), alors que la documentation continuait de le décrire.
+- **Restauré** depuis l'historique Git (`git checkout 3d4eceb -- build/`), vérifié fichier par fichier.
+- **Ajouté** : `docs/27-de-freebsd-a-nexbsd.md` — feuille de route honnête en trois étages (identité · noyau propre · image propre), avec les ressources réellement nécessaires et la décision à prendre sur ADR-0010 / P-03.
+
 ### 2026-10-25 — Session S-017 : cause de C-14 établie et correctif NSS
 - **Cause établie** (journal du démarrage à froid) : `add_local_groups: SID …-1001 -> getpwuid(10000) failed, is nsswitch configured?` puis `check_sam_security: make_server_info_sam() failed with 'NT_STATUS_NO_SUCH_USER'`. **L'annuaire délivre les identités, la machine ne les résout pas** — deux sources d'identités qui ne se parlent pas.
 - **Éliminé définitivement** : ordre de démarrage, secrets/domaine, droits de lecture sur `sambaNTPassword` (l'attribut est lisible), mot de passe erroné (l'échec est `NO_SUCH_USER`).

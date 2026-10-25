@@ -1,0 +1,45 @@
+Identité de version — proposition NON APPLIQUÉE, NON TESTÉE
+===========================================================
+
+Contexte vérifié le 2026-10-23 sur reference/newvers.sh-15.1 (releng/15.1) :
+
+    TYPE="FreeBSD"
+    REVISION="15.1"
+    BRANCH="RELEASE-p6"
+    if [ -n "${BRANCH_OVERRIDE}" ]; then BRANCH=${BRANCH_OVERRIDE}; fi
+
+Deux leviers existent, et un seul est déjà prévu par l'amont :
+
+1. BRANCH_OVERRIDE (PRÉVU PAR L'AMONT, sans patch)
+   `uname -r` devient « 15.1-NEXBSD-L1 ».
+   → utilisable immédiatement, aucun code amont modifié. C'est ce que fait release.conf.
+   → limite : `uname -s` renvoie toujours « FreeBSD ».
+
+2. TYPE (nécessite un patch) — ci-dessous, à vos risques.
+   `uname -s` renverrait « NexBSD ».
+
+POURQUOI CE N'EST PAS APPLIQUÉ AUJOURD'HUI :
+  - de nombreux scripts (ports, pkg, rc.d) testent `uname -s` = FreeBSD ;
+    changer TYPE peut casser la plateforme de façon silencieuse ;
+  - la règle du projet interdit d'introduire un changement non testé dans la base ;
+  - c'est une décision d'identité (ADR-0015), pas une modification technique anodine :
+    elle doit être prise en connaissance du risque, et vérifiée par une compilation réelle.
+
+PATCH PROPOSÉ (unified diff, à appliquer depuis la racine de l'arbre source) :
+
+--- a/sys/conf/newvers.sh
++++ b/sys/conf/newvers.sh
+@@
+-TYPE="FreeBSD"
++# NexBSD : identité de version. Voir docs/22-delta-nexbsd.md.
++# Le repli sur FreeBSD est volontaire : sans la variable, le comportement amont est intact.
++TYPE="${NEXBSD_TYPE:-FreeBSD}"
+ REVISION="15.1"
+
+CONTRÔLE APRÈS APPLICATION (obligatoire, non réalisé) :
+  - `uname -s` == NexBSD ; `uname -r` == 15.1-NEXBSD-L1 ;
+  - `pkg -v` fonctionne ; `pkg install` fonctionne ; les rc.d démarrent ;
+  - `freebsd-update` refuse explicitement (attendu : plus notre système à mettre à jour).
+
+TANT QUE CE PATCH N'EST PAS APPLIQUÉ ET COMPILÉ, NexBSD n'a PAS d'identité système :
+il a une identité de version, et un nom sur ses fichiers. Il faut le dire ainsi.
