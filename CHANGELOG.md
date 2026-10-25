@@ -5,6 +5,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-25 — Session S-017 : cause de C-14 établie et correctif NSS
+- **Cause établie** (journal du démarrage à froid) : `add_local_groups: SID …-1001 -> getpwuid(10000) failed, is nsswitch configured?` puis `check_sam_security: make_server_info_sam() failed with 'NT_STATUS_NO_SUCH_USER'`. **L'annuaire délivre les identités, la machine ne les résout pas** — deux sources d'identités qui ne se parlent pas.
+- **Éliminé définitivement** : ordre de démarrage, secrets/domaine, droits de lecture sur `sambaNTPassword` (l'attribut est lisible), mot de passe erroné (l'échec est `NO_SUCH_USER`).
+- **Ajouté** : `scripts/65-resoudre-identites-nss.sh` — correctif : `nss-pam-ldapd` (`nslcd`), `passwd`/`group` dans `nsswitch.conf` interrogent l'annuaire **après** les fichiers locaux, avec restauration automatique en cas d'échec. Syntaxe vérifiée ; **pas encore exécuté**.
+
 ### 2026-10-24 — Session S-016 (fin) : compte rendu normalisé, reprise sans conversation
 - **Ajouté** : `docs/25-compte-rendu-session.md` — livrable des **Parties XVIII et XX §7** : état, fichiers, décisions, résultats vérifiés, problème ouvert C-14 avec ses deux commandes discriminantes, prochaines actions. Le projet ne dépend plus du mur de discussion pour reprendre.
 - **Mis à jour** : `docs/ETAT.md` **v14** (T-04-G à 7/11, C-14 ouvert) ; `docs/INDEX-DOCUMENTS.md`.
