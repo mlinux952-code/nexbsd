@@ -77,9 +77,57 @@ Used memory:    2097152 KiB
 Lecture : arrêt **propre** (id `-`), disque de construction **32 212 254 720 o = 30 Gio** (qcow2 creux),
 disque attaché **de façon persistante**, RAM **2 097 152 Kio = 2 048 Mo**. Étape 0 : **RÉUSSIE**.
 
-#### Étape 1 — `scripts/67` dans la VM
+#### Étape 1 — `scripts/67` dans la VM : **RÉUSSIE** (2026-10-25 20:43→20:5x UTC)
 
-_(à remplir : sortie verbatim, y compris en cas d'échec)_
+Commande réellement exécutée : `sh /tmp/67-preparer-construction-noyau.sh vtbd1`
+(disque **nommé explicitement** : la détection automatique du dépôt n'avait pas encore été éprouvée ici.)
+
+Sortie **verbatim**, extraits décisifs :
+
+```
+RAM totale      : 2009 Mo
+processeurs     : 2 fils (le poste a 2 coeurs physiques)
+[OK]    RAM suffisante pour un noyau (>= 1800 Mo) — derogation ADR-0020
+[ATTN]  RAM < 4000 Mo : le monde complet (buildworld) reste INTERDIT sur ce poste (ADR-0010).
+disque systeme : /dev/gpt/rootfs (il ne sera JAMAIS touche)
+disque fourni  : vtbd1 (choix explicite de l'operateur)
+[OK]    disque de construction distinct du disque systeme
+taille de vtbd1 : 30 Go
+vtbd1 created / vtbd1p1 added / systeme de fichiers UFS cree / /build monte depuis /dev/gpt/build
+entree fstab ajoutee (le montage survit au redemarrage)
+espace libre sur /build : 27359 Mo
+[OK]    2 Go d'echange actifs sur /dev/md0
+telechargement de src.txz (253 Mo) depuis download.freebsd.org ...
+taille telechargee : 253039000 octets (attendu 253039000)
+[OK]    empreinte SHA256 conforme : cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1
+[OK]    arbre extrait
+REVISION : REVISION="15.1"
+[OK]    /usr/src -> /build/src
+GENERIC de l'arbre : 02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878
+[OK]    GENERIC identique a la reference du depot (reference/GENERIC-15.1)
+NEXBSD_L1 genere    : 14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301
+[OK]    IDENTIQUE au fichier du depot (build/fork/sys/amd64/conf/NEXBSD_L1)
+[OK]    ident = NEXBSD_L1
+arbre source   : /build/src (1.7G)
+ETAT : PRET A CONSTRUIRE
+```
+
+**Les deux preuves décisives** (aucune ne vient d'une affirmation, toutes deux d'une empreinte calculée) :
+
+1. `GENERIC de l'arbre : 02491b53…d84878` **= référence du dépôt** → l'arbre extrait est bien celui de la
+   version installée, et la référence du dépôt est fiable.
+2. `NEXBSD_L1 genere : 14c86800…eb301` **= fichier du dépôt** → la configuration qui va être compilée est
+   **prouvablement** celle de `build/fork/`, à l'octet près.
+
+**Observations consignées :**
+- La VM annonce **2 fils** (et non 4 comme l'hôte) : `-j2` reste le bon réglage.
+- Ligne cosmétique `echange total : 6 Mo` : calcul d'affichage fautif (unités `1.0G`/`2.0G` additionnées),
+  **corrigé depuis** dans le dépôt. N'affecte aucune opération : l'échange réel est bien de 2 Go + 1 Go.
+- 27 359 Mo libres sur `/build` pour 12 000 exigés : marge confortable pour les objets.
+
+#### Étape 2 — `scripts/68 --lancer` (construction)
+
+_(à remplir)_
 
 | Étape | Résultat | Verdict |
 |---|---|---|
