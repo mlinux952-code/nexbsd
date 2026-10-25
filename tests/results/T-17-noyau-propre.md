@@ -125,9 +125,29 @@ ETAT : PRET A CONSTRUIRE
   **corrigé depuis** dans le dépôt. N'affecte aucune opération : l'échange réel est bien de 2 Go + 1 Go.
 - 27 359 Mo libres sur `/build` pour 12 000 exigés : marge confortable pour les objets.
 
-#### Étape 2 — `scripts/68 --lancer` (construction)
+#### Étape 2 — `scripts/68 --lancer` : **LANCÉE** (2026-10-25 20:53:43 UTC, pid 1676)
 
-_(à remplir)_
+Sortie **verbatim** :
+
+```
+RAM 2009 Mo · echange 6 Mo · 2 fils · 25344 Mo libres dans /build/obj
+[OK]    parallelisme retenu : -j2 (plafonne par la RAM, pas par la bonne volonte)
+configuration : /build/src/sys/amd64/conf/NEXBSD_L1
+empreinte     : 14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301
+delta vs GENERIC : 10 lignes
+ident         : ident         NEXBSD_L1
+commande exacte :
+| cd /build/src && env MAKEOBJDIRPREFIX=/build/obj KERNCONF=NEXBSD_L1 BRANCH_OVERRIDE=NEXBSD-L1 make -j2 buildkernel
+[OK]    construction lancee (pid 1676)
+journal : /build/logs/buildkernel-20261025T205343Z.log
+ETAT : CONSTRUCTION LANCEE (2 a 6 h). Rien ne se conclut avant la fin.
+```
+
+Notes : `delta vs GENERIC : 10 lignes` = 5 lignes retirées + 5 lignes de commentaire/ident ajoutées — cohérent
+avec `NEXBSD_L1.rapport`. `echange 6 Mo` reste le défaut d'affichage cosmétique (corrigé dans le dépôt).
+L'empreinte de la configuration compilée est bien `14c86800…eb301`, celle du dépôt.
+
+**Résultat de l'étape 2 : en attente de la fin de la construction.**
 
 | Étape | Résultat | Verdict |
 |---|---|---|
