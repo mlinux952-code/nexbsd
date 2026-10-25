@@ -5,6 +5,12 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-25 — Session S-018 (suite 3) : défaut réel trouvé dans `scripts/67` (identification du disque système)
+- **Défaut** : l'identification du disque système reposait sur le **nom** du périphérique (`ada0`, `vtbd0`). Or sur ce banc la racine est montée depuis **`/dev/gpt/rootfs`** : le nom ne correspond à aucun disque, la détection automatique aurait donc pu désigner **le disque système** comme disque de construction.
+- **Correctif** : on demande désormais à `gpart show -p` **quel disque porte la partition racine** (`est_disque_systeme()`), et le refus s'appuie sur ce test, plus sur une comparaison de chaînes.
+- **Mesure conservatoire** : pour l'exécution du 2026-10-25, le disque est **nommé explicitement** (`vtbd1`) — on n'exécute pas une détection automatique tant qu'elle n'a pas été éprouvée sur le banc.
+- **Leçon** : un garde-fou qui compare des **noms** ne protège de rien ; il doit comparer des **faits** (quelle partition est montée sur quelle racine).
+
 ### 2026-10-25 — Session S-018 (suite 2) : VM du banc identifiée, script 67 durci
 - **Identifié** : le banc est un domaine **libvirt `nexbsd-test` en session** (`qemu:///session`), disques dans `~/nexbsd-vm/`, bus **virtio** → les disques FreeBSD sont **`vtbd0`/`vtbd1`**, pas `ada0`/`ada1`.
 - **Durci** : `scripts/67` ignore désormais `cd*`/`md*`/`fd*` (piège du lecteur optique) et **refuse** le disque système de la racine ; message explicite si le nom est fourni en argument.
