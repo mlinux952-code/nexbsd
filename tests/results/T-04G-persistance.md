@@ -91,9 +91,16 @@ différent de celui stocké dans l'annuaire. Le diagnostic automatique ajouté e
 non plus être effacé. Il est consigné, corrigé, et le test sera rejoué : un journal de tests qui ne montre
 que des succès ne vaut rien.
 
+### Entracte — 2026-10-25 : C-14 corrigé, rejeu imminent
+
+Après établissement de la cause, `scripts/65` a été appliqué avec succès (`nss-pam-ldapd`) et toutes les
+preuves SMB ont été retrouvées **sans redémarrage** : `omrane` lit `[commun]`, `sara` lit `[public]` et
+reste **refusée** dans `[commun]`. Le test est rejoué en entier (essai 2) pour vérifier que ce correctif
+**survit lui-même** à une coupure — ce qui est précisément l'objet de T-04-G.
+
 ### Essai 2 — à exécuter
 
-_(vide)_
+_(en cours)_
 
 ## 5. Verdict
 

@@ -234,7 +234,26 @@ le projet.
 pas encore établie avec certitude (état en mémoire/cache de jetons probable). Ce qui est établi : à froid,
 l'échec est systématique et sa cause est celle ci-dessus.
 
-**Statut :** cause établie — correctif en cours d'application (`scripts/65`).
+**Correctif appliqué et vérifié — 2026-10-25 19:28 UTC :**
+
+```
+[OK] nss-pam-ldapd installe ; [OK] nslcd tourne
+[OK] resolu : omrane:*:10000:2001:Omrane:/home/omrane:/bin/sh
+[OK] resolu : sara:*:10002:2002:Sara Test:/home/sara:/bin/sh
+[OK] resolu : bureau:*:2001:omrane
+[OK] omrane s'authentifie et lit [commun]
+[OK] sara s'authentifie et lit [public]
+[OK] sara est bien refusee dans [commun] (refus explicite)
+Resolution NSS : uid10000=1 uid10002=1 gid2001=1 | SMB : omrane=1 sara=1 refus=1
+```
+
+**Statut :** **clos** le 2026-10-25 — la machine et Samba partagent désormais **une seule** source
+d'identités. Réserve : la persistance de ce correctif après redémarrage est précisément ce que T-04-G
+doit confirmer (rejeu en cours).
+
+**Règle retenue pour le futur composant `identites` :** un serveur Samba en `ldapsam` **exige** que la
+machine résolve les identités POSIX de l'annuaire (NSS) ; sans cela, l'authentification échoue en
+`NT_STATUS_NO_SUCH_USER` même avec un annuaire parfait.
 
 ---
 
