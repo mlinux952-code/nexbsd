@@ -172,6 +172,21 @@ L'empreinte de la configuration compilée est bien `14c86800…eb301`, celle du 
 | 21:40:33 | 23 693 | 592 | ~197 | 3,0 Go |
 | 21:43:33 | 24 897 | 1 204 | ~401 | 3,0 Go |
 | 21:46:33 | 27 228 | 2 331 | ~777 | 3,1 Go |
+| 21:49:33 | 28 949 | 1 721 | ~574 | 3,2 Go |
+| 21:52:34 | 30 055 | 1 106 | ~369 | 3,3 Go |
+| 21:55:34 | 30 879 | 824 | ~275 | 3,3 Go |
+| 21:58:34 | 31 435 | 556 | ~185 | 3,4 Go |
+| 22:01:34 | 32 181 | 746 | ~249 | 3,5 Go |
+| 22:04:34 | 32 723 | 542 | ~181 | 3,5 Go |
+| 22:07:36 | 33 572 | 849 | ~283 | 3,6 Go |
+| 22:10:41 | 34 568 | 996 | ~325 | 3,7 Go |
+
+**Volume atteint : 34 568 lignes, 3,7 Go d'objets.** Un `buildkernel` complet sur cette configuration produit
+typiquement de l'ordre de 35 000 à 45 000 lignes : la construction est **proche de son terme** au moment de
+l'arrêt. La question posée par le responsable — « est-ce que je perds les 14 % utilisés ? » — a une réponse
+factuelle : **non**, ces 3,7 Go sont des **fichiers écrits sur le disque** (`/build/obj`) ; un arrêt propre
+les conserve tous et `make` reprend au fichier suivant. Seul le fichier **en cours de compilation** à
+l'instant de l'arrêt (quelques secondes de travail) est perdu.
 
 **Construction interrompue volontairement le 2026-10-25 vers 22:50 (heure locale)**, à la demande du
 responsable (fin de soirée). Arrêt **propre** de la VM (`virsh shutdown`), donc systèmes de fichiers
