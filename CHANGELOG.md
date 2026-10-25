@@ -5,6 +5,10 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-24 — Session S-016 (fin) : compte rendu normalisé, reprise sans conversation
+- **Ajouté** : `docs/25-compte-rendu-session.md` — livrable des **Parties XVIII et XX §7** : état, fichiers, décisions, résultats vérifiés, problème ouvert C-14 avec ses deux commandes discriminantes, prochaines actions. Le projet ne dépend plus du mur de discussion pour reprendre.
+- **Mis à jour** : `docs/ETAT.md` **v14** (T-04-G à 7/11, C-14 ouvert) ; `docs/INDEX-DOCUMENTS.md`.
+
 ### 2026-10-24 — Session S-016 : T-04-G essai 1 (7/11), ordre de démarrage en cause
 - **Exécuté** : T-04-G essai 1 avec **redémarrage réel** — 7 contrôles sur 11. Les services reviennent **seuls** (`slapd`, `smbd` à l'écoute), l'annuaire est **intact** (10 entrées, SID et appartenances conservés), le fichier témoin est retrouvé.
 - **Constaté (C-14)** : après redémarrage, **toutes** les ouvertures de session échouent en `NT_STATUS_LOGON_FAILURE` alors qu'elles fonctionnaient en T-04-F. Hypothèse principale : **`samba_server` démarre avant `slapd`** → initialisation `ldapsam` manquée.
