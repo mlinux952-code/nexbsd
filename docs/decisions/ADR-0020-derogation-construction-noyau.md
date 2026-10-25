@@ -8,7 +8,7 @@
 ## Problème
 
 L'ADR-0010 reporte **toute** compilation au profil **L3** (machine puissante) dont l'existence n'est pas acquise
-(problème **P-03**). Le projet est donc bloqué : le delta `build/fork/` est écrit depuis la session S-010 et
+(problème **P-03**). Le projet est donc bloqué : le delta `fork/` est écrit depuis la session S-010 et
 **n'a jamais été compilé**. Une configuration de noyau non compilée n'est pas une preuve : c'est un brouillon.
 
 ## Mesure du poste (verbatim, 2026-10-25)

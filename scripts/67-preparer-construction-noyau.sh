@@ -12,7 +12,7 @@
 #   E. extrait l'arbre dans /build/src et fait pointer /usr/src dessus ;
 #   F. REGENERE la configuration NexBSD_L1 a partir du GENERIC de CET arbre, puis
 #      VERIFIE que son empreinte est identique a celle du depot NexusBSD
-#      -> la configuration compilee est prouvablement celle de build/fork/.
+#      -> la configuration compilee est prouvablement celle de fork/.
 #
 # CE QUE CE SCRIPT NE FAIT PAS : il ne compile rien (voir 68), il n'installe rien (voir 69).
 #
@@ -262,7 +262,7 @@ awk '
 H_CONF=$(sha256 -q "$CONF")
 info "NEXBSD_L1 genere    : $H_CONF"
 if [ "$H_CONF" = "$SHA_CONF_REF" ]; then
-  ok "IDENTIQUE au fichier du depot (build/fork/sys/amd64/conf/NEXBSD_L1)"
+  ok "IDENTIQUE au fichier du depot (fork/sys/amd64/conf/NEXBSD_L1)"
   info "=> la configuration qui sera compilee est prouvablement celle du depot."
 else
   attn "empreinte differente de celle du depot ($SHA_CONF_REF)."

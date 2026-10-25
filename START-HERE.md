@@ -114,7 +114,7 @@ Quand une session s'écarte (sujet hors périmètre, envie d'ajouter un composan
 | Recherches sourcées | `research/*/fiche.md` |
 | Matrices | `matrices/*.csv` |
 | Scripts de préparation | `scripts/` |
-| Squelette du delta propre (fork) | `build/fork/` |
+| Squelette du delta propre (fork) | `fork/` |
 | Historique des sessions | `reports/` |
 | **Où vit le projet (Drive, GitHub)** | `docs/20-depots-et-sauvegardes.md` |
 | **Sauvegarder la session** | `scripts/50-sauvegarder-session.sh` |

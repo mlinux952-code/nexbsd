@@ -23,24 +23,24 @@
 
 | Fichier | Ce qu'il fait | Vérifié ? |
 |---|---|---|
-| `build/fork/reference/GENERIC-15.1` | GENERIC **officiel** de `releng/15.1`, téléchargé et conservé comme référence | ✅ source amont, URL en §5 |
-| `build/fork/tools/generer-kernel-conf.sh` | **génère** le noyau NexBSD à partir de cette référence, par règles explicites | ✅ **exécuté**, sortie ci-dessous |
-| `build/fork/sys/amd64/conf/NEXBSD_L1` | le noyau du profil L1 (identité + retraits) | ✅ généré — ❌ **jamais compilé** |
-| `build/fork/sys/amd64/conf/NEXBSD_L1.rapport` | liste chaque ligne retirée et sa justification | ✅ produit |
-| `build/fork/src.conf` | options du monde, chacune **vérifiée** dans `src.conf.5` 15.1 | ✅ noms vérifiés — ❌ jamais utilisé |
-| `build/fork/release.conf` | identité et contenu de l'image (`KERNCONF`, `BRANCH_OVERRIDE`) | ❌ jamais exécuté |
-| `build/fork/overlay/etc/motd` | l'écran d'accueil de NexBSD, avec la mention FreeBSD obligatoire | ❌ non intégré |
-| `build/fork/overlay/etc/nexbsd-version` | fiche d'identité du système installé | ❌ non intégré |
-| `build/fork/overlay/etc/rc.conf.defaults` | services **activés au démarrage** (leçon du test T-03) | ❌ non intégré |
-| `build/fork/patches/0001-identite-version.patch` | fait passer `uname -s` à « NexBSD » | ❌ **non appliqué** (risque documenté) |
-| `build/fork/build-nexbsd.sh` | chaîne complète, avec garde-fous L3 | ❌ jamais exécuté (garde-fou testé) |
+| `fork/reference/GENERIC-15.1` | GENERIC **officiel** de `releng/15.1`, téléchargé et conservé comme référence | ✅ source amont, URL en §5 |
+| `fork/tools/generer-kernel-conf.sh` | **génère** le noyau NexBSD à partir de cette référence, par règles explicites | ✅ **exécuté**, sortie ci-dessous |
+| `fork/sys/amd64/conf/NEXBSD_L1` | le noyau du profil L1 (identité + retraits) | ✅ généré — ❌ **jamais compilé** |
+| `fork/sys/amd64/conf/NEXBSD_L1.rapport` | liste chaque ligne retirée et sa justification | ✅ produit |
+| `fork/src.conf` | options du monde, chacune **vérifiée** dans `src.conf.5` 15.1 | ✅ noms vérifiés — ❌ jamais utilisé |
+| `fork/release.conf` | identité et contenu de l'image (`KERNCONF`, `BRANCH_OVERRIDE`) | ❌ jamais exécuté |
+| `fork/overlay/etc/motd` | l'écran d'accueil de NexBSD, avec la mention FreeBSD obligatoire | ❌ non intégré |
+| `fork/overlay/etc/nexbsd-version` | fiche d'identité du système installé | ❌ non intégré |
+| `fork/overlay/etc/rc.conf.defaults` | services **activés au démarrage** (leçon du test T-03) | ❌ non intégré |
+| `fork/patches/0001-identite-version.patch` | fait passer `uname -s` à « NexBSD » | ❌ **non appliqué** (risque documenté) |
+| `fork/build-nexbsd.sh` | chaîne complète, avec garde-fous L3 | ❌ jamais exécuté (garde-fou testé) |
 
 ## 3. Ce que la génération du noyau a produit — et ce qu'elle n'a pas fait
 
 Exécution réelle du 2026-10-23 :
 
 ```
-Généré : build/fork/sys/amd64/conf/NEXBSD_L1
+Généré : fork/sys/amd64/conf/NEXBSD_L1
 TOTAL : 4 ligne(s) retirée(s) sur 393 du GENERIC d'origine.
 ```
 

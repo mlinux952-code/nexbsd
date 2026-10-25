@@ -26,11 +26,11 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Ajouté** : `docs/28-campagne-construction-noyau.md` — protocole complet en 8 étapes, provenance **épinglée** (`src.txz` 253 039 000 o, SHA256 `cf5762da…a89e1`, `releng/15.1`, révision `96841ea08dcf`), critères de réussite, retour arrière, et section « points sur les I ».
 - **Ajouté** : `scripts/67-preparer-construction-noyau.sh` (disque de construction, échange, sources vérifiées par empreinte, régénération de `NEXBSD_L1` **vérifiée bit à bit** contre le dépôt), `scripts/68-construire-noyau-nexbsd.sh` (garde-fous, `-j2` plafonné par la RAM, journal, modes `--etat`/`--suivre`/`--verifier`), `scripts/69-installer-noyau-nexbsd.sh` (sauvegarde du noyau d'origine, `installkernel`, `loader.conf`, **sans redémarrage automatique**).
 - **Ajouté** : `tests/results/T-17-noyau-propre.md` — protocole du test « le banc démarre sur un noyau construit par le projet » (`uname -i` = `NEXBSD_L1`, `uname -r` = `15.1-NEXBSD-L1`, rejeu 11/11).
-- **Vérifié** : la régénération de `NEXBSD_L1` depuis `GENERIC` 15.1 produit un fichier **identique au SHA256 près** à `build/fork/sys/amd64/conf/NEXBSD_L1`.
+- **Vérifié** : la régénération de `NEXBSD_L1` depuis `GENERIC` 15.1 produit un fichier **identique au SHA256 près** à `fork/sys/amd64/conf/NEXBSD_L1`.
 - **Consigné** : synchronisation du dépôt par le responsable (`e7ede39..0193ec4` poussé sur GitHub), instantané **s020** rendu public sur Drive.
 
 ### 2026-10-25 — Session S-017 (suite) : le delta du fork retrouvé et restauré
-- **Découvert (C-16)** : `build/fork/` — 17 fichiers (noyau `NEXBSD_L1`, `src.conf`, `release.conf`, overlay, patch d'identité) — avait été **supprimé** par le commit `25ae838` (S-012, sans rapport), alors que la documentation continuait de le décrire.
+- **Découvert (C-16)** : `fork/` — 17 fichiers (noyau `NEXBSD_L1`, `src.conf`, `release.conf`, overlay, patch d'identité) — avait été **supprimé** par le commit `25ae838` (S-012, sans rapport), alors que la documentation continuait de le décrire.
 - **Restauré** depuis l'historique Git (`git checkout 3d4eceb -- build/`), vérifié fichier par fichier.
 - **Ajouté** : `docs/27-de-freebsd-a-nexbsd.md` — feuille de route honnête en trois étages (identité · noyau propre · image propre), avec les ressources réellement nécessaires et la décision à prendre sur ADR-0010 / P-03.
 
@@ -76,8 +76,8 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Constat** : la VM du responsable tourne (virt-manager + KVM) et une invite root a été atteinte ; le copier-coller dans la fenêtre graphique ne fonctionne pas (absence de `spice-vdagent` dans l'invité) → contournement par `virsh console` et serveur HTTP local.
 
 ### 2026-10-23 — Session S-010 : le delta NexBSD devient du code
-- **Ajouté** : `build/fork/reference/` — GENERIC, `src.conf.5`, `newvers.sh`, `config.5` officiels de `releng/15.1` (provenance et URL consignées).
-- **Ajouté** : `build/fork/tools/generer-kernel-conf.sh` — **exécuté** : produit `NEXBSD_L1` depuis GENERIC avec 4 retraits motivés et un rapport auditable.
+- **Ajouté** : `fork/reference/` — GENERIC, `src.conf.5`, `newvers.sh`, `config.5` officiels de `releng/15.1` (provenance et URL consignées).
+- **Ajouté** : `fork/tools/generer-kernel-conf.sh` — **exécuté** : produit `NEXBSD_L1` depuis GENERIC avec 4 retraits motivés et un rapport auditable.
 - **Ajouté** : `src.conf` avec **uniquement des options vérifiées** dans la documentation amont ; `release.conf`, `overlay/etc/*`, `patches/0001-identite-version.patch` (non appliqué), `build-nexbsd.sh` (garde-fous testés).
 - **Ajouté** : `docs/22-delta-nexbsd.md` — distinction socle/produit, inventaire du delta, 7 questions, Q4 reformulée.
 - **Aucun fichier compilé, aucune image produit.**
@@ -121,7 +121,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 ### 2026-10-23 — Session S-004 : protocole anti-dérive et publication
 - **Ajouté** : `START-HERE.md` (protocole de session), `docs/ETAT.md` (état en une page), `docs/13-publication-grand-public.md` (10 portes G1-G10, 3 scénarios), ADR-0016.
 - **Ajouté** : `scripts/40-verifier-frontiere-licence.sh` (contrôle T-13, testé sur 3 cas).
-- **Ajouté** : `build/fork/` — squelette du delta propre (`src.conf`, `NEXBSD_L1`, `release.conf`, `build-nexbsd.sh`). **Aucun fichier compilé.**
+- **Ajouté** : `fork/` — squelette du delta propre (`src.conf`, `NEXBSD_L1`, `release.conf`, `build-nexbsd.sh`). **Aucun fichier compilé.**
 
 ### 2026-10-23 — Session S-003 : « système à part entière » → fork
 - **Ajouté** : `docs/11-fork-pas-surcouche.md` (3 modèles, test des 7 questions, précédent HardenedBSD), `docs/12-licences-et-frontieres.md`, ADR-0011 à 0015.

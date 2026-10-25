@@ -97,7 +97,7 @@ nexbsd/
 ├── matrices/                  matrices composants / fonctions / licences / compatibilité + risques
 ├── scripts/                   diagnostic hôte, vérification d'image, écriture USB garde-fou, lanceur QEMU
 ├── tests/                     plans et comptes rendus de tests (vide à ce stade)
-├── build/                     scripts de construction (vide à ce stade)
+├── fork/                      delta NexBSD (noyau NEXBSD_L1, src.conf, release.conf, overlay)
 ├── integration/               configurations d'intégration (vide à ce stade)
 └── reports/                   comptes rendus de session et de version
 ```

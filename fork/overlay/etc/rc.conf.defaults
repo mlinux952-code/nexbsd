@@ -1,0 +1,9 @@
+# Valeurs par défaut NexBSD (à installer dans /etc/rc.conf par la chaîne de release)
+# Choix justifiés par l'expérience du test T-03 du 2026-10-23 :
+#   un service relancé en 'onestart' meurt au redémarrage → tout service du profil est
+#   activé ici, jamais laissé à la main de l'utilisateur.
+hostname="nexbsd"
+sshd_enable="NO"          # aucun accès réseau entrant par défaut (R-13)
+samba_server_enable="YES" # quand la plateforme est installée
+syslogd_enable="YES"
+dumpdev="AUTO"

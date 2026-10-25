@@ -23,7 +23,7 @@
 | 11 | Prototype minimal | 🟡 **amorcé** | le **banc d'identités** existe et fonctionne en VM (T-01, T-03, T-04, T-04-E, T-04-F réussis). Mais il n'est pas encore un **livrable packagé** : il s'obtient en enchaînant quatre scripts à la main (`60`, `62`, `63`, `64`). Tant que ce n'est pas ramené à **un** composant installable et rejouable, le livrable reste partiel |
 | 12 | Rapport de tests | 🟡 **amorcé** | **5 tests réussis** avec journaux verbatim dans `tests/results/` (T-01, T-03, T-04, T-04-E, T-04-F), échecs compris et documentés (C-10→C-13). Manque : le **rapport de validation** unique exigé en sortie de phase 4 |
 | 13 | Registre des problèmes | ✅ **fait (ce jour)** | `docs/16-registre-problemes.md` |
-| 14 | Guide de construction | 🟡 **partiel** | `build/fork/README.md` + `build-nexbsd.sh` (non exécuté) |
+| 14 | Guide de construction | 🟡 **partiel** | `fork/README.md` + `build-nexbsd.sh` (non exécuté) |
 | 15 | Guide d'installation et de récupération | 🟡 **partiel** | `docs/plan-action.md` étapes 2-6 + `docs/hardware.md` §6 ; pas de guide dédié, car **aucune installation n'a été réalisée** |
 | 16 | Politique de sécurité | ✅ **fait** | `docs/security.md` |
 | 17 | Procédure de mise à jour | 🟡 **squelette** | `docs/17-procedure-mise-a-jour.md` — ne peut pas être validée avant qu'un système existe |
@@ -39,7 +39,7 @@
 
 | Règle du méga-prompt | Respectée ? | Preuve / remarque |
 |---|---|---|
-| Ne pas prétendre avoir exécuté des commandes, compilé, testé | ✅ | chaque document marque `NON EXÉCUTÉ` / `NON VALIDÉ` ; `build/fork/` le dit en tête de chaque fichier |
+| Ne pas prétendre avoir exécuté des commandes, compilé, testé | ✅ | chaque document marque `NON EXÉCUTÉ` / `NON VALIDÉ` ; `fork/` le dit en tête de chaque fichier |
 | Distinguer faits / hypothèses / propositions / résultats / problèmes | ✅ | étiquetage `[FAIT] [HYPOTHÈSE] [PROPOSITION] [À VÉRIFIER] [DÉCISION]` + `START-HERE.md` |
 | Ne jamais inventer un dépôt, une version, une compatibilité | ✅ | toutes les affirmations techniques portent une URL et une date de consultation |
 | Conserver source + URL + date + version | ✅ | tables « Sources » dans les 9 fiches de recherche |

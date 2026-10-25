@@ -1,0 +1,41 @@
+# NexBSD — configuration de noyau pour la cible L1 (PC faible)
+# ---------------------------------------------------------------------------
+# STATUT : [PROPOSITION] — AUCUN BUILD NI DÉMARRAGE RÉEL.
+#
+# Méthode volontairement conservatrice : on PART de GENERIC et on RETIRE.
+# Écrire une configuration de noyau depuis zéro est la première cause de
+# « ça compile mais la machine ne démarre pas / le clavier ne répond pas ».
+#
+# Règle : chaque "nodevice" doit être justifié par une fonction retirée du
+# périmètre. Dans le doute, on GARDE le pilote.
+# ---------------------------------------------------------------------------
+
+include GENERIC
+
+ident           NEXBSD_L1
+
+# --- matériel exclu du périmètre de la cible ---
+# (aucun retrait validé à ce jour : la liste ci-dessous est un EXEMPLE commenté,
+#  à activer seulement après avoir constaté l'absence du matériel concerné)
+#
+# nodevice      iscsi            # pas de SAN iSCSI sur un PC faible
+# nodevice      mpt             # contrôleurs RAID d'entreprise
+# nodevice      mps
+# nodevice      ciss
+# nodevice      fb              # framebuffer : à garder si pas de KMS
+# nodevice      hyperv          # invités Hyper-V
+# nodevice      vmx             # pas d'hôte de virtualisation en L1
+
+# --- options de noyau ---
+# MALLOC_PRODUCTION retire les vérifications de débogage de l'allocateur :
+# gain de performance, mais rend le diagnostic de corruption mémoire plus
+# difficile. À évaluer, pas à activer par réflexe.
+#
+# options     MALLOC_PRODUCTION
+
+# --- taille de l'éventuelle couche ZFS ---
+# ZFS est écarté du profil L1 (ADR-0009) : ne pas inclure les modules ZFS
+# réduit la taille du noyau et de l'image. À valider par un build.
+#
+# nodevice    zfs
+# nodevice    zfs_zstd

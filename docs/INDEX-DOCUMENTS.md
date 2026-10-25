@@ -125,7 +125,7 @@
 | `51-installer-depot-github.sh` | ✅ exécuté (3 cas, push testé vers un dépôt local factice) | installe le dépôt depuis le bundle et prépare GitHub ; refuse dossier existant ; ne pousse pas |
 | `50-sauvegarder-session.sh` | ✅ exécuté (2 cas : succès + mauvais répertoire) | instantané daté + `SHA256SUMS.txt` ; n'envoie rien par réseau |
 
-## 8. `build/fork/` — delta propre (aucun fichier compilé)
+## 8. `fork/` — delta propre (aucun fichier compilé)
 
 | Fichier | Statut | Rôle |
 |---|---|---|

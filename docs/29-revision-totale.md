@@ -62,7 +62,7 @@ ce projet ; aucune image n'a jamais été produite ; le PC de 2011 n'a jamais re
 
 ## 4. Le delta possédé : petit, vérifié, jamais compilé
 
-`build/fork/` (17 fichiers) contient **tout** ce que NexBSD ajoute à FreeBSD :
+`fork/` (17 fichiers) contient **tout** ce que NexBSD ajoute à FreeBSD :
 
 | Fichier | Delta réel |
 |---|---|

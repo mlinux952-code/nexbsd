@@ -3,7 +3,7 @@
 Exigé par la Partie XIII. **Aucune image n'a été produite.**
 
 Contiendra :
-- `release.conf` / scripts de construction (aujourd'hui : `build/fork/release.conf` + `build-nexbsd.sh`, non exécutés) ;
+- `release.conf` / scripts de construction (aujourd'hui : `fork/release.conf` + `build-nexbsd.sh`, non exécutés) ;
 - notes de version par version publiée ;
 - sommes de contrôle et signatures (porte G8 — mécanisme non choisi) ;
 - procédure de vérification destinée au public ;

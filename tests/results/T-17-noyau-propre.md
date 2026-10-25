@@ -106,7 +106,7 @@ REVISION : REVISION="15.1"
 GENERIC de l'arbre : 02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878
 [OK]    GENERIC identique a la reference du depot (reference/GENERIC-15.1)
 NEXBSD_L1 genere    : 14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301
-[OK]    IDENTIQUE au fichier du depot (build/fork/sys/amd64/conf/NEXBSD_L1)
+[OK]    IDENTIQUE au fichier du depot (fork/sys/amd64/conf/NEXBSD_L1)
 [OK]    ident = NEXBSD_L1
 arbre source   : /build/src (1.7G)
 ETAT : PRET A CONSTRUIRE
@@ -117,7 +117,7 @@ ETAT : PRET A CONSTRUIRE
 1. `GENERIC de l'arbre : 02491b53…d84878` **= référence du dépôt** → l'arbre extrait est bien celui de la
    version installée, et la référence du dépôt est fiable.
 2. `NEXBSD_L1 genere : 14c86800…eb301` **= fichier du dépôt** → la configuration qui va être compilée est
-   **prouvablement** celle de `build/fork/`, à l'octet près.
+   **prouvablement** celle de `fork/`, à l'octet près.
 
 **Observations consignées :**
 - La VM annonce **2 fils** (et non 4 comme l'hôte) : `-j2` reste le bon réglage.

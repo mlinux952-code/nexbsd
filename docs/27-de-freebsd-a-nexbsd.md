@@ -18,7 +18,7 @@ Autrement dit : nous avons prouvé qu'un serveur d'identités façon NetWare **f
 
 ## 2. Le delta du fork existe déjà — et il a été retrouvé ce jour
 
-Le projet disposait d'un delta écrit en session S-010 (`build/fork/`, 17 fichiers). **Il avait été supprimé
+Le projet disposait d'un delta écrit en session S-010 (`fork/`, 17 fichiers). **Il avait été supprimé
 par erreur** au commit `25ae838` (S-012, un commit sans rapport), et la documentation continuait d'en parler
 comme s'il existait. Il est **restauré** (voir registre **C-16**). Contenu retrouvé :
 

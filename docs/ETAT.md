@@ -127,13 +127,13 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | S-001 | 2026-10-23 | Phases 0 et 1 : cadrage, recherche, matrices, prototypes, plan | 26 fichiers, 8 fiches, 5 matrices, 8 ADR |
 | S-002 | 2026-10-23 | Cible PC faible + station Linux Mint | ADR-0009/0010, 4 scripts, 2 documents |
 | S-003 | 2026-10-23 | « Système à part entière » → modèle fork | ADR-0011 à 0015, 2 documents, 5 risques |
-| S-004 | 2026-10-23 | Protocole de session, objectif grand public, outillage licence | `START-HERE.md`, `ETAT.md`, ADR-0016, `build/fork/`, script 40 |
+| S-004 | 2026-10-23 | Protocole de session, objectif grand public, outillage licence | `START-HERE.md`, `ETAT.md`, ADR-0016, `fork/`, script 40 |
 | S-005 | 2026-10-23 | **Réseau : rôle des 4 composants, NCP sur IP, index complet** | ADR-0017/0018, `docs/14-reseau-netware.md`, `docs/INDEX-DOCUMENTS.md` |
 | S-006 | 2026-10-23 | **V-1 tranchée (client NCP réel) + conformité aux 20 livrables du mur** | ADR-0019, `research/ncp-ip/fiche.md`, `docs/15-conformite-mega-prompt.md`, `docs/vision.md`, `docs/08-schema-flux.md`, `docs/16-registre-problemes.md`, `docs/17-procedure-mise-a-jour.md`, `docs/19-guide-contribution.md`, `LICENSE`, `NOTICE`, `CHANGELOG.md`, `docs/etude-faisabilite.md`, dossiers `components/` `integration/` `release/` |
 | S-018 | 2026-10-25 | **Campagne de construction du noyau (étage 2) : poste mesuré, ADR-0020, scripts 67/68/69, provenance épinglée** | `docs/28-campagne-construction-noyau.md`, ADR-0020, `scripts/67`→`69`, `tests/results/T-17-noyau-propre.md` |
 | S-017 | 2026-10-25 | **C-14 clos, T-04-G 11/11, identité étage 1, C-16 (delta restauré), `docs/27`** | `scripts/65`/`66`, `docs/26`/`27`, `tests/results/T-04G-persistance.md`, `T-16-identite-banc.md` |
 | S-014 | 2026-10-24 | **Reprise du banc : méthode en 5 étapes, sans copier-coller, bundle s014 pour synchroniser le dépôt** | `docs/24-reprise-banc.md`, instantané s014 |
-| S-010 | 2026-10-23 | **Le delta NexBSD existe en fichiers : noyau NEXBSD_L1 généré depuis GENERIC, options vérifiées, identité, chaîne de construction** | `build/fork/` complet, `docs/22-delta-nexbsd.md` |
+| S-010 | 2026-10-23 | **Le delta NexBSD existe en fichiers : noyau NEXBSD_L1 généré depuis GENERIC, options vérifiées, identité, chaîne de construction** | `fork/` complet, `docs/22-delta-nexbsd.md` |
 | S-009 | 2026-10-23 | **Premiers tests réels en VM : T-01 et T-03 réussis ; Samba 4.23.11 et OpenLDAP 2.6/2.7 vérifiés** | `tests/results/`, `scripts/31-lancer-vm-freebsd.sh`, matrices K-01/K-09/K-10, ETAT v9 |
 | S-008 | 2026-10-23 | **GitHub enregistré + dépannage du push (4 erreurs réelles) + rattrapage des commits** | `docs/21-pousser-sur-github.md`, `scripts/51-installer-depot-github.sh`, bundle `s008` |
 | S-007 | 2026-10-23 | **Sauvegarde Drive + dépôt Git local + cahier des charges fonctionnel** | `docs/20-depots-et-sauvegardes.md`, `scripts/50-sauvegarder-session.sh`, `docs/02-cahier-des-charges-fonctionnel.md`, archives + bundle |

@@ -35,7 +35,7 @@ Trois scénarios honnêtes de « grand public » : **A** (expérimental, réalis
 Automatise le test **T-13** : détection de tout code copyleft dans l'arbre de base, avec exemptions justifiées par ADR.
 **Testé ici** : arbre propre → code 0 ; arbre contaminé (3 fichiers) → code 1 avec localisation exacte ; exemptions appliquées → 1 exempté, violations restantes comptées.
 
-### 1.5 Le squelette du delta propre — `build/fork/`
+### 1.5 Le squelette du delta propre — `fork/`
 `src.conf`, `NEXBSD_L1`, `release.conf`, `exceptions-licence.txt`, `build-nexbsd.sh`. **Aucun n'a été validé par une construction réelle**, et chacun porte cet avertissement en tête. Les garde-fous du script (refus hors FreeBSD, refus sous 8 Go de RAM ou 40 Go d'espace) sont la traduction directe d'ADR-0010.
 
 ## 2. Vérifications réellement effectuées
@@ -52,7 +52,7 @@ Automatise le test **T-13** : détection de tout code copyleft dans l'arbre de b
 
 ## 3. Fichiers créés / modifiés
 
-**Créés :** `START-HERE.md` · `docs/ETAT.md` · `docs/13-publication-grand-public.md` · `docs/decisions/ADR-0016-publication-grand-public.md` · `scripts/40-verifier-frontiere-licence.sh` · `build/fork/{README.md,src.conf,NEXBSD_L1,release.conf,exceptions-licence.txt,build-nexbsd.sh}` · ce compte rendu.
+**Créés :** `START-HERE.md` · `docs/ETAT.md` · `docs/13-publication-grand-public.md` · `docs/decisions/ADR-0016-publication-grand-public.md` · `scripts/40-verifier-frontiere-licence.sh` · `fork/{README.md,src.conf,NEXBSD_L1,release.conf,exceptions-licence.txt,build-nexbsd.sh}` · ce compte rendu.
 
 **Modifiés :** `README.md` (protocole en tête, objectif de publication, arborescence) · `docs/decisions/README.md` (16 ADR) · `scripts/README.md` (script 40 documenté) · `matrices/risques.csv` (R-22 publication prématurée, R-23 dérive GPL).
 

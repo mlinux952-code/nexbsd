@@ -24,7 +24,7 @@ Légende statut : **ouvert** · **contourné** · **clos**
 | P-09 | Étude de faisabilité sans conclusion (livrable 3) | 🟠 | ne peut être écrite sans test | ouvert | après P-02 |
 | P-10 | Le script `20-ecrire-usb.sh` n'a **jamais** été exécuté sur un périphérique réel | 🟠 | risque de destruction si bug | ouvert | relire + tester avec une clé sacrifiable |
 | P-11 | Le script `30-qemu-freebsd.sh` n'a jamais lancé de VM (QEMU absent de l'environnement de test) | 🟡 | première exécution non validée | ouvert | tester sur le Mint |
-| P-12 | `build/fork/*` jamais compilé (ni `src.conf` ni `KERN_CONF`) | 🟡 | valeurs peut-être inopérantes | ouvert | après P-03 |
+| P-12 | `fork/*` jamais compilé (ni `src.conf` ni `KERN_CONF`) | 🟡 | valeurs peut-être inopérantes | ouvert | après P-03 |
 | P-13 | **Dépôt GitHub inexistant** (aucun connecteur GitHub disponible) ; Drive fait le 2026-10-23 | 🔴 | pas d'historique distant ni de travail à plusieurs ; subsiste une copie datée sur Drive | **partiellement résolu** | action du responsable : `docs/20-depots-et-sauvegardes.md` §3 |
 | P-14 | Le client NCP de test exige une **VM Windows** (licence à vérifier) | 🟡 | bloque le banc B | ouvert | décision du responsable |
 
@@ -280,7 +280,7 @@ Les dossiers `build/`, `components/`, `release/` étaient **absents ou vides**, 
 `docs/15` décrivaient un delta complet (noyau `NEXBSD_L1`, `src.conf`, `release.conf`, overlay, patch).
 
 **Cause :** le commit `25ae838` (« S-012 : abandon du mode terminal, virt-manager recommandé ») a **supprimé
-17 fichiers** de `build/fork/` — sans aucun rapport avec son objet. Suppression accidentelle, non détectée
+17 fichiers** de `fork/` — sans aucun rapport avec son objet. Suppression accidentelle, non détectée
 pendant deux sessions.
 
 **Aggravant :** la documentation a continué d'affirmer l'existence de ce delta. C'est précisément la faute
@@ -315,3 +315,33 @@ modules) puis de `kernel` (fichier final), espace consommé, temps écoulé.
 les alertes. Une alerte doit être fiable, sinon elle ne vaut rien.
 
 **Statut :** corrigé le 2026-10-25 (dépôt), à livrer dans l'instantané s026.
+
+---
+
+## C-18 — **Récidive de C-16** : le dossier `build/` disparaît à chaque tour (cause structurelle trouvée)
+
+**Constaté :** 2026-10-25, 22:22, sur la sortie du responsable : le `git merge` de l'instantané **s026**
+affiche `delete mode 100644 fork/…` **17 fois**, et le `git push` a propagé la suppression sur GitHub
+(`77f441d..7d9fe1c`). Deuxième occurrence du même incident en une seule journée.
+
+**Cause réelle (enfin identifiée, et elle n'est pas humaine) :** l'environnement de travail dans lequel le
+dépôt est préparé **exclut de ses instantanés tout répertoire nommé `build`**. Le dossier `build/fork/`
+était donc restauré en mémoire, puis **effacé du système de fichiers entre deux tours**. Au tour suivant,
+`git add -A` enregistrait fidèlement… une suppression. Le commit `9523462` (C-17), qui ne parlait que de
+`scripts/68`, a ainsi supprimé 17 fichiers sans rapport.
+
+**Aggravant :** deux fois de suite, un `git add -A` a transformé un artefact d'environnement en **commit
+qui détruit du travail**, puis en **push**.
+
+**Correctifs appliqués :**
+1. **Renommage définitif : `build/fork/` → `fork/`** (racine du dépôt). Le nom `build` est désormais interdit
+   dans ce dépôt, précisément parce qu'il est effacé par l'environnement.
+2. **43 références mises à jour** (`docs/15`, `16`, `22`, `27`, `28`, `29`, `ETAT`, `INDEX`, ADR-0020,
+   `CHANGELOG`, `README`, `START-HERE`, `T-17`, `scripts/67`, `fork/README.md`).
+3. **Garde-fou exécutable : `scripts/70-verifier-delta.sh`** — vérifie que les 17 fichiers du delta sont
+   présents **et suivis par Git**, avec empreintes. À lancer avant **chaque** commit et **chaque** instantané.
+4. **Règle de méthode** : plus jamais de `git add -A` sans avoir lu `git status` ligne par ligne ; un commit
+   ne doit contenir que ce que son message annonce (`git show --stat` obligatoire).
+
+**Statut :** correctifs appliqués le 2026-10-25 (instantané s027). **GitHub doit être remis d'aplomb par le
+responsable** avec cet instantané, qui contient la restauration.

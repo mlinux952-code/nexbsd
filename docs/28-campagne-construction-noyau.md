@@ -1,7 +1,7 @@
 # Campagne de construction — étage 2 : le premier noyau NexBSD
 
 **Version :** 1.0 — 2026-10-25 (session S-018)
-**Rôle :** transformer le delta `build/fork/` (écrit, jamais compilé) en **un noyau réellement construit,
+**Rôle :** transformer le delta `fork/` (écrit, jamais compilé) en **un noyau réellement construit,
 installé et démarré** sur le banc. C'est l'étage 2 de `docs/27`.
 **Règle de cette campagne :** une commande à la fois, sortie réelle collée, résultat consigné **verbatim**
 dans `tests/results/T-17-noyau-propre.md`. Aucun résultat inventé, aucun « ça devrait marcher ».
@@ -114,10 +114,10 @@ surtout **de provenance unique et vérifiable par empreinte**.
 
 | Fichier | SHA256 dans le dépôt |
 |---|---|
-| `build/fork/sys/amd64/conf/NEXBSD_L1` | `14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301` |
-| `build/fork/reference/GENERIC-15.1` | `02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878` |
-| `build/fork/src.conf` | `be95d02df3414d1ca251342f3a82c685808141666fe28d92333cd83fd092ecd2` |
-| `build/fork/release.conf` | `a6bd82ce2310c802301014408a18caa89fe97acf2ecfe880960f946d3ee877e9` |
+| `fork/sys/amd64/conf/NEXBSD_L1` | `14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301` |
+| `fork/reference/GENERIC-15.1` | `02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878` |
+| `fork/src.conf` | `be95d02df3414d1ca251342f3a82c685808141666fe28d92333cd83fd092ecd2` |
+| `fork/release.conf` | `a6bd82ce2310c802301014408a18caa89fe97acf2ecfe880960f946d3ee877e9` |
 
 **Le delta réel de `NEXBSD_L1` est exactement de 5 lignes** par rapport à `GENERIC` 15.1 :
 `ident → NEXBSD_L1`, et 4 périphériques retirés (`fdc`, `cbb`, `cardbus`, `hyperv`), chacun justifié dans
