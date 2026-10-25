@@ -16,9 +16,8 @@ développeur** de reprendre le projet **sans lire l'historique d'une conversatio
 |---|---|
 | Phase | 4 (**preuve de faisabilité**) en cours — les phases 0 à 3 sont documentées |
 | Banc d'essai | **VM FreeBSD 15.1-RELEASE opérationnelle** (KVM/virt-manager, console série `ttyu0`, réseau `10.0.2.15`, hôte `10.0.2.2`) |
-| Tests réussis | **5 sur 18** : T-01, T-03, T-04, T-04-E, T-04-F |
-| Test en cours | **T-04-G** (persistance après redémarrage) : **7 contrôles sur 11** |
-| Problème ouvert | **C-14** — après redémarrage, les ouvertures de session SMB échouent (`NT_STATUS_LOGON_FAILURE`) |
+| Tests réussis | **6 sur 19** : T-01, T-03, T-04, T-04-E, T-04-F, **T-04-G (11/11)** |
+| Problème ouvert | **aucun bloquant** — C-14 **clos** le 2026-10-25 (cause : la machine ne résolvait pas les identités de l'annuaire ; correctif `nss-pam-ldapd`) |
 | Image NexBSD | **aucune** — aucun fichier compilé, aucune image produite |
 | Prototype minimal livrable (livrable 11) | **amorcé** : le banc fonctionne, mais s'obtient en enchaînant 4 scripts à la main |
 
@@ -101,3 +100,27 @@ service samba_server restart; sleep 12; smbclient //127.0.0.1/commun -U 'omrane%
 - Les **mots de passe du banc sont de laboratoire** (`adminsecret`, `omranelab`, `saralab`) — VM jetable,
   non exposée au réseau. Ils ne doivent jamais servir ailleurs.
 - **L'IA n'a aucun accès à GitHub.** L'état du dépôt distant ne peut être affirmé que par le responsable.
+
+---
+
+## Session S-017 — 2026-10-25
+
+### Ce qui a changé
+
+- **C-14 trouvé, compris, corrigé, vérifié.** Cause réelle, lue dans le journal du démarrage à froid :
+  `add_local_groups: SID …-1001 -> getpwuid(10000) failed, is nsswitch configured?` puis
+  `check_sam_security: make_server_info_sam() failed with 'NT_STATUS_NO_SUCH_USER'`. **L'annuaire
+  délivrait les identités, la machine ne les résolvait pas.** Correctif : `scripts/65` (`nss-pam-ldapd`).
+- **T-04-G RÉUSSI, 11 contrôles sur 11** : le banc revient seul après redémarrage, annuaire et droits
+  intacts, `omrane` écrit, `sara` reste refusée.
+- **Identité du produit (rapport du responsable)** : `docs/26-identite-et-nommage.md` distingue le
+  **socle** (FreeBSD 15.1 stock) du **produit** (NexBSD) ; `scripts/66` applique l'**étage 1** (nom
+  d'hôte, accueil, invite) sans prétendre que le système *est* NexBSD.
+
+### Prochaine action
+
+| # | Action | Critère de réussite |
+|---|---|---|
+| 1 | Exécuter `scripts/66` (T-16, étage 1) | l'invite affiche `root@nexbsd`, les services répondent |
+| 2 | Regrouper les scripts `60`→`66` en **un composant** `components/identites/` | une machine nue devient serveur d'identités NexBSD par **une** commande |
+| 3 | Étages 2 et 3 de l'identité (chaîne de version, image propre) | bloqués par le profil **L3** (P-03) |

@@ -1,6 +1,10 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 14 · **Mise à jour :** 2026-10-24 (session S-016, fin de session)
+**Version de cette fiche :** 15 · **Mise à jour :** 2026-10-25 (session S-017)
+
+> **Rappel permanent (demande du responsable, 2026-10-25) :** le produit s'appelle **NexBSD**.
+> Toute occurrence de « freebsd » dans une sortie d'écran, un `uname` ou un nom d'hôte désigne
+> **l'état du socle actuel** (FreeBSD 15.1 stock, non modifié), **pas la cible**. Voir `docs/26`.
 **Rôle :** source de vérité en une page. En cas de contradiction avec un autre document, **c'est celui-ci qui décrit l'état**, car il est mis à jour à chaque session.
 
 ---
@@ -18,11 +22,11 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
 | Code NexBSD | **delta écrit** (noyau `NEXBSD_L1` généré, `src.conf`, `release.conf`, overlay, patch d'identité) — **aucun fichier compilé, aucune image**. Le banc d'identités (T-04→T-04-F) est **hors du dépôt produit** : il devra être transformé en composant de la couche Plateforme |
 | Installation FreeBSD | **VM opérationnelle chez le responsable** (virt-manager + KVM, FreeBSD 15.1-RELEASE, console série `ttyu0`) ; **matériel réel : aucune installation** |
-| Test d'exécution | **5 sur 18 réussis en VM** : T-01 (FreeBSD démarre), T-03 (partage Samba), T-04 (annuaire OpenLDAP), T-04-E (Samba authentifie via l'annuaire), **T-04-F (droits décidés par des groupes de l'annuaire, 2026-10-24)**. **T-04-G en cours : 7 contrôles sur 11** — services et données reviennent seuls, l'authentification ne survit pas au redémarrage (**C-14 ouvert**) |
+| Test d'exécution | **6 sur 19 réussis en VM** : T-01, T-03, T-04, T-04-E, T-04-F, et **T-04-G (le banc revient seul après redémarrage, 11/11, 2026-10-25)**. T-16 (identité NexBSD du banc, étage 1) écrit, non exécuté |
 | Image système | **aucune** (et aucune possible sans profil L3) |
 | Décisions validées par le responsable | **aucune** — 19 ADR à l'état `proposition` |
-| **Sauvegarde** | **Google Drive fait** (instantanés **s015b** puis **s015d**) · **GitHub** : dépôt privé `mlinux952-code/nexbsd` (poussé par le responsable) · dépôt Git local : **51 commits** |
-| Documents | ~90 fichiers, 5 matrices CSV, **13 scripts** (dont 4 de banc), index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` ; **`docs/25-compte-rendu-session.md`** assure la reprise sans conversation |
+| **Sauvegarde** | **Google Drive fait** (instantanés **s015b** puis **s015d**) · **GitHub** : dépôt privé `mlinux952-code/nexbsd` (poussé par le responsable) · dépôt Git local : **55 commits** |
+| Documents | ~90 fichiers, 5 matrices CSV, **15 scripts** (dont 4 de banc), index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` ; **`docs/25-compte-rendu-session.md`** assure la reprise sans conversation |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
 | Mesure RAM (ENF-01) | **≈ 100 Mo au repos** sur système nu en VM → objectif ≤ 128 Mo atteignable (à confirmer sur matériel) |
 | Chemin NCP (différenciation) | **V-1 tranchée** : client NCP réel, gratuit et maintenu identifié (ADR-0019) ; V-2/V-3 en suspens |
