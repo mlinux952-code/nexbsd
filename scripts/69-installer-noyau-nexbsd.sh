@@ -54,13 +54,20 @@ VERS=$(strings "$K" | grep -m1 -E "^FreeBSD 15\.1(-| )" || true)
 
 echo
 echo "########## BLOC B - place disque et sauvegarde du noyau d'origine ##########"
+# MESURE REELLE DU BANC (2026-10-25) : la racine ne dispose que de ~1,1 Go.
+# installkernel ecrit le noyau ET ses modules, et ce DEUX FOIS (/boot/kernel.NEXBSD_L1
+# et /boot/kernel). Avec les symboles de debogage (makeoptions DEBUG=-g du GENERIC),
+# cela depasserait 1,3 Go et echouerait APRES plusieurs heures de compilation.
+# On installe donc SANS les symboles (MK_KERNEL_SYMBOLS=no) : ~350-400 Mo au total.
+# Le noyau conserve dans /build/obj garde, lui, tous ses symboles pour le debogage.
 LIBRE_MO=$(df -k /boot | awk 'NR==2 {print int($4/1024)}')
-TAILLE_NOYAU_MO=$(du -m "$K" | awk '{print $1}')
-info "libre sur /boot : ${LIBRE_MO} Mo ; noyau a installer : ${TAILLE_NOYAU_MO} Mo"
-if [ "$LIBRE_MO" -lt $((TAILLE_NOYAU_MO + 300)) ]; then
-  ko "pas assez de place pour installer le noyau sans risque. Liberer de l'espace d'abord."
+info "libre sur /boot : ${LIBRE_MO} Mo (mesure du banc : la racine est petite)"
+if [ "$LIBRE_MO" -lt 700 ]; then
+  ko "moins de 700 Mo libres sur /boot : l'installation du noyau + modules echouerait."
+  ko "Liberer de l'espace, ou agrandir la racine (qemu-img resize + gpart resize + growfs)."
   exit 1
 fi
+ok "place suffisante pour installer noyau + modules SANS symboles de debogage"
 
 if [ -d "/boot/$SAUVE" ]; then
   ok "sauvegarde /boot/$SAUVE deja presente (elle n'est pas ecrasee)"
@@ -75,9 +82,9 @@ fi
 
 echo
 echo "########## BLOC C - compilation-installation du noyau ##########"
-info "commande : env MAKEOBJDIRPREFIX=$OBJ KERNCONF=$KERNCONF make installkernel"
+info "commande : env MAKEOBJDIRPREFIX=$OBJ KERNCONF=$KERNCONF make MK_KERNEL_SYMBOLS=no installkernel"
 cd "$SRC" || exit 1
-if env MAKEOBJDIRPREFIX="$OBJ" KERNCONF="$KERNCONF" make -j2 installkernel; then
+if env MAKEOBJDIRPREFIX="$OBJ" KERNCONF="$KERNCONF" make -j2 MK_KERNEL_SYMBOLS=no installkernel; then
   ok "installkernel termine sans erreur"
 else
   ko "installkernel a echoue. Le noyau d'origine est toujours dans /boot/$SAUVE :"

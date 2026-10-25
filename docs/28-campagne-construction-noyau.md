@@ -126,6 +126,30 @@ extrait, puis **vérifie l'empreinte** : la configuration compilée est donc pro
 
 ---
 
+## 4 bis. Mesures réelles du banc après agrandissement (2026-10-25, verbatim)
+
+```
+FreeBSD 15.1-RELEASE        nexbsd
+=== RAM ===                 2009 Mo          (2 048 Mo annoncés par l'hyperviseur)
+swapinfo                    /dev/gpt/swapfs 1.0G  0B utilisé
+=== DISQUES ===             vtbd0  6.0G       vtbd1  32212254720 o = 30G
+=== LIBRE ===               /dev/gpt/rootfs 4.8G  3.4G utilisés  1.1G disponibles (76 %)
+```
+
+**Trois conséquences tirées de ces chiffres, pas d'une supposition :**
+
+1. **La racine est petite : 1,1 Go libres.** `installkernel` écrit le noyau **et ses modules**, deux fois
+   (`/boot/kernel.NEXBSD_L1` et `/boot/kernel`). Avec les symboles de débogage du `GENERIC`, cela dépasse
+   **1,3 Go** : l'installation échouerait **après plusieurs heures de compilation**. Le script `69` installe
+   donc avec **`MK_KERNEL_SYMBOLS=no`** (~350-400 Mo) ; le noyau garde tous ses symboles dans `/build/obj`.
+2. **Tout le reste va sur `vtbd1`** (sources, objets, journal, échange) : la racine ne sert que pour `/boot`.
+   C'est exactement le découpage exigé par ADR-0020.
+3. **`ping` échoue alors que le réseau fonctionne** : la VM utilise le réseau utilisateur de QEMU (slirp),
+   qui **ne transporte pas ICMP**. Un `ping` négatif ne prouve donc **rien** sur la connectivité ; seule une
+   requête HTTP le prouve (`fetch`). Leçon consignée : ne jamais conclure « pas d'Internet » sur un `ping`.
+
+---
+
 ## 5. Les étapes, dans l'ordre (une commande à la fois)
 
 | # | Où | Ce que l'on fait | Script / commande | Sortie attendue |
