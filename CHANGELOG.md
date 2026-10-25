@@ -5,6 +5,10 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
 ## [Non publié] — phase de conception
 
+### 2026-10-25 — Session S-018 (suite) : révision totale du projet
+- **Ajouté** : `docs/29-revision-totale.md` — audit contradictoire demandé par le responsable : chiffres vérifiables (58 commits, 136 fichiers, 20 tests dont **6 réussis**, 20 ADR dont **0 validée**, **0 noyau**, **0 image**, **0 installation réelle**), tableau « affirmation → preuve → verdict », risques ouverts, feuille de route **J1→J7** jusqu'à l'installation sur un PC.
+- **Consigné** : le poste est **KVM-capable** (`/dev/kvm`, `virsh`, `qemu-system-x86_64`) mais **aucune VM** n'est déclarée dans `qemu:///system` → mode de lancement de la VM à identifier avant tout agrandissement (on ne devine pas).
+
 ### 2026-10-25 — Session S-018 : campagne de construction du noyau (étage 2)
 - **Poste du responsable mesuré, verbatim** : 3,7 Go de RAM (787 Mo disponibles), 4 fils, **67 Go libres**. Conclusion chiffrée : le **noyau est constructible**, le **monde et l'image ne le sont pas** sur ce poste.
 - **Ajouté** : `docs/decisions/ADR-0020-derogation-construction-noyau.md` — dérogation **unique et bornée** à l'ADR-0010 : un seul `buildkernel`, garde-fous mesurés, disque séparé, dérogation qui expire à la fin.
