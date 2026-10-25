@@ -149,6 +149,25 @@ L'empreinte de la configuration compilée est bien `14c86800…eb301`, celle du 
 
 **Résultat de l'étape 2 : en attente de la fin de la construction.**
 
+##### Suivi de la construction (mesures réelles, journal `buildkernel-20261025T205343Z.log`)
+
+| Heure UTC | Lignes | Delta lignes | Debit (lignes/min) | Espace `/build` |
+|---|---|---|---|---|
+| 20:53:43 | 0 (depart) | - | - | 2,2 Go |
+| 20:57:12 | 3 674 | - | - | - |
+| 21:01:43 | 5 713 | 2 039 | ~650 | 2,2 Go |
+| 21:04:31 | 7 091 | 1 378 | ~658 | 2,2 Go |
+| 21:07:31 | 8 571 | 1 480 | ~493 | 2,3 Go |
+| 21:10:32 | 9 880 | 1 309 | ~436 | 2,3 Go |
+| 21:13:32 | 12 745 | 2 865 | **~955** | 2,4 Go |
+
+**Lecture :** debit moyen ~650 lignes/min, avec une **acceleration** nette sur le dernier intervalle (phase des
+modules, composes de petits fichiers). Echange utilise : **56 K sur 3 Go** - la machine n'echange pas, donc
+`-j2` etait le bon reglage. Espace consomme : 2,4 Go (prevision 4-8 Go : on sera en dessous).
+**Estimation initiale "2 a 6 h" : trop prudente, les faits la dementent** - la construction s'annonce en
+**moins d'une heure** au total.
+
+
 | Étape | Résultat | Verdict |
 |---|---|---|
 | 67 préparer | — | — |
