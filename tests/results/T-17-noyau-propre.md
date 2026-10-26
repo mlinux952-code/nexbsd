@@ -193,6 +193,32 @@ FreeBSD 15.1-NEXBSD-L1 NEXBSD_L1
 `BRANCH_OVERRIDE=NEXBSD-L1`, levier **prévu par l'amont** dans `sys/conf/newvers.sh` : aucune modification
 d'un fichier FreeBSD n'a été nécessaire.
 
+##### Étape 3 — installation du noyau : **RÉUSSIE** (2026-10-26)
+
+Première tentative : **refusée** par `installkernel` (voir **C-19**, pkgbase) → corrigée par
+`INSTKERNNAME=kernel.NEXBSD_L1`. Deuxième tentative : interrompue par `Ctrl+C` en plein défilement des
+modules (aucune conséquence : installation répétable). Troisième tentative, **en arrière-plan avec journal** :
+
+```
+>>> Install kernel(s) NEXBSD_L1 completed in 24 seconds, ncpu: 2, make -j2
+grep -c "Error code" installkernel.log -> 0
+858 fichiers .ko installés
+du -sh /boot/kernel.NEXBSD_L1 -> 158M
+/dev/gpt/rootfs 4.8G 3.5G 921M 80% /
+```
+
+| Constat | Valeur |
+|---|---|
+| Installation | **terminée, 0 erreur** |
+| Modules installés | **858 fichiers `.ko`** |
+| Taille installée | **158 Mo** (sans symboles de débogage, grâce à `MK_KERNEL_SYMBOLS=no`) |
+| Espace restant sur `/` | **921 Mo** |
+| `/boot/kernel` (noyau d'origine, paquet) | **intact, non touché** |
+
+**Leçon consignée (`docs/28` §4 ter) :** `installkernel` déverse plus de 800 lignes d'installation de modules ;
+sur un terminal série, cela ressemble à un blocage. **On ne lance plus jamais une opération longue au premier
+plan : arrière-plan + journal + compteur.**
+
 **Note d'honnêteté sur le journal de reprise :** le redirection de la commande de reprise a été altérée au
 transport (guillemets perdus) ; le journal de reprise ne contient donc que la fin. Le **résultat final est
 sans ambiguïté** (`code de retour : 0`), et le journal de la première phase (45 253 lignes) reste complet dans
