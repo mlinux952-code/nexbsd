@@ -31,7 +31,11 @@ SRC=$BASE/src
 OBJ=$BASE/obj
 KERNCONF=NEXBSD_L1
 SURVERSION=NEXBSD-L1
-SAUVE=kernel.GENERIC-sauvegarde
+# FreeBSD 15 est "pkgbase" : /boot/kernel appartient au paquet FreeBSD-kernel-generic.
+# installkernel REFUSE d'y ecrire (a juste titre : le registre de paquets deviendrait faux).
+# Solution officielle, indiquee par le message d'erreur lui-meme : installer AILLEURS
+# via INSTKERNNAME. Le noyau d'origine n'est alors JAMAIS touche.
+INSTKERN=kernel.NEXBSD_L1
 
 echo "########## ETAGE 2 / ETAPE 3 : installer le noyau $KERNCONF ##########"
 echo "# date : $(date -u +%FT%TZ) ; hote : $(hostname) ; systeme actuel : $(uname -sr)"
@@ -69,15 +73,13 @@ if [ "$LIBRE_MO" -lt 700 ]; then
 fi
 ok "place suffisante pour installer noyau + modules SANS symboles de debogage"
 
-if [ -d "/boot/$SAUVE" ]; then
-  ok "sauvegarde /boot/$SAUVE deja presente (elle n'est pas ecrasee)"
+# Depuis FreeBSD 15 (pkgbase), /boot/kernel n'est PAS renomme : il appartient au paquet
+# FreeBSD-kernel-generic. On installe A COTE : le noyau d'origine reste intact et
+# selectionnable au chargeur. Aucune sauvegarde n'est donc necessaire.
+if [ -d /boot/kernel ]; then
+  ok "/boot/kernel (noyau d'origine, paquet) laisse INTACT : rien n'est ecrase"
 else
-  if [ -d /boot/kernel ]; then
-    mv /boot/kernel "/boot/$SAUVE" || { ko "renommage de /boot/kernel impossible"; exit 1; }
-    ok "/boot/kernel renomme en /boot/$SAUVE (retour arriere possible)"
-  else
-    attn "/boot/kernel absent : rien a sauvegarder (situation inhabituelle, a signaler)"
-  fi
+  attn "/boot/kernel absent : situation inhabituelle, a signaler"
 fi
 
 echo
@@ -92,26 +94,26 @@ else
   exit 1
 fi
 
-[ -d "/boot/$KERNCONF" ] && ok "/boot/$KERNCONF present" || { ko "/boot/$KERNCONF absent apres installation"; exit 1; }
-if [ -f "/boot/$KERNCONF/kernel" ]; then
-  info "empreinte installee : $(sha256 -q "/boot/$KERNCONF/kernel")"
-  [ "$(sha256 -q "/boot/$KERNCONF/kernel")" = "$(sha256 -q "$K")" ] && ok "le noyau installe est bien celui qui a ete construit" || attn "empreintes differentes : a examiner avant de redemarrer"
+[ -d "/boot/$INSTKERN" ] && ok "/boot/$INSTKERN present" || { ko "/boot/$INSTKERN absent apres installation"; exit 1; }
+if [ -f "/boot/$INSTKERN/kernel" ]; then
+  info "empreinte installee : $(sha256 -q "/boot/$INSTKERN/kernel")"
+  [ "$(sha256 -q "/boot/$INSTKERN/kernel")" = "$(sha256 -q "$K")" ] && ok "le noyau installe est bien celui qui a ete construit" || attn "empreintes differentes : a examiner avant de redemarrer"
 fi
 
 echo
 echo "########## BLOC D - demarrage sur le noyau NexBSD ##########"
 LC=/boot/loader.conf
 cp -p "$LC" "$LC.avant-noyau-nexbsd" 2>/dev/null || true
-if grep -q '^kernel="kernel.NEXBSD_L1"' "$LC" 2>/dev/null; then
-  ok "loader.conf designe deja kernel.NEXBSD_L1"
+if grep -q "^kernel=\"$INSTKERN\"" "$LC" 2>/dev/null; then
+  ok "loader.conf designe deja $INSTKERN"
 else
   {
     echo ""
     echo "# --- NexBSD : etage 2 (ajoute par scripts/69, $(date -u +%F)) ---"
-    echo 'kernel="kernel.NEXBSD_L1"'
+    echo "kernel=\"$INSTKERN\""
     echo 'autoboot_delay="5"'
   } >> "$LC"
-  ok "loader.conf : demarrage sur kernel.NEXBSD_L1, delai 5 s"
+  ok "loader.conf : demarrage sur $INSTKERN, delai 5 s"
 fi
 info "extrait de $LC :"
 grep -nE "kernel|autoboot" "$LC" | sed 's/^/  ...     /'
@@ -119,9 +121,9 @@ grep -nE "kernel|autoboot" "$LC" | sed 's/^/  ...     /'
 echo
 echo "########## RESUME ##########"
 info "noyau en service actuellement : $(uname -i) ($(uname -r))"
-info "noyau au prochain demarrage   : $KERNCONF (version annoncee : 15.1-$SURVERSION)"
-info "sauvegarde du noyau d'origine : /boot/$SAUVE"
-info "retour arriere, menu du chargeur : set kernel=\"$SAUVE\"  puis  boot"
+info "noyau au prochain demarrage   : $INSTKERN (version annoncee : 15.1-$SURVERSION)"
+info "noyau d'origine (intact, paquet) : /boot/kernel"
+info "retour arriere : remettre kernel=kernel dans /boot/loader.conf"
 echo
 echo "ETAT : NOYAU INSTALLE — REDEMARRAGE NON EFFECTUE (decision a l'operateur)."
 echo

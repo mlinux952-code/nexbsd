@@ -350,3 +350,42 @@ qui détruit du travail**, puis en **push**.
 
 Le delta est donc intact **localement, dans le dépôt Git, sur Mint et sur GitHub** : quatre lieux, une seule
 preuve rejouable.
+
+---
+
+## C-19 — `installkernel` refuse d'écrire dans `/boot/kernel` : FreeBSD 15 est « pkgbase »
+
+**Constaté :** 2026-10-26, première tentative d'installation du noyau `NEXBSD_L1` (qui venait d'être compilé
+avec succès). Sortie verbatim :
+
+```
+ERROR: The kernel at /boot/kernel was installed from packages.
+       A packaged kernel should never be updated using installkernel;
+       this will cause the package database to become out of sync with
+       the live system state.  Either uninstall the packaged kernel,
+       or install this kernel to a different path using INSTKERNNAME.
+```
+
+**Cause :** depuis FreeBSD 14/15, le système de base est livré en **paquets** (`pkgbase`) :
+`/boot/kernel` appartient au paquet `FreeBSD-kernel-generic`. `installkernel` protège la cohérence du
+registre de paquets et **refuse** d'écraser un noyau géré par `pkg`. **Le garde-fou a raison.**
+
+**Ce qu'il ne fallait PAS faire :** `souhaiter ALLOW_PKGBASE_INSTALLKERNEL=yes`. Le message le dit lui-même :
+« you should not use the pkg(8) utility until you have resolved the inconsistency ». Cela désynchroniserait le
+registre de paquets d'un banc validé — exactement le genre de raccourci qui casse un système proprement.
+
+**Correctif retenu (celui que le message d'erreur indique) :** installer **à côté**, via
+`INSTKERNNAME=kernel.NEXBSD_L1`. Conséquences, toutes favorables :
+
+| Conséquence | Effet |
+|---|---|
+| Le noyau s'installe dans **`/boot/kernel.NEXBSD_L1`** | `/boot/kernel` (paquet) reste **intact** : aucune sauvegarde, aucun renommage |
+| Le retour arrière devient trivial | remettre `kernel="kernel"` dans `/boot/loader.conf`, ou au chargeur |
+| Le registre de paquets reste cohérent | `pkg` continue de fonctionner normalement |
+| `MK_KERNEL_SYMBOLS=no` | évite d'installer le fichier `.debug` : indispensable avec **1,1 Go** libres sur la racine |
+
+**Portée pour la suite du projet :** à l'étage 3 (image `release.sh`), c'est la chaîne de release qui produit
+**ses propres** paquets — la question ne se posera donc plus de la même façon. À garder en tête pour J3/J4.
+
+**Statut :** corrigé dans `scripts/69` le 2026-10-26 (variable `INSTKERN`, `INSTKERNNAME` passé à `make`,
+plus aucun renommage de `/boot/kernel`). **Clos après vérification du démarrage.**
