@@ -147,7 +147,38 @@ Notes : `delta vs GENERIC : 10 lignes` = 5 lignes retirées + 5 lignes de commen
 avec `NEXBSD_L1.rapport`. `echange 6 Mo` reste le défaut d'affichage cosmétique (corrigé dans le dépôt).
 L'empreinte de la configuration compilée est bien `14c86800…eb301`, celle du dépôt.
 
-**Résultat de l'étape 2 : en attente de la fin de la construction.**
+#### Étape 2 — RÉSULTAT : **CONSTRUCTION RÉUSSIE** (2026-10-26, 18:55:40 UTC)
+
+**Preuve verbatim (fin du journal `buildkernel-20261026-reprise.log`) :**
+
+```
+>>> Kernel(s)  NEXBSD_L1 built in 1470 seconds, ncpu: 2, make -j2
+--------------------------------------------------------------
+### code de retour : 0
+```
+
+**Chronologie complète de la construction (deux sessions, arrêt propre entre les deux) :**
+
+| Phase | Période | Journal | Objets |
+|---|---|---|---|
+| 1re tentative | 2026-10-25 20:53 → 22:34 | `buildkernel-20261025T205343Z.log`, **45 253 lignes** | 4,0 Go |
+| arrêt propre volontaire | 2026-10-25 ~22:50 | seuil de 45 000 lignes atteint (règle `docs/30` §1 bis) | conservés |
+| reprise | 2026-10-26 18:30 → 18:55 | `buildkernel-20261026-reprise.log` | 4,6 Go |
+| **fin** | **18:55:40** | `Kernel(s) NEXBSD_L1 built in 1470 seconds` · `code de retour : 0` | **4,6 Go** |
+
+**Ce que cela prouve, exactement :** le projet sait **compiler son propre noyau**, à partir des sources de
+FreeBSD 15.1-RELEASE **vérifiées par empreinte**, avec **sa configuration** `NEXBSD_L1` (empreinte
+`14c86800…eb301`, identique au dépôt), sous **son** nom de version (`BRANCH_OVERRIDE=NEXBSD-L1`), sur un
+portable de 2011 avec 2 Go alloués et sans jamais échanger.
+
+**Ce que cela ne prouve pas encore :** que le noyau **démarre** et que le banc fonctionne dessus. Ce sont les
+étapes 3 à 5 (installation, redémarrage, rejeu de `scripts/64`).
+
+**Note d'honnêteté sur le journal de reprise :** le redirection de la commande de reprise a été altérée au
+transport (guillemets perdus) ; le journal de reprise ne contient donc que la fin. Le **résultat final est
+sans ambiguïté** (`code de retour : 0`), et le journal de la première phase (45 253 lignes) reste complet dans
+`buildkernel-20261025T205343Z.log`. Leçon : une commande qui écrit dans un journal doit être revérifiée après
+collage — elle a déjà été simplifiée pour la suite.
 
 ##### Suivi de la construction (mesures réelles, journal `buildkernel-20261025T205343Z.log`)
 

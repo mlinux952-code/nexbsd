@@ -222,4 +222,4 @@ par acte. Rien de plus, rien de moins, et rien de caché.
 
 | Essai | Date | Résultat | Verdict | Preuve |
 |---|---|---|---|---|
-| 1 | 2026-10-25 | Étape 0 (VM agrandie) et **étape 1 (`67`) réussies** : sources vérifiées par SHA256, `NEXBSD_L1` **identique au dépôt** ; construction lancée ensuite | EN COURS | `tests/results/T-17-noyau-propre.md` |
+| 1 | 2026-10-25 → 2026-10-26 | Étapes 0 et 1 réussies ; **construction du noyau `NEXBSD_L1` RÉUSSIE** le 2026-10-26 à 18:55:40 UTC : `Kernel(s) NEXBSD_L1 built in 1470 seconds`, `code de retour : 0`, 4,6 Go d'objets. Reste : installation, redémarrage, preuve par le banc | **RÉUSSIE (compilation)** | `tests/results/T-17-noyau-propre.md` |

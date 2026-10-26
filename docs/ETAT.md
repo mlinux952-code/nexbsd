@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 16 · **Mise à jour :** 2026-10-25 (session S-018)
+**Version de cette fiche :** 17 · **Mise à jour :** 2026-10-26 (session S-019)
 
 > **Rappel permanent (demande du responsable, 2026-10-25) :** le produit s'appelle **NexBSD**.
 > Toute occurrence de « freebsd » dans une sortie d'écran, un `uname` ou un nom d'hôte désigne
@@ -20,7 +20,7 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Élément | État au 2026-10-25 (S-018) |
 |---|---|
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
-| Code NexBSD | **delta écrit** (noyau `NEXBSD_L1` généré, `src.conf`, `release.conf`, overlay, patch d'identité) — **aucun fichier compilé, aucune image**. Le banc d'identités (T-04→T-04-F) est **hors du dépôt produit** : il devra être transformé en composant de la couche Plateforme |
+| Code NexBSD | **noyau `NEXBSD_L1` COMPILÉ** le 2026-10-26 (`Kernel(s) NEXBSD_L1 built in 1470 seconds`, `code de retour : 0`) — installation et démarrage en cours de validation. Reste : `buildworld`/image (hors de portée du poste). Delta dans `fork/` (17 fichiers, garde-fou `scripts/70`) |
 | Installation FreeBSD | **VM opérationnelle chez le responsable** (virt-manager + KVM, FreeBSD 15.1-RELEASE, console série `ttyu0`) ; **matériel réel : aucune installation** |
 | Test d'exécution | **6 sur 19 réussis en VM** : T-01, T-03, T-04, T-04-E, T-04-F, et **T-04-G (le banc revient seul après redémarrage, 11/11, 2026-10-25)**. T-16 (identité NexBSD du banc, étage 1) écrit, non exécuté |
 | Image système | **aucune** — et elle reste **hors de portée du poste** (4 Go de RAM, `docs/28` §2) ; voie d'intégration continue à ouvrir (voie B de `docs/27`) |
