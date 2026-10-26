@@ -219,6 +219,34 @@ du -sh /boot/kernel.NEXBSD_L1 -> 158M
 sur un terminal série, cela ressemble à un blocage. **On ne lance plus jamais une opération longue au premier
 plan : arrière-plan + journal + compteur.**
 
+##### Étape 4 — DÉMARRAGE SUR LE NOYAU NexBSD : **RÉUSSI** (2026-10-26)
+
+Le noyau installé a été démarré. Sortie verbatim, apres `reboot` :
+
+```
+root@nexbsd:~ # uname -s; uname -r; uname -i; sysctl -n kern.ident; sysctl -n kern.version
+FreeBSD
+15.1-NEXBSD-L1
+NEXBSD_L1
+NEXBSD_L1
+FreeBSD 15.1-NEXBSD-L1 NEXBSD_L1
+```
+
+| Critère J1 | Attendu | **Obtenu** | Verdict |
+|---|---|---|---|
+| `uname -s` | `FreeBSD` (le socle) | **`FreeBSD`** | conforme |
+| `uname -r` | `15.1-NEXBSD-L1` | **`15.1-NEXBSD-L1`** | **conforme** |
+| `uname -i` | `NEXBSD_L1` | **`NEXBSD_L1`** | **conforme** |
+| `kern.ident` | `NEXBSD_L1` | **`NEXBSD_L1`** | **conforme** |
+| `kern.version` | `FreeBSD 15.1-NEXBSD-L1 NEXBSD_L1` | **identique** | **conforme** |
+
+**Portée exacte, sans exagération :** le système qui tourne est **le noyau compile dans ce projet**, et il
+s'annonce sous **notre** nom de version. Cela ne fait pas de NexBSD un système autonome : le reste du monde
+utilisateur, des pilotes et des services est encore celui de FreeBSD 15.1 (voir `docs/32`, niveau I2).
+C'est l'etage 2, franchement franchi.
+
+`/tmp/64-banc-T04G-persistance.sh` etait absent : `/tmp` est vide au demarrage. Script a recharger.
+
 **Note d'honnêteté sur le journal de reprise :** le redirection de la commande de reprise a été altérée au
 transport (guillemets perdus) ; le journal de reprise ne contient donc que la fin. Le **résultat final est
 sans ambiguïté** (`code de retour : 0`), et le journal de la première phase (45 253 lignes) reste complet dans
