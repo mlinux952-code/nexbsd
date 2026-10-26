@@ -174,6 +174,25 @@ portable de 2011 avec 2 Go alloués et sans jamais échanger.
 **Ce que cela ne prouve pas encore :** que le noyau **démarre** et que le banc fonctionne dessus. Ce sont les
 étapes 3 à 5 (installation, redémarrage, rejeu de `scripts/64`).
 
+##### Vérification du binaire produit — verbatim (2026-10-26)
+
+```
+-rwxr-xr-x  1 root wheel 28912376 Oct 26 18:55 .../sys/NEXBSD_L1/kernel
+82dc5681397b06fab69171daf6e910d6a380b058ee63341a83c77f770b94c87c
+@(#)FreeBSD 15.1-NEXBSD-L1 NEXBSD_L1
+FreeBSD 15.1-NEXBSD-L1 NEXBSD_L1
+```
+
+| Constat | Valeur |
+|---|---|
+| Taille du noyau | **28 912 376 octets** (27,6 Mio) |
+| SHA256 | **`82dc5681397b06fab69171daf6e910d6a380b058ee63341a83c77f770b94c87c`** |
+| Chaîne de version inscrite | **`FreeBSD 15.1-NEXBSD-L1 NEXBSD_L1`** |
+
+**C'est la première sortie du projet où le nom de version n'est pas celui de FreeBSD.** Elle est obtenue par
+`BRANCH_OVERRIDE=NEXBSD-L1`, levier **prévu par l'amont** dans `sys/conf/newvers.sh` : aucune modification
+d'un fichier FreeBSD n'a été nécessaire.
+
 **Note d'honnêteté sur le journal de reprise :** le redirection de la commande de reprise a été altérée au
 transport (guillemets perdus) ; le journal de reprise ne contient donc que la fin. Le **résultat final est
 sans ambiguïté** (`code de retour : 0`), et le journal de la première phase (45 253 lignes) reste complet dans
