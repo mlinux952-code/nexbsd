@@ -150,7 +150,25 @@ swapinfo                    /dev/gpt/swapfs 1.0G  0B utilisé
 
 ---
 
-## 5. Les étapes, dans l'ordre (une commande à la fois)
+## 4 ter. Ce que fait reellement `installkernel` (constate le 2026-10-26)
+
+`installkernel` **n'est pas silencieux** : il installe d'abord le binaire noyau, puis **plus d'un millier de
+modules** (`io.ko`, `ipfw.ko`, `ispfw.ko`, `mlx5.ko`, `if_iwn.ko`...), un `install -T release ...` par module.
+Sur un terminal serie, cela ressemble a une commande « qui ne s'arrete jamais » : **elle travaille**.
+Duree attendue : **5 a 10 minutes**.
+
+**Trois regles qui en decoulent :**
+1. **Ne pas interrompre par reflexe** : ce n'est pas un blocage. Si on interrompt malgre tout, **rien n'est casse** —
+   l'installation est repetable (`install` reecrit les memes fichiers).
+2. **Toujours la lancer en arriere-plan avec journal**, pour ne pas confondre « long » et « fige » :
+   `nohup env ... make installkernel > /build/logs/installkernel.log 2>&1 &`
+3. **Les modules comptent** : le noyau `NEXBSD_L1` doit avoir **son** repertoire de modules complet
+   (`/boot/kernel.NEXBSD_L1/*.ko`) ; un noyau sans ses modules perd des fonctions (le demarrage, lui, reste
+   assure car virtio est compile en dur dans `GENERIC`).
+
+---
+
+## 5. Les etapes, dans l'ordre (une commande a la fois)
 
 | # | Où | Ce que l'on fait | Script / commande | Sortie attendue |
 |---|---|---|---|---|
