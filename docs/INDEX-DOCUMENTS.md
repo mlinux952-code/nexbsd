@@ -25,6 +25,7 @@
 |---|---|---|
 | `docs/ETAT.md` | **ÉTAT** | l'état du projet en une page — source de vérité |
 | `docs/00-cadrage-phase0.md` | PROPOSITION | périmètre, hypothèses H-1→H-9, contraintes, critères S-1→S-9 |
+| `docs/31-apport-externe-noyau-propre.md` | **DÉCISION** | analyse du noyau « depuis zéro » produit par une autre session : ce qu'on adopte, ce qu'on écarte, décision des deux couloirs |
 | `docs/29-revision-totale.md` | **ÉTAT** | audit contradictoire : ce qui est prouvé, écrit, ou absent — demandé par le responsable |
 | `docs/28-campagne-construction-noyau.md` | PROPOSITION | **étage 2** : ressources mesurées du poste, provenance épinglée des sources, 8 étapes, points sur les I |
 | `docs/27-de-freebsd-a-nexbsd.md` | PROPOSITION | feuille de route en trois étages (identité · noyau propre · image propre) |
