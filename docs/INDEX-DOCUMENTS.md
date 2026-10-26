@@ -174,3 +174,4 @@
 | `docs/architecture/` | `README.md` (renvoi) | à terme : `flux.md`, diagrammes, décisions d'architecture détaillées |
 | `25-compte-rendu-session.md` | Compte rendu de session normalisé (Parties XVIII et XX §7) — permet la reprise sans conversation | 2026-10-24 |
 | `33-revue-generale-2026-10-26.md` | Revue générale : les 4 étages, matrice des 24 ingrédients d'un vrai système, 6 conditions, trajectoire, points sur les i | 2026-10-26 |
+| `34-pourquoi-composants-ecartes.md` | Causes exactes du rejet de Firefox OS et MARS_NWE (licence != cause) + regle generale « quand l'age disqualifie » | 2026-10-26 |

@@ -25,3 +25,11 @@ Comment assurer la compatibilité avec les protocoles NetWare historiques ?
 ## Conditions de révision
 - Si un besoin réel d'interopérabilité NCP/IPX était démontré (client existant identifié).
 - Si un portage FreeBSD avec pile IPX en espace utilisateur était financé et testé.
+
+## Réexamen du 2026-10-26 (déclenché par ADR-0019)
+
+La condition de révision est **atteinte** : ADR-0019 a identifié un client NCP réel et maintenu
+(Client for Open Enterprise Server 26.2.1, port 524). Le rejet est **maintenu**, mais pour une raison
+technique explicite et non par inertie : MARS_NWE **exige IPX** (retiré de FreeBSD 11.0) et **ne sait pas
+parler NCP sur IP**. La réponse au besoin est **ADR-0018** (réimplémentation propre de NCP sur UDP/TCP 524),
+pas l'adoption de MARS_NWE. Voir `docs/34-pourquoi-composants-ecartes.md`.
