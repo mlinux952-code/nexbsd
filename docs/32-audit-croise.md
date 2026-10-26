@@ -88,3 +88,14 @@ une **action corrective**. Un audit qui ne trouve rien est un audit inutile.
 Nous savons **prouver d'où vient notre noyau** (ce que beaucoup de projets ne savent pas faire) ; nous ne savons
 pas encore **prouver qu'il est reproductible**, et nos tests ne sont pas automatisés. Ce sont des manques de
 **forme de preuve**, pas de fond : ils se corrigent en deux séances, et ils sont maintenant écrits noir sur blanc.
+
+---
+
+## Mise à jour du 2026-10-26 au soir — non-conformité n° 1 **CLOSE**
+
+| Critère | Statut | Preuve |
+|---|---|---|
+| **Reproductibilité mesurée** | **NON CONFORME → CONFORME** | `tests/results/T-11-reproductibilite.md` : deuxième construction à froid (`/build/obj2`, 6533 s) donne **exactement** `82dc5681397b06fab69171daf6e910d6a380b058ee63341a83c77f770b94c87c`, identique à la première |
+
+**Décompte révisé : 8 conformes · 3 partiels · 1 non conforme** (le harnais automatisé reste le dernier manque).
+Le collègue avait raison de pointer ce manque : il est désormais comblé, avec une mesure, pas une intention.

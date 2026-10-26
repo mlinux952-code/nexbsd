@@ -56,12 +56,12 @@ Chaque ligne = un ingrédient nécessaire pour qu'un système de cette famille e
 | 18 | **Interface petit écran** (WebKit, phase 5) | ADR-0003 tranché, aucun prototype | **ABSENT** |
 | 19 | **Chemin NCP** (la différenciation NetWare) | ADR-0019 tranché (client NCP réel gratuit), banc B non monté, service NCP inexistant | **ABSENT** |
 | 20 | **Mesure de consommation** (objectif ≤ 128 Mo) | ≈ 100 Mo au repos sur système nu en VM ; **jamais mesuré avec annuaire + Samba actifs** | **PARTIEL** |
-| 21 | **Reproductibilité** des sorties | empreintes calculées, mais **jamais** deux constructions comparées (non conforme `docs/32`) | **PARTIEL** |
+| 21 | **Reproductibilité** des sorties | **deux constructions a froid comparees le 2026-10-26 : empreintes IDENTIQUES** (`82dc5681…`), 6533 s | **FAIT** |
 | 22 | **Harnais de tests automatisé** | tests = protocoles manuels à recopier (non conforme `docs/32`) | **PARTIEL** |
 | 23 | **Matériel réel** (le PC de 2011) | disque interne **intact**, aucune installation réelle ; tout est fait en VM | **ABSENT** |
 | 24 | **Traçabilité licences** | frontière documentée (`docs/12`), `samba.schema` GPL tenu hors dépôt, `scripts/40` de contrôle | **FAIT** (à automatiser : T-13) |
 
-**Décompte sans complaisance : 9 FAIT · 5 PARTIEL · 10 ABSENT.**
+**Décompte sans complaisance (mis à jour le 2026-10-26 au soir) : 10 FAIT · 4 PARTIEL · 10 ABSENT.**
 
 ---
 

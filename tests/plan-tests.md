@@ -1,7 +1,7 @@
 # Plan de tests — prototype 0
 
 **Date :** 2026-10-23
-**Statut : 7 tests réussis sur 20 (2026-10-26) — T-17 (noyau propre) RÉUSSI en entier.** T-01, T-03, T-04, T-04-E et T-04-F sont réussis en machine virtuelle ; les 12 autres restent `NON EXÉCUTÉ` ; T-04-G est écrit et attend son exécution.
+**Statut : 8 tests réussis sur 20 (2026-10-26) — T-17 (noyau propre) et T-11 (reproductibilité) RÉUSSIS.** T-01, T-03, T-04, T-04-E et T-04-F sont réussis en machine virtuelle ; les 12 autres restent `NON EXÉCUTÉ` ; T-04-G est écrit et attend son exécution.
 
 > **Exécution du 2026-10-23 (VM QEMU, émulation pure)** : FreeBSD 15.1-RELEASE démarre (81 s jusqu'à `login:`), ~100 Mo de RAM occupés au repos, Samba 4.23.11 installé depuis les dépôts, partage authentifié accessible **depuis une autre machine** avec écriture et relecture. Détails : `tests/results/`.
 
@@ -36,7 +36,7 @@
 | T-10 | Interface petit écran | démontrer une UI navigable au clavier | phase 5 | lancer la coquille, naviguer uniquement au clavier, mesurer RAM et temps de lancement | navigation complète sans souris | — | NON EXÉCUTÉ |
 | T-12 | Construction de la base | NexBSD construit sa propre image (phase 4bis) | profil L3, arbre source | `make buildworld` puis `buildkernel`, `release.sh` | image amorçable, build reproductible | — | NON EXÉCUTÉ (L3 indisponible) |
 | T-13 | Frontière de licence | aucun code copyleft dans la base | arbre de base | recherche de `SPDX-License-Identifier: GPL` + revue | zéro occurrence non justifiée | — | À AUTOMATISER |
-| T-11 | Reproductibilité | rejouer une construction | script de build | reconstruire depuis un état propre et comparer | résultat identique ou écarts expliqués | — | NON EXÉCUTÉ |
+| T-11 | Reproductibilité | rejouer une construction | script de build | reconstruire depuis un état propre (`/build/obj2`) et comparer | résultat identique ou écarts expliqués | empreintes **identiques** (`82dc5681…`), 0 erreur, 6533 s | **RÉUSSI (2026-10-26)** — `tests/results/T-11-reproductibilite.md` |
 
 ## Format d'un compte rendu de test
 

@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 19 · **Mise à jour :** 2026-10-26 (session S-019) · **niveau d'indépendance : I2 — J1 COMPLET**
+**Version de cette fiche :** 20 · **Mise à jour :** 2026-10-26 (session S-019) · **niveau d'indépendance : I2 — J1 COMPLET, noyau REPRODUCTIBLE**
 
 > **Rappel permanent (demande du responsable, 2026-10-25) :** le produit s'appelle **NexBSD**.
 > Toute occurrence de « freebsd » dans une sortie d'écran, un `uname` ou un nom d'hôte désigne
@@ -130,6 +130,7 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | S-004 | 2026-10-23 | Protocole de session, objectif grand public, outillage licence | `START-HERE.md`, `ETAT.md`, ADR-0016, `fork/`, script 40 |
 | S-005 | 2026-10-23 | **Réseau : rôle des 4 composants, NCP sur IP, index complet** | ADR-0017/0018, `docs/14-reseau-netware.md`, `docs/INDEX-DOCUMENTS.md` |
 | S-006 | 2026-10-23 | **V-1 tranchée (client NCP réel) + conformité aux 20 livrables du mur** | ADR-0019, `research/ncp-ip/fiche.md`, `docs/15-conformite-mega-prompt.md`, `docs/vision.md`, `docs/08-schema-flux.md`, `docs/16-registre-problemes.md`, `docs/17-procedure-mise-a-jour.md`, `docs/19-guide-contribution.md`, `LICENSE`, `NOTICE`, `CHANGELOG.md`, `docs/etude-faisabilite.md`, dossiers `components/` `integration/` `release/` |
+| S-019c | 2026-10-26 | **T-11 RÉUSSI : noyau REPRODUCTIBLE** — 2e construction a froid (`/build/obj2`, 6533 s) donne **exactement** `82dc5681…`, identique a la 1re. Non-conformite n.1 de l'audit croise CLOSE | `tests/results/T-11-reproductibilite.md` |
 | S-019 | 2026-10-26 | **J1 COMPLET** : noyau `NEXBSD_L1` compilé, installé, démarré durablement, **banc T-04-G 11/11 sur ce noyau** (`hote : FreeBSD 15.1-NEXBSD-L1`) ; C-19 (pkgbase), C-20 (`nextboot` à usage unique) ; `docs/33` revue générale | `tests/results/T-17-noyau-propre.md`, `T-04G-persistance.md`, `docs/33`, `docs/16` |
 | S-019b | 2026-10-26 | **ÉTAGE 2 FRANCHI : noyau `NEXBSD_L1` compilé, installé ET démarré — `uname -i` = `NEXBSD_L1`, `uname -r` = `15.1-NEXBSD-L1`** ; C-19 (pkgbase) consigné | `tests/results/T-17-noyau-propre.md`, `docs/28` §4 ter, `docs/16` C-19 |
 | S-018 | 2026-10-25 | **Campagne de construction du noyau (étage 2) : poste mesuré, ADR-0020, scripts 67/68/69, provenance épinglée** | `docs/28-campagne-construction-noyau.md`, ADR-0020, `scripts/67`→`69`, `tests/results/T-17-noyau-propre.md` |
