@@ -97,5 +97,12 @@ pas encore **prouver qu'il est reproductible**, et nos tests ne sont pas automat
 |---|---|---|
 | **Reproductibilité mesurée** | **NON CONFORME → CONFORME** | `tests/results/T-11-reproductibilite.md` : deuxième construction à froid (`/build/obj2`, 6533 s) donne **exactement** `82dc5681397b06fab69171daf6e910d6a380b058ee63341a83c77f770b94c87c`, identique à la première |
 
-**Décompte révisé : 8 conformes · 3 partiels · 1 non conforme** (le harnais automatisé reste le dernier manque).
+**Décompte révisé : 8 conformes · 3 partiels · 1 non conforme** (le harnais automatisé restait le dernier manque).
+
+### Mise à jour (même soir) — harnais **écrit**, en attente d'exécution
+
+`tests/harnais.sh` a été écrit le 2026-10-26 (261 lignes, sha256 `bbf5d8de…66f2`) : 24 contrôles en une passe,
+verdict global et **code de retour**, aucun redémarrage nécessaire. Le critère « harnais automatisé » passe
+donc de **non conforme** à **partiel** : il manque **l'exécution** sur la VM et la sortie verbatim.
+**Décompte : 8 conformes · 4 partiels · 0 non conforme.**
 Le collègue avait raison de pointer ce manque : il est désormais comblé, avec une mesure, pas une intention.

@@ -38,6 +38,25 @@
 | T-13 | Frontière de licence | aucun code copyleft dans la base | arbre de base | recherche de `SPDX-License-Identifier: GPL` + revue | zéro occurrence non justifiée | — | À AUTOMATISER |
 | T-11 | Reproductibilité | rejouer une construction | script de build | reconstruire depuis un état propre (`/build/obj2`) et comparer | résultat identique ou écarts expliqués | empreintes **identiques** (`82dc5681…`), 0 erreur, 6533 s | **RÉUSSI (2026-10-26)** — `tests/results/T-11-reproductibilite.md` |
 
+## Harnais de tests automatisé (`tests/harnais.sh`)
+
+**Créé le 2026-10-26** pour répondre au manque n° 2 de l'audit croisé (`docs/32`) : jusqu'ici, tous les
+tests étaient des **protocoles manuels** recopiés à la main.
+
+| Caractéristique | Valeur |
+|---|---|
+| Empreinte du fichier | **`bbf5d8def53bd57f8947243f64ca54a3e4e65f8a3f7607d2ca07cf90cd7f66f2`** (261 lignes) |
+| Usage | `sh harnais.sh` (passe complète) · `sh harnais.sh --lecture` (sans écriture) · `--aide` |
+| Contrôles | identité (5) · services (4) · annuaire (4) · NSS (3) · droits disque (2) · configuration Samba (3) · service réel (3) |
+| Verdict | compteurs `OK` / `KO` / `ATT` + **code de retour** (0 = tout passe, 1 = au moins un échec) |
+| Règle R-10 | un contrôle non applicable est compté **`ATT`**, jamais `OK` ; un outil absent est **`KO`** avec la raison |
+| Prérequis | aucun : pas de redémarrage, pas d'installation ; écrit seulement dans `/tmp` |
+
+**Ce qui reste à faire :** l'exécuter sur la VM et consigner la sortie verbatim dans
+`tests/results/T-18-harnais.md`.
+
+---
+
 ## Format d'un compte rendu de test
 
 ```
