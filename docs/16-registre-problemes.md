@@ -389,3 +389,25 @@ registre de paquets d'un banc validé — exactement le genre de raccourci qui c
 
 **Statut :** corrigé dans `scripts/69` le 2026-10-26 (variable `INSTKERN`, `INSTKERNNAME` passé à `make`,
 plus aucun renommage de `/boot/kernel`). **Clos après vérification du démarrage.**
+
+---
+
+## C-20 — `nextboot.conf` est à **usage unique** : on quitte le noyau d'essai sans s'en apercevoir
+
+**Constaté :** 2026-10-26 au soir. Le noyau `NEXBSD_L1` avait été démarré via `/boot/nextboot.conf`
+(`nextboot_enable="YES"`, `kernel="kernel.NEXBSD_L1"`). Après le redémarrage suivant, la ligne d'en-tête
+du banc affichait `hote : FreeBSD 15.1-RELEASE` — **le noyau d'origine**.
+
+**Cause :** `nextboot` est conçu pour **un seul** démarrage d'essai : le chargeur consomme
+`nextboot.conf` puis revient au réglage par défaut (`kernel="kernel"`). C'est une **qualité** pour un essai
+risqué, un **piège** pour une campagne de mesures qui s'étale sur plusieurs redémarrages.
+
+**Conséquence sur nos résultats :** le rejeu T-04-G du 2026-10-26 est **11/11**, mais **sur FreeBSD 15.1-RELEASE**.
+Il ne doit donc **pas** être compté comme la preuve « banc sur noyau NexBSD ».
+
+**Correctif :** rendre le choix **permanent** :
+`sysrc -f /boot/loader.conf kernel=kernel.NEXBSD_L1` (+ `autoboot_delay="5"` pour garder le menu accessible).
+Sauvegarde préalable : `/boot/loader.conf.avant-nexbsd`. Retour arrière : `kernel="kernel"`.
+
+**Leçon générale (règle de session) :** **toute** sortie de test doit être lue jusqu'à sa ligne d'en-tête
+(`hote :`, `uname -r`) avant d'être comptée comme réussie. Un 11/11 sur le mauvais noyau vaut zéro.

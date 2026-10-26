@@ -152,3 +152,42 @@ et **les droits sont toujours appliqués** : `omrane` écrit, `sara` est refusé
 **Historique :** essai 1 `ECHEC 7/11` (défaut réel **C-14** : la machine ne résolvait pas les identités de
 l'annuaire ; plus un faux échec **C-15** dû au script) · **essai 2 : RÉUSSI 11/11** après correctif
 `nss-pam-ldapd`.
+
+---
+
+## Rejeu du 2026-10-26 (soir) — 11/11, mais **sur le noyau d'origine**
+
+**Objectif du rejeu :** prouver que le banc tient **sur le noyau `NEXBSD_L1`** (derniere case du jalon J1).
+
+**Phase « avant » (2026-10-26T19:33:00Z)** — executee sur le noyau NexBSD :
+`# hote : FreeBSD 15.1-NEXBSD-L1 ; phase : avant` — 10 entrees, SID de `sara`, temoin ecrit.
+
+**Phase « apres » (2026-10-26T19:41:15Z)** — sortie verbatim :
+
+```
+# date : 2026-10-26T19:41:15Z ; hote : FreeBSD 15.1-RELEASE ; phase : apres
+Controles reussis : 11 / 11
+T-04-G : REUSSI - le banc revient seul apres redemarrage, donnees et droits compris.
+```
+
+| Controle | Resultat |
+|---|---|
+| redemarrage effectif | OK (up 32 secs) |
+| slapd / smbd revenus sans intervention | OK, `:445` en ecoute |
+| annuaire : 10 entrees, SID de `sara` | OK |
+| appartenance `omrane` -> `bureau` | OK |
+| temoin retrouve (`2026-10-26T19:33:00Z`) | OK |
+| droits `drwxrws--- 0 2001` | OK |
+| `omrane` ecrit / `sara` refusee / `sara` lit `[public]` | OK, OK, OK |
+
+**⚑ Reserve majeure, consignee telle quelle :** la phase « apres » s'annonce
+**`hote : FreeBSD 15.1-RELEASE`**, c'est-a-dire le **noyau d'origine**, pas `15.1-NEXBSD-L1`.
+Cause identifiee : `nextboot.conf` est **a usage unique** (voir **C-20**) ; le redemarrage a donc
+quitte `NEXBSD_L1` pour revenir au noyau par defaut.
+
+**Ce que ce rejeu prouve :** le banc repasse **11/11** apres une coupure, et le mecanisme de secours
+`nextboot` ramene bien au noyau d'origine sans intervention — les deux sont des resultats utiles.
+**Ce qu'il ne prouve pas :** le banc **sur notre noyau**. Cette case de J1 reste **ouverte**.
+
+**Action :** rendre `kernel="kernel.NEXBSD_L1"` **permanent** dans `/boot/loader.conf`, puis refaire une
+paire avant/apres entierement sur `NEXBSD_L1`.
