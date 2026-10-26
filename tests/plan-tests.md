@@ -45,15 +45,16 @@ tests étaient des **protocoles manuels** recopiés à la main.
 
 | Caractéristique | Valeur |
 |---|---|
-| Empreinte du fichier | **`bbf5d8def53bd57f8947243f64ca54a3e4e65f8a3f7607d2ca07cf90cd7f66f2`** (261 lignes) |
+| Empreinte du fichier | **`ef46576c2fa67b485a587135e757553693dbb0f9c31b8336d8bec42618513c8d`** (v1.1, 267 lignes) — v1.0 : `bbf5d8de…` |
 | Usage | `sh harnais.sh` (passe complète) · `sh harnais.sh --lecture` (sans écriture) · `--aide` |
 | Contrôles | identité (5) · services (4) · annuaire (4) · NSS (3) · droits disque (2) · configuration Samba (3) · service réel (3) |
 | Verdict | compteurs `OK` / `KO` / `ATT` + **code de retour** (0 = tout passe, 1 = au moins un échec) |
 | Règle R-10 | un contrôle non applicable est compté **`ATT`**, jamais `OK` ; un outil absent est **`KO`** avec la raison |
 | Prérequis | aucun : pas de redémarrage, pas d'installation ; écrit seulement dans `/tmp` |
 
-**Ce qui reste à faire :** l'exécuter sur la VM et consigner la sortie verbatim dans
-`tests/results/T-18-harnais.md`.
+**Historique :** v1.0 executee le 2026-10-26 → **ECHEC 22/24** ; les 2 echecs etaient des **defauts du harnais**
+(`ls -ld` au lieu de `ls -ldn` ; texte de `smbclient` au lieu du code de retour), pas du systeme. Corriges en v1.1.
+Compte rendu : `tests/results/T-18-harnais.md`.
 
 ---
 

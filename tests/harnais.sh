@@ -23,7 +23,7 @@
 #   - un outil absent est compte [KO], avec la raison ;
 #   - le verdict final est calcule, jamais ecrit a la main.
 
-VERSION="1.0"
+VERSION="1.1"
 MODE="complet"
 
 SUFFIXE="dc=nexbsd,dc=local"
@@ -170,7 +170,7 @@ if [ "$U" = "omrane" ]; then ok "NSS : omrane resolu"; else ko "NSS : omrane non
 titre "5. droits des partages sur le disque"
 
 if [ -d "$PARTAGE_COMMUN" ]; then
-  D=$(ls -ld "$PARTAGE_COMMUN" | awk '{print $1" "$4}')
+  D=$(ls -ldn "$PARTAGE_COMMUN" 2>/dev/null | awk '{print $1" "$4}')
   case "$D" in
     "drwxrws--- $GID_BUREAU") ok " $PARTAGE_COMMUN : $D (setgid + groupe $GID_BUREAU)" ;;
     *)                        ko "$PARTAGE_COMMUN : $D (attendu drwxrws--- $GID_BUREAU)" ;;
@@ -180,7 +180,7 @@ else
 fi
 
 if [ -d "$PARTAGE_PUBLIC" ]; then
-  D=$(ls -ld "$PARTAGE_PUBLIC" | awk '{print $1" "$4}')
+  D=$(ls -ldn "$PARTAGE_PUBLIC" 2>/dev/null | awk '{print $1" "$4}')
   case "$D" in
     "drwxr-xr-x "*) ok " $PARTAGE_PUBLIC : $D (lecture pour tous)" ;;
     *)              att "$PARTAGE_PUBLIC : $D (forme inattendue)" ;;
@@ -223,24 +223,30 @@ else
   printf 'harnais %s\n' "$(date -u +%FT%TZ)" > "$TMP"
   NOM="harnais-$(date -u +%H%M%S).txt"
 
-  OUT=$(smbclient "//127.0.0.1/commun" -U "omrane%$MDP_OMRANE" -c "put $TMP $NOM" 2>&1)
-  case "$OUT" in
-    *"NT_STATUS_OK"*|"") ok "omrane ecrit dans [commun]" ;;
-    *) ko "omrane n'a pas pu ecrire dans [commun] : $(echo "$OUT" | tail -1)" ;;
-  esac
+  # NOTE (correctif v1.1) : smbclient affiche TOUJOURS sa ligne de progression
+  # ("putting file ... (0.5 kB/s)") meme quand tout se passe bien.
+  # On juge donc sur le CODE DE RETOUR, jamais sur le texte -- regle reprise de scripts/64.
+  if smbclient "//127.0.0.1/commun" -U "omrane%$MDP_OMRANE" -c "put $TMP $NOM" >/tmp/harnais-omrane.out 2>&1; then
+    ok "omrane ecrit dans [commun] (code de retour 0)"
+  else
+    ko "omrane n'a pas pu ecrire dans [commun] : $(tail -1 /tmp/harnais-omrane.out)"
+  fi
 
-  OUT=$(smbclient "//127.0.0.1/commun" -U "sara%$MDP_SARA" -c "put $TMP refus-attendu.txt" 2>&1)
-  case "$OUT" in
-    *NT_STATUS_ACCESS_DENIED*|*NT_STATUS_MEDIA_WRITE_PROTECTED*) ok "sara est refusee dans [commun] (attendu)" ;;
-    *) ko "sara a ecrit dans [commun] ou erreur inattendue : $(echo "$OUT" | tail -1)" ;;
-  esac
+  if smbclient "//127.0.0.1/commun" -U "sara%$MDP_SARA" -c "put $TMP refus-attendu.txt" >/tmp/harnais-sara.out 2>&1; then
+    ko "sara a ECRIT dans [commun] : les droits ne sont pas appliques"
+  else
+    if grep -q "NT_STATUS_ACCESS_DENIED" /tmp/harnais-sara.out; then
+      ok "sara est refusee dans [commun] avec ACCESS_DENIED (attendu)"
+    else
+      ko "sara est refusee mais pour une autre raison : $(tail -1 /tmp/harnais-sara.out)"
+    fi
+  fi
 
-  OUT=$(smbclient "//127.0.0.1/public" -U "sara%$MDP_SARA" -c "ls" 2>&1)
-  case "$OUT" in
-    *NT_STATUS_ACCESS_DENIED*|*NT_STATUS_LOGON_FAILURE*) ko "sara ne peut pas lire [public] alors qu'elle devrait" ;;
-    *NT_STATUS_OK*|*"blocks of size"*) ok "sara lit [public] par le reseau" ;;
-    *) att "lecture de [public] par sara : sortie inattendue ($(echo "$OUT" | tail -1))" ;;
-  esac
+  if smbclient "//127.0.0.1/public" -U "sara%$MDP_SARA" -c "ls" >/tmp/harnais-public.out 2>&1; then
+    ok "sara lit [public] par le reseau"
+  else
+    ko "sara ne peut pas lire [public] : $(tail -1 /tmp/harnais-public.out)"
+  fi
 
   rm -f "$TMP" 2>/dev/null
 fi
