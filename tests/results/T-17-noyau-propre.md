@@ -247,7 +247,41 @@ C'est l'etage 2, franchement franchi.
 
 `/tmp/64-banc-T04G-persistance.sh` etait absent : `/tmp` est vide au demarrage. Script a recharger.
 
-**Note d'honnêteté sur le journal de reprise :** le redirection de la commande de reprise a été altérée au
+##### Étape 5 — banc rejoué **sur le noyau NexBSD** : **RÉUSSI 11/11** (2026-10-26T19:54:29Z)
+
+Après avoir rendu le choix du noyau **permanent** (`sysrc -f /boot/loader.conf kernel=kernel.NEXBSD_L1
+autoboot_delay=5`, correctif de **C-20**), la paire avant/après a été rejouée en entier sur `NEXBSD_L1` :
+
+```
+# date : 2026-10-26T19:51:12Z ; hote : FreeBSD 15.1-NEXBSD-L1 ; phase : avant
+# date : 2026-10-26T19:54:29Z ; hote : FreeBSD 15.1-NEXBSD-L1 ; phase : apres
+...
+Controles reussis : 11 / 11
+T-04-G : REUSSI - le banc revient seul apres redemarrage, donnees et droits compris.
+```
+
+| Contrôle | Résultat |
+|---|---|
+| en-tête des **deux** phases | `hote : FreeBSD 15.1-NEXBSD-L1` — **c'est bien notre noyau** |
+| redémarrage effectif | OK (`up 36 secs`, instant de démarrage différent) |
+| `slapd`, `smbd` revenus sans commande manuelle | OK, `:445` en écoute |
+| annuaire : 10 entrées, SID de `sara` conservé | OK |
+| `omrane` → `bureau` conservé | OK |
+| témoin retrouvé (`2026-10-26T19:51:12Z`) | OK |
+| droits `drwxrws--- 0 2001` avant **et** après | OK |
+| `omrane` écrit / `sara` refusée / `sara` lit `[public]` | OK · OK · OK |
+
+### Verdict du jalon J1 — **COMPLET**
+
+| Condition de J1 | Preuve | État |
+|---|---|---|
+| noyau compilé par le projet | `Kernel(s) NEXBSD_L1 built in 1470 seconds`, retour 0 | ✅ |
+| noyau installé à côté, sans toucher au socle | `/boot/kernel.NEXBSD_L1`, 858 modules, 158 Mo, `/boot/kernel` intact | ✅ |
+| noyau démarré **durablement** | `kernel="kernel.NEXBSD_L1"` dans `/boot/loader.conf` | ✅ |
+| identité système | `uname -r` = `15.1-NEXBSD-L1`, `uname -i` = `NEXBSD_L1` | ✅ |
+| **le banc tient dessus** | **T-04-G : 11/11, en-tête `15.1-NEXBSD-L1`** | ✅ |
+
+**Note d'honnêteté sur le journal de reponse :** le redirection de la commande de reprise a été altérée au
 transport (guillemets perdus) ; le journal de reprise ne contient donc que la fin. Le **résultat final est
 sans ambiguïté** (`code de retour : 0`), et le journal de la première phase (45 253 lignes) reste complet dans
 `buildkernel-20261025T205343Z.log`. Leçon : une commande qui écrit dans un journal doit être revérifiée après

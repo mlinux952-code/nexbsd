@@ -83,7 +83,7 @@ Six conditions, dans l'ordre où elles doivent être satisfaites. Tant qu'une se
 
 | # | Condition | Pourquoi elle est indispensable | Faisable sur le poste actuel ? |
 |---|---|---|---|
-| **A** | Le banc complet (annuaire + droits + persistance) tient **sur notre noyau** | sinon l'étage 2 n'a pas de sens | **oui — ce soir** |
+| **A** | Le banc complet (annuaire + droits + persistance) tient **sur notre noyau** | sinon l'étage 2 n'a pas de sens | **✅ FAIT le 2026-10-26 à 19:54 UTC — 11/11, en-tête `FreeBSD 15.1-NEXBSD-L1`** |
 | **B** | Un **vrai poste client** (Windows ou Linux Mint) accède aux partages | un partage prouvé par lui-même ne prouve rien du réseau | **oui** (Mint est là, réseau QEMU à monter) |
 | **C** | Une **image produite par le projet** démarre et s'installe | c'est la définition même d'un système distribué | **non** → voie CI (`docs/27` voie B) |
 | **D** | Le système **se met à jour seul** (dépôt de paquets NexBSD) | sans cela, chaque mise à jour est manuelle : ce n'est pas un système | non → après C |

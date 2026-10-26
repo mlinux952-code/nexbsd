@@ -191,3 +191,29 @@ quitte `NEXBSD_L1` pour revenir au noyau par defaut.
 
 **Action :** rendre `kernel="kernel.NEXBSD_L1"` **permanent** dans `/boot/loader.conf`, puis refaire une
 paire avant/apres entierement sur `NEXBSD_L1`.
+
+---
+
+## Rejeu final du 2026-10-26 (soir) — **11/11 SUR LE NOYAU NexBSD**
+
+Après correctif **C-20** (choix du noyau rendu permanent), paire complete sur `NEXBSD_L1` :
+
+```
+# date : 2026-10-26T19:51:12Z ; hote : FreeBSD 15.1-NEXBSD-L1 ; phase : avant
+# date : 2026-10-26T19:54:29Z ; hote : FreeBSD 15.1-NEXBSD-L1 ; phase : apres
+Controles reussis : 11 / 11
+T-04-G : REUSSI - le banc revient seul apres redemarrage, donnees et droits compris.
+```
+
+| Controle | Avant | Apres |
+|---|---|---|
+| annuaire | 10 entrees | 10 entrees |
+| SID `sara` | `...-1010` | `...-1010` (identique) |
+| droits `[commun]` | `drwxrws--- 0 2001` | `drwxrws--- 0 2001` |
+| temoin | ecrit `19:51:12Z` | retrouve |
+| `omrane` ecrit | — | OK |
+| `sara` dans `[commun]` | — | refusee |
+| `sara` lit `[public]` | — | OK |
+
+**Verdict : REUSSI, sans reserve** — et cette fois l'en-tete du script atteste que le banc tourne sur
+**`FreeBSD 15.1-NEXBSD-L1`**, le noyau construit par le projet.
