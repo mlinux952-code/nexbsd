@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 17 · **Mise à jour :** 2026-10-26 (session S-019)
+**Version de cette fiche :** 17 · **Mise à jour :** 2026-10-26 (session S-019) · **niveau d'indépendance : I2**
 
 > **Rappel permanent (demande du responsable, 2026-10-25) :** le produit s'appelle **NexBSD**.
 > Toute occurrence de « freebsd » dans une sortie d'écran, un `uname` ou un nom d'hôte désigne
