@@ -177,3 +177,4 @@
 | `34-pourquoi-composants-ecartes.md` | Causes exactes du rejet de Firefox OS et MARS_NWE (licence != cause) + regle generale « quand l'age disqualifie » | 2026-10-26 |
 | `35-reutilisation-bornee-gaia-mars.md` | Proposition de 2 experiences bornees : porter 1 app Gaia (Apache-2.0) sur WebKitGTK + banc A MARS_NWE pour ecrire la spec NetWare ; plateforme Gaia exclue, MARS_NWE hors produit | 2026-10-26 |
 | `36-alternatives-annuaire.md` | Mise au point : 389 DS et FreeIPA sont des alternatives a OpenLDAP, pas a MARS_NWE ; comparaison et maintien d'OpenLDAP | 2026-10-26 |
+| `37-apport-externe-centre-de-commande.md` | Contribution n° 2 examinee : principe P-CC adopte (couche D-4), liste des 10 systemes ramenee a une veille, recommandation 'FreeBSD option parmi d'autres' rejetee sur preuve | 2026-10-26 |

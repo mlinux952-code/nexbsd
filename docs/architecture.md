@@ -82,7 +82,10 @@ Composants à concevoir : `shell` (écran d'accueil), `launcher`, `keynav` (mapp
 - **D-1** Samba (fichiers), CUPS (impression) — *retenus, sous réserve de version*.
 - **D-2** OpenLDAP — *retenu sous condition de disponibilité d'une version ≥ 2.6 sous FreeBSD*.
 - **D-3** compatibilité NetWare historique — **rejetée** comme composant ; sujet de laboratoire isolé uniquement.
-- **D-4** administration : interface NexBSD (à créer).
+- **D-4** administration : interface NexBSD (à créer). **Principe P-CC** (`docs/37`) : un point
+  d'administration unique pour des machines hétérogènes, par **adaptateurs** explicites, **hors base et hors
+  noyau**, opérations impossibles **annoncées** et non simulées, toute action journalisée et attribuée à une
+  identité de l'annuaire. **Chantier ouvert seulement après l'image installable** (condition C, `docs/33`).
 - **D-5** supervision : syslog/newsyslog + un superviseur léger.
 
 ### Couche E — Applications et administration
