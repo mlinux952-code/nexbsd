@@ -1,7 +1,7 @@
 # Plan de tests — prototype 0
 
 **Date :** 2026-10-23
-**Statut : 8 tests réussis sur 20 (2026-10-26) — T-17 (noyau propre) et T-11 (reproductibilité) RÉUSSIS.** T-01, T-03, T-04, T-04-E et T-04-F sont réussis en machine virtuelle ; les 12 autres restent `NON EXÉCUTÉ` ; T-04-G est écrit et attend son exécution.
+**Statut : 9 tests réussis sur 20 (2026-10-26) — T-17 (noyau propre), T-11 (reproductibilité) et T-18 (harnais automatisé) RÉUSSIS.** T-01, T-03, T-04, T-04-E et T-04-F sont réussis en machine virtuelle ; les 12 autres restent `NON EXÉCUTÉ` ; T-04-G est écrit et attend son exécution.
 
 > **Exécution du 2026-10-23 (VM QEMU, émulation pure)** : FreeBSD 15.1-RELEASE démarre (81 s jusqu'à `login:`), ~100 Mo de RAM occupés au repos, Samba 4.23.11 installé depuis les dépôts, partage authentifié accessible **depuis une autre machine** avec écriture et relecture. Détails : `tests/results/`.
 
@@ -52,9 +52,9 @@ tests étaient des **protocoles manuels** recopiés à la main.
 | Règle R-10 | un contrôle non applicable est compté **`ATT`**, jamais `OK` ; un outil absent est **`KO`** avec la raison |
 | Prérequis | aucun : pas de redémarrage, pas d'installation ; écrit seulement dans `/tmp` |
 
-**Historique :** v1.0 executee le 2026-10-26 → **ECHEC 22/24** ; les 2 echecs etaient des **defauts du harnais**
-(`ls -ld` au lieu de `ls -ldn` ; texte de `smbclient` au lieu du code de retour), pas du systeme. Corriges en v1.1.
-Compte rendu : `tests/results/T-18-harnais.md`.
+**Résultat : v1.1 → `HARNAIS : REUSSI (24/24)`, code de retour 0** (2026-10-26T22:19:32Z).
+**Historique :** v1.0 → **ECHEC 22/24** ; les 2 echecs etaient des **defauts du harnais** (`ls -ld` au lieu de
+`ls -ldn` ; texte de `smbclient` au lieu du code de retour), pas du systeme. Compte rendu : `tests/results/T-18-harnais.md`.
 
 ---
 

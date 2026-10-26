@@ -105,4 +105,9 @@ pas encore **prouver qu'il est reproductible**, et nos tests ne sont pas automat
 verdict global et **code de retour**, aucun redémarrage nécessaire. Le critère « harnais automatisé » passe
 donc de **non conforme** à **partiel** : il manque **l'exécution** sur la VM et la sortie verbatim.
 **Décompte : 8 conformes · 4 partiels · 0 non conforme.**
+
+### Mise à jour (2026-10-26, 22:19 UTC) — harnais **exécuté et réussi**
+
+`sh harnais.sh` → **`HARNAIS : REUSSI (24/24 obligatoires)`**, **code de retour 0**, en ~30 secondes.
+Le critère « harnais automatisé » passe de *partiel* à **CONFORME**. **Décompte final : 9 conformes · 3 partiels · 0 non conforme.**
 Le collègue avait raison de pointer ce manque : il est désormais comblé, avec une mesure, pas une intention.
