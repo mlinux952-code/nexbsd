@@ -82,12 +82,25 @@ ERREUR : 'nexbsd-test' n'est pas en cours d'execution (etat : shut off)
 
 ## 4. Verdict
 
-**RÉUSSI à blanc** (3 essais sur 3). `scripts/31-lancer-vm-freebsd.sh` **v3**, 197 lignes,
-sha256 `908d617c9a0ff7c6d773a2b4753bc7b6a61a15fc8c76b623b2a27050a696ccc3`.
+**RÉUSSI** (3 essais sur 3 à blanc, **+ détection validée sur la sortie réelle**).
 
-⚠️ **Ce qui reste à faire pour transformer ce succès à blanc en succès réel :** exécuter
+### 4.1 Validation de terrain du motif de détection (2026-10-27, ~20h10 UTC)
+
+🖥️ MINT, sortie **verbatim** :
+
+```
+$ virsh -c qemu:///session qemu-monitor-command nexbsd-test --hmp "info usernet" | grep -E "(^|[[:space:]])4450([[:space:]]|$)"
+
+  TCP[HOST_FORWARD] 106       127.0.0.1  4450       10.0.2.15   445     0     0
+```
+
+Le motif corrigé fonctionne **sur la machine réelle**, pas seulement sur la doublure. C'est cette ligne
+précise que la v3 cherche avant de décider d'ajouter ou non.
+
+⚠️ **Ce qui reste à faire pour transformer ce succès en succès de terrain complet :** exécuter
 `sh scripts/31-lancer-vm-freebsd.sh --reseau` **sur le Mint**, contre la vraie VM. Tant que ce n'est pas
-fait, ce test est un test **de logique**, pas un test **de terrain** — et il est consigné comme tel.
+fait, le test est un test **de logique et de détection**, pas encore d'exécution du script complet — et il
+est consigné comme tel.
 
 ## 5. Ce que cela change pour le projet
 
