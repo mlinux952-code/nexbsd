@@ -47,7 +47,7 @@ Chaque ligne = un ingrédient nécessaire pour qu'un système de cette famille e
 | 9 | **Persistance après coupure** | **T-04-G 11/11 le 2026-10-25** ; rejeu **sur notre noyau** en cours ce soir | **FAIT** (à re-prouver sur `NEXBSD_L1`) |
 | 10 | **Client réel non-FreeBSD** (Windows / Linux) | tous les essais SMB ont été faits par `smbclient` **depuis la VM elle-même** | **ABSENT** — jamais testé depuis un vrai poste client |
 | 11 | **Réseau / découverte de services** (esprit SAP) | T-15 non exécuté, mDNS/DNS-SD non configuré | **ABSENT** |
-| 12 | **Isolation / pare-feu** | T-05, T-05a non exécutés, `pf` non configuré | **ABSENT** |
+| 12 | **Isolation / pare-feu** | `pf` actif le 2026-10-27 : **11 règles, refus par défaut journalisé**, banc **24/24 sous filtrage** (T-05). T-05a (test de refus depuis une autre machine) reste à faire | **PARTIEL** |
 | 13 | **Impression partagée** | T-07 non exécuté, CUPS non installé | **ABSENT** |
 | 14 | **Sauvegarde / restauration** | T-06 non exécuté, aucune procédure de restauration exercée | **ABSENT** |
 | 15 | **Installateur** (installer sur un PC nu) | l'installateur utilisé est celui de FreeBSD ; aucune image NexBSD | **ABSENT** |
