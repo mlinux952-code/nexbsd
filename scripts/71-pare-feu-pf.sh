@@ -113,8 +113,10 @@ block in log all
 # --- sorties autorisees (mises a jour, fetch, resolution DNS) : le systeme doit pouvoir travailler
 pass out all keep state
 
-# --- ICMP echo : diagnostic indispensable, mais limite en debit (anti-inondation)
-pass in on $IFACE inet proto icmp icmp-type echoreq keep state (max 20/s, burst 10)
+# --- ICMP echo : diagnostic indispensable (savoir si la machine est vivante).
+# C-23 : la limitation de debit s'ecrit avec max-src-conn-rate + table overload ; "max 20/s" N'EXISTE PAS
+# en pf ("max" designe un nombre d'etats, pas un debit). On garde donc un simple keep state.
+pass in on $IFACE inet proto icmp icmp-type echoreq keep state
 # --- ICMP indispensable au bon fonctionnement de TCP (PMTU) : on ne le bloque pas
 pass in on $IFACE inet proto icmp icmp-type unreach keep state
 pass in on $IFACE inet proto icmp icmp-type timex keep state

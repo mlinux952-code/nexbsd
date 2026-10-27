@@ -475,3 +475,33 @@ restauré, l'état est resté strictement inchangé. Un échec propre vaut mieux
 **Point important pour la confiance :** charger le module `pf` **ne filtre rien**. Le filtrage ne commence
 que lorsque des règles sont chargées **et** `pf` activé (`pfctl -e`). `kldload pf` est donc sans risque et
 réversible (`kldunload pf`).
+
+---
+
+## C-23 — `pass ... keep state (max 20/s, burst 10)` : une syntaxe qui n'existe pas en `pf`
+
+**Constaté :** 2026-10-27, deuxième tentative d'activation du pare-feu (`scripts/71` v1.2, modules chargés
+correctement). La validation à blanc refuse le fichier :
+
+```
+----- 4. validation A BLANC (aucune application) -----
+  [KO]    SYNTAXE INVALIDE — rien n'a ete applique
+  ...     /etc/pf.conf:18: syntax error
+```
+
+**Cause :** en `pf`, `max` désigne un **nombre d'états** (une quantité), **pas un débit**. La limitation de
+débit s'écrit `max-src-conn-rate <n>/<période>` éventuellement avec `overload <table>`. J'avais écrit
+`(max 20/s, burst 10)`, qui **n'existe pas** : erreur de ma part, pas du système.
+
+**Effet :** deuxième échec propre. Rien appliqué, `/etc/pf.conf` restauré, système inchangé.
+
+**Correctif (v1.3) :** la règle ICMP devient un simple `keep state`. La limitation de débit anti-inondation
+est **reportée** : elle exige une table `overload` et une décision explicite (« à partir de combien de
+requêtes on bloque ? »). Mieux vaut un pare-feu qui démarre et se prouve qu'une protection élégante qui ne
+se charge pas.
+
+**Leçon (trois échecs, trois causes différentes, la même racine) :** C-22 (ordre des étapes), C-23 (syntaxe
+inventée), et l'échec initial (mauvais hôte de téléchargement). La racine commune est **d'avoir écrit du
+`pf` de mémoire au lieu de le valider contre la réalité**. La parade est désormais en place : **chaque
+version du script valide à blanc et s'arrête net** si le fichier est refusé — c'est le garde-fou qui a
+parlé trois fois de suite.
