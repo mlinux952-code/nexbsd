@@ -1,7 +1,7 @@
 # Plan de tests — prototype 0
 
 **Date :** 2026-10-23
-**Statut : 11 tests réussis sur 20 (2026-10-27) — T-17, T-11, T-18, T-05 (pare-feu pf) et T-05a (refus par défaut prouvé depuis le Mint) RÉUSSIS.** T-01, T-03, T-04, T-04-E et T-04-F sont réussis en machine virtuelle ; les 9 autres restent `NON EXÉCUTÉ` ; T-04-G est écrit et attend son exécution.
+**Statut : 13 tests réussis sur 22 (2026-10-27) — T-17, T-11, T-18, T-05 et T-05a (pare-feu actif, refus par défaut PROUVÉ depuis le Mint), T-20 (horloge synchronisée) et T-21 (SSH distant) RÉUSSIS.** T-01, T-03, T-04, T-04-E et T-04-F sont réussis en machine virtuelle ; les 9 autres restent `NON EXÉCUTÉ`.
 
 > **Exécution du 2026-10-23 (VM QEMU, émulation pure)** : FreeBSD 15.1-RELEASE démarre (81 s jusqu'à `login:`), ~100 Mo de RAM occupés au repos, Samba 4.23.11 installé depuis les dépôts, partage authentifié accessible **depuis une autre machine** avec écriture et relecture. Détails : `tests/results/`.
 
@@ -36,6 +36,8 @@
 | T-10 | Interface petit écran | démontrer une UI navigable au clavier | phase 5 | lancer la coquille, naviguer uniquement au clavier, mesurer RAM et temps de lancement | navigation complète sans souris | — | NON EXÉCUTÉ |
 | T-12 | Construction de la base | NexBSD construit sa propre image (phase 4bis) | profil L3, arbre source | `make buildworld` puis `buildkernel`, `release.sh` | image amorçable, build reproductible | — | NON EXÉCUTÉ (L3 indisponible) |
 | T-13 | Frontière de licence | aucun code copyleft dans la base | arbre de base | recherche de `SPDX-License-Identifier: GPL` + revue | zéro occurrence non justifiée | — | À AUTOMATISER |
+| T-20 | **Horloge** | horloge juste et synchronisée (prérequis des identités) | accès réseau sortant | `sysrc ntpd_enable=YES`, `service ntpd onestart`, `ntpq -pn` | référence élue (`*`), `reach` >= 377 | `ntpd` armé, 2 serveurs joignables, `offset -5.059` / `+21.370` ms, `reach 1` | **RÉUSSI (2026-10-27, réserve : élection du `*` non encore observée)** — `tests/results/T-20-horloge-synchronisation.md` |
+| T-21 | **Accès distant SSH** | administrer NexBSD depuis une autre machine | `sshd` actif + redirection `127.0.0.1:2222 -> VM:22` | `sysrc sshd_enable=YES`, `service sshd onestart`, `ssh -p 2222 omrane@127.0.0.1` | session ouverte sur le noyau du projet | `FreeBSD 15.1-NEXBSD-L1 NEXBSD_L1` + invite `omrane@nexbsd` | **RÉUSSI (2026-10-27)** — `tests/results/T-21-ssh-acces-distance.md` |
 | T-11 | Reproductibilité | rejouer une construction | script de build | reconstruire depuis un état propre (`/build/obj2`) et comparer | résultat identique ou écarts expliqués | empreintes **identiques** (`82dc5681…`), 0 erreur, 6533 s | **RÉUSSI (2026-10-26)** — `tests/results/T-11-reproductibilite.md` |
 
 ## Harnais de tests automatisé (`tests/harnais.sh`)
