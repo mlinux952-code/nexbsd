@@ -32,7 +32,7 @@ echo "########## NexBSD — registre des acquis ##########"
 echo "# date : $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 echo
 
-TOTAL=0; NP=0; NM=0; NX=0
+TOTAL=0; NP=0; NM=0; NX=0; NG=0
 KO_CIBLE=0; KO_DEST=0
 OUVERTS=""; AFAIRE=""
 
@@ -55,6 +55,7 @@ for ligne in $DONNEES; do
     case "$dest" in
         PRODUIT)  NP=$((NP + 1)) ;;
         METHODE)  NM=$((NM + 1)) ;;
+        GOUVERNANCE) NG=$((NG + 1)) ;;
         PREUVE)   NX=$((NX + 1)) ;;
         *)        ko "$id : destination inconnue ou vide ('$dest') — chaque acquis doit aller quelque part"
                   KO_DEST=$((KO_DEST + 1))
@@ -105,6 +106,7 @@ info "acquis enregistres      : $TOTAL"
 info "destines au PRODUIT     : $NP"
 info "destines a la METHODE   : $NM"
 info "destines a la PREUVE    : $NX"
+info "destines a la GOUVERNANCE : $NG"
 echo
 echo "----- 3. ce qui n'est PAS encore dans le produit -----"
 if [ -n "$OUVERTS" ]; then
@@ -119,9 +121,24 @@ else
 fi
 
 echo
-if [ "$KO_DEST" -eq 0 ] && [ "$KO_CIBLE" -eq 0 ]; then
+echo "----- 4. aucune preuve sans destination -----"
+NONREF=0
+for f in tests/results/*.md; do
+    [ -f "$f" ] || continue
+    base=$(basename "$f")
+    tid=$(echo "$base" | sed -E 's/^(T-[0-9]+[A-Za-z]*).*/\1/')
+    if grep -q "$base" "$CSV" || { [ "$tid" != "$base" ] && grep -q "$tid" "$CSV"; }; then
+        :
+    else
+        ko "compte rendu NON reference dans le registre : $base"
+        NONREF=$((NONREF + 1))
+    fi
+done
+[ "$NONREF" -eq 0 ] && ok "les $(ls tests/results/*.md 2>/dev/null | wc -l | tr -d ' ') comptes rendus sont references"
+echo
+if [ "$KO_DEST" -eq 0 ] && [ "$KO_CIBLE" -eq 0 ] && [ "$NONREF" -eq 0 ]; then
     echo "VERDICT : REGISTRE CONFORME — chaque acquis a une destination, chaque cible PRODUIT existe."
     exit 0
 fi
-echo "VERDICT : REGISTRE NON CONFORME — $KO_DEST destination(s) invalide(s), $KO_CIBLE cible(s) en defaut."
+echo "VERDICT : REGISTRE NON CONFORME — $KO_DEST destination(s) invalide(s), $KO_CIBLE cible(s) en defaut, $NONREF preuve(s) non referencee(s)."
 exit 1

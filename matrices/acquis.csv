@@ -6,9 +6,10 @@
 #
 # REGLE R-12 (docs/40) : aucun travail n'est considéré comme terminé tant que sa DESTINATION
 # n'est pas écrite dans ce fichier. Trois destinations légitimes, une seule interdite :
-#   PRODUIT  = doit se retrouver dans l'image NexBSD (via fork/overlay ou la chaîne de release)
-#   METHODE  = ne va PAS dans l'image, mais empêche de refaire une erreur (scripts, leçons, garde-fous)
-#   PREUVE   = ne va PAS dans l'image, mais prouve que l'image fait ce qu'elle prétend (tests)
+#   PRODUIT     = doit se retrouver dans l'image NexBSD (via fork/overlay ou la chaîne de release)
+#   METHODE     = ne va PAS dans l'image, mais empêche de refaire une erreur (scripts, leçons, garde-fous)
+#   PREUVE      = ne va PAS dans l'image, mais prouve que l'image fait ce qu'elle prétend (tests)
+#   GOUVERNANCE = une décision écrite, qui engage la suite (docs/decisions/ADR-xxxx)
 #   INTERDIT = « on l'a fait, c'est dans nos têtes / dans une VM » → c'est précisément ce que ce
 #              registre existe pour empêcher.
 #
@@ -40,3 +41,31 @@ A-19;2026-10-27;chaine de release + image installable (jalon J5);docs/41;PRODUIT
 A-20;2026-10-27;diagnostic materiel du PC de 2011 (livrable 9);docs/hardware.md;PREUVE;docs/hardware.md;A-FAIRE
 A-21;2026-10-27;bureau et applications NexBSD (couche C);docs/42;PRODUIT;;A-FAIRE
 A-22;2026-10-27;identite unique PAM/LDAP pour les sessions systeme;constat T-21;PRODUIT;;A-FAIRE
+A-23;2026-10-24;configuration slapd (annuaire) — n existe QUE dans les scripts 60 et 62;T-04 / T-04-E;PRODUIT;fork/overlay/usr-local-etc-openldap-slapd.conf;A-FAIRE
+A-24;2026-10-24;configuration smb4.conf (partages + ldapsam) — n existe QUE dans les scripts 62 et 63;T-04-E / T-04-F;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;A-FAIRE
+A-25;2026-10-25;nsswitch.conf (resolution des identites de l annuaire) — que dans script 65;T-04-G / C-14;PRODUIT;fork/overlay/etc-nsswitch.conf;A-FAIRE
+A-26;2026-10-25;nslcd.conf (passerelle NSS vers LDAP) — que dans script 65;T-04-G / C-14;PRODUIT;fork/overlay/usr-local-etc-nslcd.conf;A-FAIRE
+A-27;2026-10-24;annuaire de base : comptes, groupes, SID (LDIF) — que dans scripts 60 et 63;T-04 / T-04-F;PRODUIT;fork/overlay/install/annuaire-base.ldif;A-FAIRE
+A-28;2026-10-24;services armes au demarrage : slapd, nslcd, samba_server;T-04-G;PRODUIT;fork/overlay/etc/rc.conf.defaults;OUVERT
+A-29;2026-10-23;noyau NEXBSD_L1 + delta vs GENERIC (5 lignes motivees);T-17;PRODUIT;fork/sys/amd64/conf/NEXBSD_L1.rapport;FERME
+A-30;2026-10-23;20 decisions consignees (ADR-0001 a ADR-0020) — toutes a l etat PROPOSITION;docs/decisions/;GOUVERNANCE;docs/decisions/ADR-0001-base-freebsd.md;OUVERT
+A-31;2026-10-26;echelle d independance I0-I5 et grille d audit contradictoire;docs/32;METHODE;docs/32-audit-croise.md;FERME
+A-32;2026-10-23;reprise sans conversation : sequence START-HERE, ETAT, comptes rendus;docs/39;METHODE;START-HERE.md;FERME
+A-33;2026-10-23;sauvegardes : bundles Drive + depot GitHub (etat du distant NON verifie);docs/20;PREUVE;docs/20-depots-et-sauvegardes.md;OUVERT
+A-34;2026-10-23;11 couloirs de recherche separes du produit (MARS_NWE, noyau propre, NCP...);research/;METHODE;research/netware/fiche.md;FERME
+A-35;2026-10-25;reproductibilite du noyau : deux constructions, empreintes identiques;T-11;PREUVE;tests/results/T-11-reproductibilite.md;FERME
+A-36;2026-10-27;regles de travail R-1..R-12 et lecons M-1..M-11;docs/40;METHODE;docs/40-regles-de-travail.md;FERME
+A-37;2026-10-23;preuve de demarrage du socle;T-01;PREUVE;tests/results/T-01-demarrage-freebsd.md;FERME
+A-38;2026-10-23;preuve de partage SMB depuis une autre machine;T-03;PREUVE;tests/results/T-03-partage-samba.md;FERME
+A-39;2026-10-24;preuve de l annuaire OpenLDAP;T-04;PREUVE;tests/results/T-04-ldap-annuaire.md;FERME
+A-40;2026-10-24;preuve Samba via ldapsam;T-04-E;PREUVE;tests/results/T-04E-samba-ldap.md;FERME
+A-41;2026-10-24;preuve des droits par groupes;T-04-F;PREUVE;tests/results/T-04F-droits-groupes.md;FERME
+A-42;2026-10-25;preuve de persistance apres redemarrage;T-04-G;PREUVE;tests/results/T-04G-persistance.md;FERME
+A-43;2026-10-27;preuve du pare-feu actif (24/24 sous filtrage);T-05;PREUVE;tests/results/T-05-pare-feu.md;FERME
+A-44;2026-10-27;preuve de refus par defaut depuis une autre machine;T-05a;PREUVE;tests/results/T-05a-accessibilite-depuis-mint.md;FERME
+A-45;2026-10-25;preuve de l identite NexBSD du banc;T-16;PREUVE;tests/results/T-16-identite-banc.md;FERME
+A-46;2026-10-26;preuve du noyau NEXBSD_L1 installe;T-17;PREUVE;tests/results/T-17-noyau-propre.md;FERME
+A-47;2026-10-27;preuve du harnais 24/24;T-18;PREUVE;tests/results/T-18-harnais.md;FERME
+A-48;2026-10-27;preuve de rejouabilite du reseau du banc;T-19;PREUVE;tests/results/T-19-rejouabilite-reseau-banc.md;FERME
+A-49;2026-10-27;preuve de synchronisation de l horloge;T-20;PREUVE;tests/results/T-20-horloge-synchronisation.md;FERME
+A-50;2026-10-27;preuve d acces SSH distant par cle;T-21;PREUVE;tests/results/T-21-ssh-acces-distance.md;FERME

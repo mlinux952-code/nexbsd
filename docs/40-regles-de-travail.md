@@ -111,3 +111,20 @@ Puis restauré → `CONFORME`. **Le garde-fou détecte vraiment.**
 **Règle :** tout garde-fou nouveau doit être testé **dans les deux sens** (cas conforme + cas en défaut),
 et la sortie du cas en défaut est consignée. Même exigence que pour `nc` sous slirp (C-25) : une mesure qui
 ne peut pas dire « non » ne dit rien du tout.
+
+---
+
+## R-13 — Un test réussi n'est pas un produit
+
+**Constaté le 2026-10-27** (audit rétrospectif `docs/45`) : les tests T-04, T-04-E, T-04-F et T-04-G sont
+réussis depuis quatre jours, avec preuves verbatim. Mais la **configuration** qui les rend possibles
+(`slapd.conf`, `smb4.conf`, `nsswitch.conf`, `nslcd.conf`, LDIF) n'existe **que dans les scripts de banc**,
+sous forme de commandes. **Aucune image ne peut être produite à partir de là.**
+
+**Règle.** La réussite d'un test ne dispense pas d'écrire le **fichier de configuration** correspondant
+dans `fork/overlay/`. Un acquis ne passe à `FERME` que si sa **cible existe dans le dépôt**, pas parce que
+le test est vert.
+
+**Corollaire opérationnel :** quand un script de banc écrit un fichier de configuration sur la cible
+(`cat > /usr/local/etc/… <<'CONF'`), ce contenu doit être **extrait** vers `fork/overlay/` et le script
+doit devenir un simple applicateur — sinon on maintient deux vérités qui divergeront.
