@@ -82,3 +82,28 @@ utile n'est donc pas un nouveau test, mais **la chaîne qui transforme ces fichi
 4. `release.sh` + CI (`docs/41`) → **première image**, puis J5.
 
 C'est exactement l'ordre de `docs/43` §5. **On ne change pas de route : on remplit le moule.**
+
+---
+
+## 6. Addendum — le garde-fou a parlé, et il avait raison
+
+En commitant les trois nouveaux fichiers du produit, `scripts/70-verifier-delta.sh` a répondu :
+
+```
+[ECHEC] Suppression accidentelle probable — verifier : git status --short ; git log --diff-filter=D -- fork
+```
+
+**Ce n'était pas une suppression : c'était une croissance.** Le delta est passé de **17 à 20 fichiers**
+(ajout de `pf.conf`, `sshd_config.nexbsd`, `pam.d/su`), et la liste de référence du garde-fou n'avait pas
+suivi.
+
+**Décision prise :** mise à jour **motivée** de `scripts/70`, avec la raison écrite dans le script
+lui-même (`17 → 20 fichiers, réglages prouvés au banc T-05/T-05a/T-21`). Après quoi :
+
+```
+VERDICT : DELTA INTACT (20 fichiers, empreintes conformes)
+```
+
+**Leçon de méthode (M-10, à ajouter à `docs/40`) :** un garde-fou qui crie **à tort** finit par être
+ignoré, et un garde-fou ignoré ne protège plus rien. Quand sa référence change légitimement, il faut
+**mettre à jour la référence avec sa justification**, le jour même — jamais désactiver le contrôle.

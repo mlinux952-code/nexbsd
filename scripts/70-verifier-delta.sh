@@ -2,7 +2,7 @@
 # 70-verifier-delta.sh — GARDE-FOU : le delta du fork est-il toujours la ?
 #
 # POURQUOI CE SCRIPT EXISTE (incident C-16 puis C-18, 2026-10-25) :
-#   Deux fois dans la meme journee, le delta du fork (17 fichiers) a ete SUPPRIME
+#   Deux fois dans la meme journee, le delta du fork (17 fichiers a l epoque) a ete SUPPRIME
 #   par un commit qui parlait d'autre chose. La premiere fois par accident humain,
 #   la seconde parce que l'environnement de preparation efface tout repertoire
 #   nomme « build ». A chaque fois, la documentation continuait d'affirmer que le
@@ -21,8 +21,10 @@ ok()   { echo "  [OK]    $*"; }
 ko()   { echo "  [ECHEC] $*"; }
 info() { echo "  ...     $*"; }
 
-# Les 17 fichiers du delta et leurs empreintes de reference (relevees le 2026-10-25).
-EXPECTED=17
+# Les fichiers du delta et leurs empreintes de reference (relevees le 2026-10-25).
+# 2026-10-27 : 17 -> 20 fichiers. Le delta s enrichit des reglages PROUVES au banc (T-05/T-05a/T-21) :
+#   overlay/etc/pf.conf, overlay/etc/ssh/sshd_config.nexbsd, overlay/etc/pam.d/su.
+EXPECTED=20
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 
@@ -65,6 +67,7 @@ echo "########## BLOC C - les fichiers critiques existent ##########"
 MANQUANTS=0
 for f in sys/amd64/conf/NEXBSD_L1 sys/amd64/conf/NEXBSD_L1.rapport src.conf release.conf \
          overlay/etc/motd overlay/etc/nexbsd-version overlay/etc/rc.conf.defaults \
+         overlay/etc/pf.conf overlay/etc/ssh/sshd_config.nexbsd overlay/etc/pam.d/su \
          patches/0001-identite-version.patch tools/generer-kernel-conf.sh \
          reference/GENERIC-15.1 reference/newvers.sh-15.1 exceptions-licence.txt; do
   if git ls-files --error-unmatch "fork/$f" >/dev/null 2>&1; then
