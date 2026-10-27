@@ -1,0 +1,36 @@
+# NexBSD — directives SSH du produit (fragment)
+#
+# USAGE PRÉVU : ces quatre directives doivent se retrouver dans la configuration EFFECTIVE de
+# sshd sur l'image NexBSD. Elles ne sont PAS un fichier complet : ne pas écraser /etc/ssh/sshd_config
+# de FreeBSD avec ce fichier (on perdrait HostKey, Subsystem, KexAlgorithms, etc.).
+#
+# F-2 (À VÉRIFIER, non vérifié à ce jour) : la méthode d'insertion n'est pas tranchée.
+#   - Option A : `Include /etc/ssh/sshd_config.d/*.conf` en tête du sshd_config — À CONFIRMER :
+#     la présence de cette directive Include dans le sshd_config livré par FreeBSD 15.1
+#     n'a PAS été contrôlée dans ce projet. Ne pas l'affirmer avant de l'avoir lue.
+#   - Option B : la chaîne de release réécrit sshd_config en y ajoutant ce bloc.
+#   ATTENTION : OpenSSH retient la PREMIÈRE occurrence d'un mot-clé, pas la dernière.
+#   Un bloc ajouté en fin de fichier est donc inopérant si le même mot-clé est déjà actif plus haut.
+#   → toujours vérifier avec `sshd -T` (configuration effective), jamais en relisant le fichier.
+#
+# ORIGINE : valeurs appliquées et VÉRIFIÉES dans la VM du banc le 2026-10-27 (T-21) :
+#   sshd -T → passwordauthentication no / kbdinteractiveauthentication no /
+#             permitrootlogin no / pubkeyauthentication yes
+#   et connexion réelle par clé seule, avec PasswordAuthentication=no côté client.
+#   Compte rendu : tests/results/T-21-ssh-acces-distance.md
+
+# Aucun mot de passe par SSH : la clé est la seule porte (prouvée le 2026-10-27).
+# Le mot de passe reste accepté par la console locale — la porte de secours n'est jamais fermée.
+PasswordAuthentication no
+
+# INDISPENSABLE en plus de la ligne ci-dessus : sans cela, le mot de passe passe encore par PAM
+# (« keyboard-interactive »), et le durcissement serait purement cosmétique. Constaté au banc :
+# c'est ce chemin qui authentifiait avant le durcissement.
+KbdInteractiveAuthentication no
+
+# root ne se connecte jamais par le réseau. L'administration passe par un compte nominatif
+# (voir ADR à écrire : comment un administrateur obtient les droits — su, doas, ou sudo).
+PermitRootLogin no
+
+# La clé reste autorisée (c'est le seul moyen d'entrer à distance).
+PubkeyAuthentication yes

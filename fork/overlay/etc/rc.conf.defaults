@@ -7,3 +7,24 @@ sshd_enable="NO"          # aucun accès réseau entrant par défaut (R-13)
 samba_server_enable="YES" # quand la plateforme est installée
 syslogd_enable="YES"
 dumpdev="AUTO"
+
+# --- ajouté le 2026-10-27, après T-20 et T-21 (banc) ---
+# Horloge : une seule référence de temps sur le réseau, sinon les identités à preuve d'heure
+# (Kerberos) refusent les billets. Prouvé au banc : ntpd joint 2 serveurs, reach 1, offset ~5-21 ms.
+ntpd_enable="YES"
+
+# ACCÈS DISTANT — DÉCISION NON PRISE, à ne pas trancher par défaut :
+#   la valeur ci-dessus (sshd_enable="NO") vient de la règle « aucun accès réseau entrant par défaut ».
+#   Or T-21 a prouvé qu'un serveur sans SSH n'est PAS administrable à distance, ce qui est
+#   incompatible avec la cible « serveur de réseau local ».
+#   Les deux options s'excluent :
+#     A) sshd_enable="YES" + clé seulement (PasswordAuthentication no, voir etc/ssh/) : administrable,
+#        mais une porte d'entrée existe dès l'installation ;
+#     B) sshd_enable="NO" : aucune porte, mais toute administration passe par la console physique.
+#   → ADR-0021 à écrire et à faire trancher par le responsable. Tant que ce n'est pas tranché,
+#     la valeur reste "NO" et l'installateur devra POSER la question à l'utilisateur.
+sshd_enable="NO"
+
+# Pare-feu : armé au démarrage, refus par défaut journalisé (voir etc/pf.conf, prouvé T-05/T-05a)
+pf_enable="YES"
+pflog_enable="YES"

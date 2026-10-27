@@ -1,0 +1,22 @@
+# NexBSD — /etc/pam.d/su
+#
+# ORIGINE : copie du fichier /etc/pam.d/su de FreeBSD 15.1 observé dans la VM du banc le
+# 2026-10-27, avec UNE modification décidée et motivée (ligne 3). Le reste est inchangé.
+#
+# DÉCISION : sur FreeBSD, un membre du groupe « wheel » peut devenir root par « su » SANS
+# mot de passe (ligne pam_group.so, avec fail_safe). Conséquence constatée au banc : « clé SSH
+# + appartenance à wheel » donnait un accès root complet sans qu'aucun mot de passe ne soit
+# jamais demandé. Inacceptable pour un serveur : NexBSD exige donc un mot de passe pour su.
+#
+# RÉVERSIBILITÉ : pour revenir au comportement FreeBSD d'origine, supprimer le préfixe
+# « #NEXBSD-DESACTIVE » de la ligne pam_group.so. Aucune ligne n'a été supprimée.
+#
+# STATUT DANS LE PRODUIT : fichier de référence ; il ne sera réellement appliqué que lorsque
+# l'image NexBSD le portera (jalon J5). Aucune image n'existe à ce jour.
+
+auth		sufficient	pam_rootok.so		no_warn
+auth		sufficient	pam_self.so		no_warn
+#NEXBSD-DESACTIVE auth		requisite		pam_group.so		no_warn group=wheel root_only fail_safe ruser
+auth		include		system
+account		include		system
+session		required	pam_permit.so
