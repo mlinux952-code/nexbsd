@@ -1,6 +1,6 @@
 # Conformité au méga-prompt maître — audit des 20 livrables
 
-**Version :** 1.1 — 2026-10-24 (session S-016)
+**Version :** 1.2 — 2026-10-27 (session S-020) — révision demandée par le responsable
 **Rôle :** vérifier, livrable par livrable, ce que le document fondateur exige (Partie XIV) et ce que le projet possède réellement.
 **Règle :** « non fait » est une information ; « fait » sans preuve est une faute.
 
@@ -99,3 +99,41 @@ n'était pas connue lors de la rédaction de la v1.0 de cet audit : elle est don
 1. **Ranger le dossier Drive** selon l'arborescence de la Partie XX (les fichiers actuels sont à plat).
 2. **Créer `docs/25-compte-rendu-session.md`** — modèle normalisé du §7 de la Partie XX, pour que la reprise
    par une autre IA ne dépende plus du mur de discussion.
+
+---
+
+## 4. Révision du 2026-10-27 — ce que trois jours de travail ont changé
+
+Depuis la v1.1 (2026-10-24), quatre jalons ont été franchis **avec preuve**. Le tableau des 20 livrables
+doit donc être relu, pas seulement daté.
+
+| # | Livrable | v1.1 (24/10) | **v1.2 (27/10)** | Preuve |
+|---|---|---|---|---|
+| 11 | Prototype minimal | 🟡 amorcé | 🟢 **substance réelle** | le banc tourne **sur notre noyau** (`NEXBSD_L1`), **derrière un pare-feu** (`pf`), et se vérifie par **une commande** (harnais 24/24). Reste à en faire un livrable **packagé** |
+| 12 | Rapport de tests | 🟡 5 tests | 🟢 **10 tests réussis / 20** | T-01, T-03, T-04, T-04-E, T-04-F, **T-04-G, T-16, T-17, T-11, T-18, T-05** — journaux verbatim dans `tests/results/` |
+| 14 | Guide de construction | 🟡 `build-nexbsd.sh` non exécuté | 🟢 **exécuté deux fois** | `Kernel(s) NEXBSD_L1 built` (1470 s puis **6533 s à froid**), installé, démarré, **reproductible** (T-11) |
+| 16 | Politique de sécurité | ✅ document | 🟢 **document + mise en œuvre** | `docs/38` (8 couches) + **`pf` actif** (T-05) |
+| 17 | Procédure de mise à jour | 🟡 squelette | 🟡 inchangé | toujours suspendu à l'existence d'une image |
+| 20 | Rapport final | ❌ | ❌ | par nature : fin de projet |
+
+**Bilan au 2026-10-27 : 11 faits, 7 partiels, 2 non faits** (même décompte qu'en v1.1 sur les extrêmes,
+mais **quatre livrables ont changé de nature** : ils ne reposent plus sur des intentions mais sur des
+sorties de console).
+
+### Les règles du mur, vérifiées sur les trois derniers jours
+
+| Règle du méga-prompt | Respectée ? | Preuve récente |
+|---|---|---|
+| « Ne pas prétendre avoir exécuté ce qui ne l'a pas été » | ✅ | les **trois échecs** de `pf` (C-22, C-23, mauvais hôte Drive) sont consignés **avec leur sortie d'erreur** |
+| « Distinguer faits / hypothèses / impossibles » | ✅ | `T-05` liste explicitement ce qui **n'est pas** prouvé (aucun test depuis une autre machine) |
+| « Ne pas créer de rapports prétendant décrire des résultats non obtenus » | ✅ | T-05a reste **NON EXÉCUTÉ** alors qu'il serait flatteur de le cocher |
+| « Le projet doit exister indépendamment de l'IA » | ✅ | 102 commits, bundles s028→**s040** sur Drive, `docs/39` assure la reprise **sans conversation** |
+| « Ne pas publier de secrets ni de données personnelles » | ✅ | `samba.schema` (GPL) tenu hors dépôt ; aucun mot de passe dans les documents, seulement dans les scripts de banc |
+| « Reproductibilité » (Partie I, rôle n° 9) | ✅ **nouveau** | T-11 : deux constructions à froid → **empreintes identiques** |
+
+### Le seul point de méthode qui a échoué
+
+**Trois échecs consécutifs sur `pf`**, tous de ma main, tous documentés : module chargé trop tard (C-22),
+syntaxe inventée (C-23), mauvais fichier téléchargé. La cause commune est **d'avoir écrit de mémoire au lieu
+de valider contre la réalité**. La parade est désormais systématique : **validation à blanc avant toute
+application**, et **empreinte vérifiée avant toute exécution**. C'est inscrit dans `docs/40`.
