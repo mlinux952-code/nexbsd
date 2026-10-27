@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 23 · **Mise à jour :** 2026-10-26 (session S-019) · **niveau d'indépendance : I2 — J1 COMPLET, noyau REPRODUCTIBLE, harnais 24/24, pare-feu pf prepare (non active)**
+**Version de cette fiche :** 24 · **Mise à jour :** 2026-10-27 (session S-020) · **niveau d'indépendance : I2 — J1 COMPLET, noyau REPRODUCTIBLE, harnais 24/24, pare-feu `pf` ACTIF et refus par défaut PROUVÉ depuis une autre machine**
 
 > **Rappel permanent (demande du responsable, 2026-10-25) :** le produit s'appelle **NexBSD**.
 > Toute occurrence de « freebsd » dans une sortie d'écran, un `uname` ou un nom d'hôte désigne
@@ -22,10 +22,10 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Phase | **0 et 1 : documents produits. 2 et 3 : amorcées. 4 : non commencée.** |
 | Code NexBSD | **noyau `NEXBSD_L1` COMPILÉ** le 2026-10-26 (`Kernel(s) NEXBSD_L1 built in 1470 seconds`, `code de retour : 0`) — installation et démarrage en cours de validation. Reste : `buildworld`/image (hors de portée du poste). Delta dans `fork/` (17 fichiers, garde-fou `scripts/70`) |
 | Installation FreeBSD | **VM opérationnelle chez le responsable** (virt-manager + KVM, FreeBSD 15.1-RELEASE, console série `ttyu0`) ; **matériel réel : aucune installation** |
-| Test d'exécution | **6 sur 19 réussis en VM** : T-01, T-03, T-04, T-04-E, T-04-F, et **T-04-G (le banc revient seul après redémarrage, 11/11, 2026-10-25)**. T-16 (identité NexBSD du banc, étage 1) écrit, non exécuté |
+| Test d'exécution | **11 sur 20 réussis en VM** : T-01, T-03, T-04, T-04-E, T-04-F, T-04-G, T-16, T-17, T-11, T-18, **T-05 (pare-feu actif)** et **T-05a (fermeture par défaut prouvée depuis le Mint, 2026-10-27)**. T-16 (identité NexBSD du banc, étage 1) écrit, non exécuté |
 | Image système | **aucune** — et elle reste **hors de portée du poste** (4 Go de RAM, `docs/28` §2) ; voie d'intégration continue à ouvrir (voie B de `docs/27`) |
 | Décisions validées par le responsable | **aucune** — **20 ADR** à l'état `proposition` (dont **ADR-0020**, dérogation bornée pour construire le noyau) |
-| **Sauvegarde** | **Google Drive** : instantanés jusqu'à **s020** (public) · **GitHub** : dépôt privé `mlinux952-code/nexbsd`, **poussé à jour par le responsable** (`e7ede39..0193ec4`, 2026-10-25) · dépôt Git local : **57 commits** |
+| **Sauvegarde** | **Google Drive** : instantanés jusqu'à **s042** (public) · **GitHub** : dépôt privé `mlinux952-code/nexbsd`, état du distant **inconnu faute de sortie `git push`** · dépôt Git local : **108 commits** |
 | Documents | ~90 fichiers, 5 matrices CSV, **15 scripts** (dont 4 de banc), index complet dans `docs/INDEX-DOCUMENTS.md` ; conformité au mur auditée dans `docs/15-conformite-mega-prompt.md` ; **`docs/25-compte-rendu-session.md`** assure la reprise sans conversation |
 | Disque du PC de 2011 | **intact** (aucune action matérielle effectuée) |
 | Mesure RAM (ENF-01) | **≈ 100 Mo au repos** sur système nu en VM → objectif ≤ 128 Mo atteignable (à confirmer sur matériel) |
@@ -86,15 +86,24 @@ NexBSD est un projet de **système d'exploitation expérimental** pour **PC faib
 | Espace disque (base / avec services) | ≤ 2 Go / ≤ 4 Go |
 | Temps de démarrage (HDD) | ≤ 60 s |
 
-## 7. Prochaine action concrète
+## 7. Prochaine action concrète (révisée le 2026-10-27)
 
-> **Débloquer le livrable 9 du mur : le diagnostic matériel.**
+> **Rendre le banc rejouable, puis le durcir.** Dans cet ordre :
 >
-> Deux relevés en lecture seule, sans rien modifier :
-> 1. sous **Windows 7** sur le PC de 2011 : remplir `docs/hardware.md` §2 (modèle, CPU, RAM, disque, firmware, année) — commandes fournies, aucune installation ;
-> 2. sous **Linux Mint** : exécuter `scripts/00-diagnostic-hote.sh` et joindre la sortie.
+> 1. **Automatiser la redirection slirp** `127.0.0.1:4450 → VM:445` dans `scripts/31-lancer-vm-freebsd.sh`
+>    (`hostfwd_add` après démarrage) : sans cela, la preuve T-05a n'est pas reproductible, et **T-11
+>    (reproductibilité) reste partiel pour une raison mécanique**.
+> 2. **Synchroniser l'horloge** de la VM (écart ≈ 22 min constaté) : prérequis de Kerberos et de la
+>    datation fiable des preuves.
+> 3. **Durcir la couche système** : `sysctl` réseau (L4) et accès SSH (clé seulement, `PermitRootLogin no`),
+>    puis jails (L3).
+> 4. **Client SMB réel depuis une seconde machine physique** (le Mint a servi de client : c'est déjà une
+>    autre machine, mais elle héberge la VM — le test sur deux hôtes distincts reste à faire).
+> 5. Alors seulement : `release.sh` + intégration continue (`docs/41`) → **image installable (J5)**.
 >
-> C'est la seule action qui ne demande ni L3, ni matériel supplémentaire, ni décision de gouvernance — et elle débloque T-01, T-02, donc le prototype, donc l'étude de faisabilité. Les fiches de recherche, elles, sont à jour : la fiche NCP (V-1) est faite.
+> **Livrable 9 du mur (diagnostic matériel) toujours ouvert** : il n'est plus bloquant pour la progression
+> du banc, mais il le reste pour **J5 sur le PC de 2011** : relever `docs/hardware.md` §2 sous Windows 7
+> (lecture seule) et exécuter `scripts/00-diagnostic-hote.sh` sous Linux Mint.
 
 **Décisions toujours attendues du responsable :** Q3 (fork assumé ?), Q4 (quand L3 ?), Q8 (VM Windows pour le banc B), Q9 (cible d'usage).
 

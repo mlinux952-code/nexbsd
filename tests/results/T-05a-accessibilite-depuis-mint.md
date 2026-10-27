@@ -194,7 +194,112 @@ Conséquences à retenir :
   c'est exactement l'architecture voulue — le service d'identité n'est pas exposé ;
 - la réserve n° 1 de T-05 (« aucun test depuis une autre machine ») est **levée pour le cas nominal**.
 
-### 4.8 Volet 2 — en cours
+### 4.8 Commande 8 — mise en place du témoin de refus (🐧 VM)
 
-Reste à prouver le **refus** : tentative sur un port non déclaré (8080), avec écouteur témoin dans la VM
-et relevé dans `pflog`.
+```
+root@nexbsd:~ # nohup nc -lk 8080 >/tmp/nc8080.log 2>&1 & nohup tcpdump -n -ttt -e -i pflog0 -w /tmp/bloc.pflog >/dev/null 2>&1 & sleep 2; sockstat -4l | grep 8080; ifconfig pflog0 | head -2; ls -l /tmp/bloc.pflog
+
+root nc         2092  3 tcp4  *:8080*                :*
+pflog0: flags=1000141<UP,RUNNING,PROMISC,LOWER_UP> metric 0 mtu 33152
+        options=0
+-rw-r--r--  1 root wheel 0 Oct 27 19:48 /tmp/bloc.pflog
+```
+
+Les trois conditions de la preuve sont réunies : **un service écoute** sur le port non déclaré 8080,
+**`pflog0` est actif** (`UP,RUNNING,PROMISC`), la capture est lancée.
+
+### 4.9 Commande 9 — tentative depuis le Mint : résultat **trompeur** (C-25)
+
+🖥️ MINT :
+
+```
+$ virsh -c qemu:///session qemu-monitor-command nexbsd-test --hmp "hostfwd_add hostnet0 tcp:127.0.0.1:4451-:8080" && time nc -zv -w 5 127.0.0.1 4451
+Connection to 127.0.0.1 4451 port [tcp/*] succeeded!
+
+real	0m0.008s
+```
+
+**`succeeded` en 8 ms sur un port bloqué : ce n'est pas un succès, c'est un artefact de mesure.**
+slirp est un **proxy en espace utilisateur** : la connexion du client se termine dans **QEMU**, qui accepte
+le TCP côté station **immédiatement**, puis tente pour son compte de joindre `10.0.2.15:8080`.
+`nc -z` n'a donc jamais vu la réponse de FreeBSD.
+
+**Conséquence rétroactive, assumée :** la commande 5 (`nc … 4450 → succeeded`) ne prouvait **rien** non plus.
+Ce qui prouve le volet 1, c'est `smbclient` — une conversation applicative réelle.
+
+> **C-25 — sous slirp, un `nc -z` réussi ne prouve que l'existence de la redirection, jamais l'état du
+> pare-feu.** Pour tester un refus à travers slirp, il faut un **échange applicatif** (bannière, protocole)
+> ou la **trace `pflog`**.
+
+### 4.10 Commande 10 — capture illisible : tampon non vidé (C-26)
+
+```
+root@nexbsd:~ # tcpdump -n -ttt -e -r /tmp/bloc.pflog
+tcpdump: truncated dump file; tried to read 4 file header bytes, only got 0
+```
+
+**C-26 : `tcpdump -w` sans `-U` écrit dans un tampon stdio ; tant que le processus vit et que le tampon
+n'est pas plein, le fichier reste à 0 octet — la preuve est en mémoire, pas sur le disque.**
+Correctif : `-U` (écriture immédiate) ; à défaut, arrêter `tcpdump` proprement pour qu'il vide son tampon.
+
+### 4.11 Commande 11 — **PREUVE DE REFUS OBTENUE** (sortie verbatim)
+
+🐧 VM :
+
+```
+root@nexbsd:~ # pkill tcpdump; sleep 1; ls -l /tmp/bloc.pflog; tcpdump -n -ttt -e -r /tmp/bloc.pflog
+-rw-r--r--  1 root wheel 1316 Oct 27 19:59 /tmp/bloc.pflog
+reading from file /tmp/bloc.pflog, link-type PFLOG (OpenBSD pflog file), snapshot length 262144
+ 00:00:00.000000 rule 0/0(match): block in on vtnet0: fe80::2 > ff02::1: ICMP6, router advertisement, length 56
+ 00:03:30.071677 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:00:05.722777 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:00:12.242636 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:00:12.248662 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:00:12.247762 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:00:12.240533 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:00:12.244069 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:00:12.240533 rule 0/0(match): block in on vtnet0: 10.0.2.2.59622 > 10.0.2.15.8080: Flags [S], seq 371264001, win 65535, options [mss 1460], length 0
+ 00:04:17.936742 rule 0/0(match): block in on vtnet0: fe80::2 > ff02::1: ICMP6, router advertisement, length 56
+[2]   Done                    nohup tcpdump -n -ttt -e -i pflog0 -w /tmp/bloc.pflog >/dev/null 2>&1
+```
+
+**Lecture ligne par ligne :**
+
+| Élément | Ce qu'il établit |
+|---|---|
+| `rule 0/0(match): block in` | c'est **`pf` lui-même** qui a jeté — décision du noyau, pas une déduction humaine |
+| `on vtnet0` | le paquet venait de **l'extérieur** de la VM, par l'interface réseau |
+| `10.0.2.2.59622 > 10.0.2.15.8080` | la passerelle slirp visait le port **8080**, qui n'est dans **aucune** des 11 règles |
+| `Flags [S]` × 8 | le SYN a été **retransmis 8 fois** par slirp (patience TCP) : **les 8 ont été jetés**. Le refus n'est pas un accident de timing, il est systématique |
+| `fe80::2 > ff02::1: ICMP6, router advertisement` | le **refus s'applique aussi à IPv6** : une annonce de routeur venue de l'extérieur est bloquée. Effet de bord **bénéfique** (aucune route IPv6 injectée dans le banc) |
+
+**Le port 8080 était réellement écouté** (`nc 2092 tcp4 *:8080`) : le refus ne peut donc **pas** s'expliquer
+par « personne n'écoutait ». La seule différence entre 445 (accepté, `smbclient` a lu des fichiers) et
+8080 (bloqué) est la **règle `pf`**. C'est le contrôle croisé qui rend la preuve solide.
+
+---
+
+## 5. Verdict
+
+**T-05a : RÉUSSI le 2026-10-27 (~20h10 UTC).**
+
+| Volet | Preuve | Résultat |
+|---|---|---|
+| 1 — port déclaré joignable depuis une autre machine | `smbclient //127.0.0.1/commun -p 4450 -U 'omrane%omranelab'` → 4 fichiers listés | ✅ |
+| 2 — port non déclaré refusé | 8 SYN vers `10.0.2.15:8080` → `rule 0/0(match): block in on vtnet0` | ✅ |
+| 3 — refus **journalisé** | `pflog0` a enregistré chaque blocage (1 316 o) | ✅ |
+| 4 — le refus n'est pas « absence de service » | `sockstat` : `nc` écoutait sur `*:8080` avant et pendant le test | ✅ |
+
+**Conséquence sur T-05 :** les deux réserves de T-05 sont levées — un client extérieur traverse le pare-feu,
+et un port fermé est **réellement fermé, et de façon journalisée**.
+
+## 6. Réserves et suites (à ne pas oublier)
+
+1. **La redirection `hostfwd_add` est volatile** : elle ne survit pas à l'arrêt de la VM. Elle doit être
+   automatisée dans `scripts/31-lancer-vm-freebsd.sh`, sinon le banc n'est pas rejouable (T-11).
+2. **Écart d'horloge VM / station ≈ 22 min** observé le 2026-10-27 (VM `19:48`, station `20:10`). Sans
+   effet ici, mais **rédhibitoire pour Kerberos** et pour la datation des preuves → à traiter (NTP).
+3. **C-25 / C-26** : deux artefacts de mesure consignés ; les tests futurs utiliseront soit un échange
+   applicatif réel, soit `tcpdump -U`.
+4. Le mot de passe apparaît en clair dans la ligne de commande (`-U 'omrane%omranelab'`) → acceptable au
+   banc, à proscrire en usage réel (fichier d'identifiants en `600`).

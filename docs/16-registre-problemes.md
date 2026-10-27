@@ -505,3 +505,59 @@ inventée), et l'échec initial (mauvais hôte de téléchargement). La racine c
 `pf` de mémoire au lieu de le valider contre la réalité**. La parade est désormais en place : **chaque
 version du script valide à blanc et s'arrête net** si le fichier est refusé — c'est le garde-fou qui a
 parlé trois fois de suite.
+
+---
+
+## C-24 — Trois attentes fausses pendant T-05a (mes erreurs, pas celles du système)
+
+**Constaté :** 2026-10-27, pendant T-05a. Trois erreurs **de ma part**, chacune détectée par une sortie
+réelle, donc sans conséquence sur le système :
+
+| # | Ce que j'avais annoncé | Réalité | Correctif retenu |
+|---|---|---|---|
+| 1 | `info network` afficherait `hostfwd=…` après un `hostfwd_add` | **jamais** : `info network` décrit les netdevs, pas les redirections | la commande qui liste les redirections est **`info usernet`** |
+| 2 | identifiants `nexbsd` / partage `partage` | **périmés** : T-04 est passé en `ldapsam` ; comptes `omrane`/`sara`, partages `[commun]`/`[public]` | **relire les comptes rendus de tests avant de réutiliser un identifiant** |
+| 3 | `nc -z` prouve qu'un port est joignable | **faux sous slirp** (voir C-25) | échange applicatif réel, ou trace `pflog` |
+
+**Effet :** trois allers-retours inutiles avec le responsable ; aucun dégât. Le `NT_STATUS_LOGON_FAILURE`
+obtenu a même servi : il a montré que `smbd` interrogeait bien l'annuaire.
+
+**Leçon :** mes affirmations d'attente sont **aussi** soumises à la règle « ne jamais inventer ». Quand je
+décris ce qu'une commande *va* afficher, je dois le tirer d'une sortie déjà observée, pas de ma mémoire.
+
+---
+
+## C-25 — Sous slirp, `nc -z` réussi ne prouve que l'existence de la redirection
+
+**Constaté :** 2026-10-27, T-05a volet 2. Une connexion vers `127.0.0.1:4451` (redirigée vers le port
+**8080**, non déclaré dans `pf` et donc bloqué) renvoie `Connection to 127.0.0.1 4451 port [tcp/*]
+succeeded!` en **8 ms**.
+
+**Cause :** slirp est un **proxy en espace utilisateur**. La connexion du client se termine dans **QEMU** ;
+QEMU accepte le TCP côté station immédiatement, puis tente pour son compte de joindre la VM. `nc -z` mesure
+donc l'acceptation par QEMU, jamais la réponse de FreeBSD.
+
+**Effet :** sans conséquence sur `pf`, mais **une conclusion prématurée évitée de justesse**. Corollaire :
+le `nc … 4450 → succeeded` du volet 1 ne prouvait rien non plus ; c'est `smbclient` qui a fait la preuve.
+
+**Parade :** pour tester un refus à travers slirp, utiliser un **échange applicatif réel** (bannière,
+protocole SMB) ou lire la **trace `pflog`**. Le temps de réponse n'est pas un critère : QEMU répond en
+millisecondes quoi qu'il arrive à la VM.
+
+---
+
+## C-26 — `tcpdump -w` sans `-U` : une capture « vide » n'est qu'un tampon non vidé
+
+**Constaté :** 2026-10-27. Après une tentative bloquée, `tcpdump -r /tmp/bloc.pflog` répond
+`truncated dump file; tried to read 4 file header bytes, only got 0` et `ls -l` montre **0 octet**, alors
+que la capture tournait et que `pflog0` était `UP,RUNNING`.
+
+**Cause :** libpcap écrit via un `FILE *` **tamponné** ; l'en-tête de 24 octets comme les enregistrements
+restent en mémoire jusqu'au remplissage du tampon ou la fermeture du fichier. La preuve existait — dans le
+tampon du processus, pas sur le disque.
+
+**Effet :** un moment de doute inutile, puis la preuve a été récupérée intacte (`pkill tcpdump` a vidé le
+tampon : fichier de **1 316 octets**).
+
+**Parade :** toujours `tcpdump -U -w …` (écriture immédiate) ; et **conserver `stderr`** (`2>/tmp/err`)
+plutôt que le jeter dans `/dev/null`, sous peine de perdre le message d'erreur qui explique tout.
