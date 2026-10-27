@@ -180,3 +180,5 @@
 | `37-apport-externe-centre-de-commande.md` | Contribution n° 2 examinee : principe P-CC adopte (couche D-4), liste des 10 systemes ramenee a une veille, recommandation 'FreeBSD option parmi d'autres' rejetee sur preuve | 2026-10-26 |
 | `38-securite-defense-en-profondeur.md` | 8 couches de securite, etat de chacune, priorites ; pf = L1 fait ce soir, jails L3 et restauration L8 prioritaires apres l'image | 2026-10-26 |
 | `39-reprise-2026-10-27.md` | Etat exact de la VM a l'arret, fichiers utiles, ordre des 5 prochaines etapes, 3 questions | 2026-10-26 |
+| `40-regles-de-travail.md` | Regles du responsable (R-1 a R-11) + 9 regles imposees par nos echecs (M-1 a M-9), format d'une session | 2026-10-27 |
+| `41-machines-distantes.md` | Machines distantes : CI (Cirrus, GitHub Actions), offres gratuites serieuses, ce qui est a eviter (PC en ligne anonymes), ordre propose | 2026-10-27 |
