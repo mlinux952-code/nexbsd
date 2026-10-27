@@ -590,3 +590,27 @@ horloge juste peut dériver après suspension, et Kerberos exige moins de 5 minu
 
 **Parade :** une « réserve » doit reposer sur **deux mesures comparables**, jamais sur des horodatages
 ramassés à des moments différents. Même racine que C-24 : j'ai décrit un état sans l'avoir observé.
+
+---
+
+## C-30 — 2026-10-27 — les scripts du dépôt sont enregistrés NON EXÉCUTABLES (défaut de l'atelier)
+
+**Constat mesuré** (atelier, `git ls-files -s scripts/*.sh`) : `21` fichiers en mode `100644`,
+`1` seul en `100755`. Visible côté MINT lors du fast-forward : une trentaine de lignes
+`mode change 100755 => 100644`.
+
+**Cause** : l'atelier crée les fichiers sans bit exécutable (comme le dossier `build/` effacé en C-16,
+c'est une propriété de l'environnement, pas un choix). Le bit est ensuite **perdu** à chaque réécriture
+d'un fichier : écrire un script écrase le mode.
+
+**Pourquoi ça compte pour le produit** :
+- sur une machine réelle, `./scripts/70-verifier-delta.sh` échoue (`Permission non accordée`) ;
+- dans la CI, `sh scripts/70-…` fonctionne : **le défaut reste donc masqué** — c'est le pire cas ;
+- `fork/build-nexbsd.sh` est un script de production : s'il n'est pas exécutable, l'utilisateur croira
+  à une image cassée alors que c'est un simple `chmod`.
+
+**Correction appliquée** : `git update-index --chmod=+x` sur tous les `*.sh` de `scripts/` et `fork/`
+→ `23` fichiers en `100755`, vérifié par la commande ci-dessus.
+
+**Garde-fou à ajouter (à faire)** : une ligne dans `scripts/70-verifier-delta.sh` qui refuse un script
+non exécutable — sinon le défaut reviendra à la prochaine réécriture, comme C-16 est revenu (C-18).
