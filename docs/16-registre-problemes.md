@@ -411,3 +411,33 @@ Sauvegarde préalable : `/boot/loader.conf.avant-nexbsd`. Retour arrière : `ker
 
 **Leçon générale (règle de session) :** **toute** sortie de test doit être lue jusqu'à sa ligne d'en-tête
 (`hote :`, `uname -r`) avant d'être comptée comme réussie. Un 11/11 sur le mauvais noyau vaut zéro.
+
+---
+
+## C-21 — `scripts/31` ne lançait pas la vraie VM (mauvais moteur, mauvais nom)
+
+**Constaté :** 2026-10-27, au démarrage de session. `sh 31-lancer-vm-freebsd.sh` répond :
+
+```
+ERREUR : image absente : /home/omrane/.cache/nexbsd-vm/FreeBSD-15.1-ufs.qcow2
+```
+
+...alors que **la VM existe** et a servi toute la session précédente.
+
+**Cause double :**
+1. **mauvais moteur** : le script avait été écrit pour un lancement **QEMU direct** (image `.qcow2` +
+   `socat` sur un socket série), recette du 2026-10-23. Depuis, le banc tourne sous **libvirt**
+   (`qemu:///session`), lancé par virt-manager, avec une console `ttyu0`.
+2. **mauvais nom** : le domaine réel s'appelle **`nexbsd-test`**, pas `nexbsd`. La commande
+   `virsh start nexbsd` échoue avec `failed to get domain 'nexbsd'`.
+
+**Effet :** perte de temps en début de session, et doute inutile sur l'intégrité de la VM.
+
+**Correctif (v2 de `scripts/31`, 2026-10-27) :** le script **détecte** au lieu de supposer :
+1. si un domaine libvirt contenant « nexbsd » existe → mode libvirt (`start` + `console`) ;
+2. sinon, si l'image QEMU directe existe → ancien chemin, conservé ;
+3. sinon → message clair avec les deux solutions, sans rien inventer.
+Options ajoutées : `--etat` (diagnostic sans rien lancer) et `--stop` (arrêt propre).
+
+**Leçon générale :** **un script de lancement doit interroger la réalité** (quel hyperviseur ? quel domaine ?)
+**avant** d'agir. Un script qui suppose est pire qu'aucun script : il fait douter de la machine.

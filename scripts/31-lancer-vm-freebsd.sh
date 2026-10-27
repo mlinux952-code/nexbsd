@@ -1,16 +1,66 @@
 #!/bin/sh
-# 31-lancer-vm-freebsd.sh — lance la VM FreeBSD 15.1 du banc de test NexBSD.
+# 31-lancer-vm-freebsd.sh — lance la VM du banc NexBSD.
 #
-# RECETTE TESTÉE À LA MAIN le 2026-10-23 (voir tests/results/T-01-demarrage-freebsd.md).
-# Ce script n'a pas encore été exécuté en tant que script : chaque commande qu'il
-# contient a été lancée et vérifiée, l'assemblage reste à confirmer.
+# HISTORIQUE (C-21, constate le 2026-10-27)
+#   v1 : supposait une image QEMU directe (FreeBSD-15.1-ufs.qcow2 dans ~/.cache/nexbsd-vm).
+#        Or le banc reel tourne sous **libvirt** : domaine `nexbsd-test`, lance par virt-manager,
+#        console serie ttyu0. Le script echouait donc avec "image absente" alors que la VM existait.
+#   v2 (ce fichier) : DETECTE le mode reel avant d'agir.
+#        1. si un domaine libvirt existe (nexbsd-test, ou tout domaine contenant "nexbsd") -> libvirt
+#        2. sinon, si l'image QEMU directe existe -> ancien chemin (conserve, il reste valable)
+#        3. sinon, message clair avec les deux solutions, sans rien inventer.
 #
-# Prérequis :
-#   - qemu-system-x86 (Debian : sudo apt install qemu-system-x86 qemu-utils)
-#   - l'image FreeBSD-15.1-RELEASE-amd64-ufs.qcow2 dans le dossier courant
+# Usage :
+#   sh 31-lancer-vm-freebsd.sh            # demarre la VM et ouvre la console
+#   sh 31-lancer-vm-freebsd.sh --etat     # dit seulement quel mode serait utilise
+#   sh 31-lancer-vm-freebsd.sh --stop     # arrete proprement la VM libvirt
 #
-# Usage : sh 31-lancer-vm-freebsd.sh [dossier-images]
-set -eu
+set -u
+
+MODE="lancer"
+for a in "$@"; do
+    case "$a" in
+        --etat) MODE="etat" ;;
+        --stop) MODE="stop" ;;
+        --aide|-h) sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        *) echo "option inconnue : $a" >&2; exit 2 ;;
+    esac
+done
+
+URI="qemu:///session"
+
+# --- 1. recherche d'un domaine libvirt -----------------------------------
+DOMAINE=""
+if command -v virsh >/dev/null 2>&1; then
+    DOMAINE=$(virsh -c "$URI" list --all --name 2>/dev/null | grep -i nexbsd | head -1)
+fi
+
+if [ -n "$DOMAINE" ]; then
+    ETAT=$(virsh -c "$URI" domstate "$DOMAINE" 2>/dev/null)
+    echo "-> mode LIBVIRT detecte : domaine '$DOMAINE' (etat : ${ETAT:-inconnu})"
+
+    case "$MODE" in
+        etat)
+            virsh -c "$URI" list --all
+            echo "-> demarrage possible avec : virsh -c $URI start $DOMAINE"
+            echo "-> console                : virsh -c $URI console $DOMAINE   (sortie : Ctrl+])"
+            exit 0 ;;
+        stop)
+            virsh -c "$URI" shutdown "$DOMAINE" >/dev/null 2>&1 && echo "-> arret demande ($DOMAINE)" || echo "-> arret impossible (deja arretee ?)"
+            exit 0 ;;
+        lancer)
+            if [ "$ETAT" != "running" ]; then
+                virsh -c "$URI" start "$DOMAINE" || { echo "ERREUR : demarrage impossible" >&2; exit 1; }
+                sleep 2
+            else
+                echo "-> deja en cours d'execution"
+            fi
+            echo "-> ouverture de la console (login root, puis Ctrl+] pour detacher)"
+            exec virsh -c "$URI" console "$DOMAINE"
+            ;;
+    esac
+fi
+
 
 DIR=${1:-$HOME/.cache/nexbsd-vm}
 IMAGE="$DIR/FreeBSD-15.1-ufs.qcow2"
