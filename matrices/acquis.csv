@@ -1,0 +1,42 @@
+# Registre des acquis — CHAQUE chose apprise ou faite a une DESTINATION
+#
+# EXIGENCE DU RESPONSABLE (2026-10-27) :
+#   « chaque manipulation, amélioration ou n'importe quoi doit impérativement être dans la version
+#     finale, sinon pour quoi on fait tout ça »
+#
+# REGLE R-12 (docs/40) : aucun travail n'est considéré comme terminé tant que sa DESTINATION
+# n'est pas écrite dans ce fichier. Trois destinations légitimes, une seule interdite :
+#   PRODUIT  = doit se retrouver dans l'image NexBSD (via fork/overlay ou la chaîne de release)
+#   METHODE  = ne va PAS dans l'image, mais empêche de refaire une erreur (scripts, leçons, garde-fous)
+#   PREUVE   = ne va PAS dans l'image, mais prouve que l'image fait ce qu'elle prétend (tests)
+#   INTERDIT = « on l'a fait, c'est dans nos têtes / dans une VM » → c'est précisément ce que ce
+#              registre existe pour empêcher.
+#
+# Format : id;date;acquis;preuve;destination;cible;etat
+#   etat : FERME (la cible existe et porte l'acquis) | OUVERT (cible existante mais incomplète)
+#          | A-FAIRE (rien n'existe encore)
+#
+# Verifie par : sh scripts/72-verifier-acquis.sh
+id;date;acquis;preuve;destination;cible;etat
+A-01;2026-10-23;socle FreeBSD 15.1 amd64 demarre (choix ADR-0001);T-01;PRODUIT;fork/src.conf;FERME
+A-02;2026-10-23;partage SMB authentifie, lu depuis une AUTRE machine;T-03;PRODUIT;scripts/60-banc-T04-ldap.sh;OUVERT
+A-03;2026-10-24;annuaire OpenLDAP operationnel (identites centralisees);T-04;PRODUIT;scripts/60-banc-T04-ldap.sh;OUVERT
+A-04;2026-10-24;Samba authentifie VIA l annuaire (ldapsam);T-04-E;PRODUIT;scripts/62-banc-T04E-samba-ldap.sh;OUVERT
+A-05;2026-10-24;droits appliques par groupes de l annuaire;T-04-F;PRODUIT;scripts/63-banc-T04F-droits-groupes.sh;OUVERT
+A-06;2026-10-25;le banc revient seul apres redemarrage (NSS/pam_ldap);T-04-G;PRODUIT;scripts/65-resoudre-identites-nss.sh;OUVERT
+A-07;2026-10-26;noyau NEXBSD_L1 compile, installe, reproductible a l octet;T-17 + T-11;PRODUIT;fork/sys/amd64/conf/NEXBSD_L1;FERME
+A-08;2026-10-25;identite du systeme : nom d hote nexbsd;T-16;PRODUIT;fork/overlay/etc/nexbsd-version;OUVERT
+A-09;2026-10-27;pare-feu pf : refus par defaut JOURNALISE, 11 regles;T-05;PRODUIT;fork/overlay/etc/pf.conf;FERME
+A-10;2026-10-27;refus prouve depuis une autre machine + trace pflog;T-05a;PREUVE;tests/results/T-05a-accessibilite-depuis-mint.md;FERME
+A-11;2026-10-27;redirection slirp automatisee, idempotente, verifiee;T-19;METHODE;scripts/31-lancer-vm-freebsd.sh;FERME
+A-12;2026-10-27;horloge synchronisee (ntpd arme au demarrage);T-20;PRODUIT;fork/overlay/etc/rc.conf.defaults;FERME
+A-13;2026-10-27;SSH par cle seule, mot de passe coupe, root interdit;T-21;PRODUIT;fork/overlay/etc/ssh/sshd_config.nexbsd;OUVERT
+A-14;2026-10-27;su exige un mot de passe (fin du passe-partout wheel);T-21 + C-29;PRODUIT;fork/overlay/etc/pam.d/su;OUVERT
+A-15;2026-10-27;le banc se verifie par une commande (harnais 24/24);T-18;METHODE;tests/harnais.sh;FERME
+A-16;2026-10-27;lecons de mesure : slirp, tcpdump -U, sed BSD, horloge;C-25 C-26 C-27 C-29;METHODE;docs/16-registre-problemes.md;FERME
+A-17;2026-10-27;motd annonce encore FreeBSD (defaut produit visible);constat T-21;PRODUIT;fork/overlay/etc/motd;A-FAIRE
+A-18;2026-10-27;comment un administrateur obtient root (su/doas/sudo);question ouverte;PRODUIT;;A-FAIRE
+A-19;2026-10-27;chaine de release + image installable (jalon J5);docs/41;PRODUIT;;A-FAIRE
+A-20;2026-10-27;diagnostic materiel du PC de 2011 (livrable 9);docs/hardware.md;PREUVE;docs/hardware.md;A-FAIRE
+A-21;2026-10-27;bureau et applications NexBSD (couche C);docs/42;PRODUIT;;A-FAIRE
+A-22;2026-10-27;identite unique PAM/LDAP pour les sessions systeme;constat T-21;PRODUIT;;A-FAIRE

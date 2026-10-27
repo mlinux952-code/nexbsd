@@ -57,3 +57,57 @@ explicite ou d'un incident consigné.
 
 **Une règle sans incident qui l'illustre est une règle décorative.** Toutes celles de la partie 2 ont coûté
 quelque chose : c'est pour cela qu'elles tiennent.
+
+---
+
+## R-12 — Tout acquis a une DESTINATION écrite, sinon il n'existe pas
+
+**Formulé par le responsable le 2026-10-27 :**
+> *« chaque manipulation, amélioration ou n'importe quoi doit impérativement être dans la version
+> finale, sinon pour quoi on fait tout ça »*
+
+**Règle.** Aucun travail n'est terminé tant que sa destination n'est pas écrite dans
+`matrices/acquis.csv`. Trois destinations légitimes, une seule interdite :
+
+| Destination | Sens | Exemple |
+|---|---|---|
+| **PRODUIT** | doit se retrouver dans l'image NexBSD (via `fork/overlay/` ou la chaîne de release) | `pf.conf`, `pam.d/su`, `sshd_config` |
+| **MÉTHODE** | ne va **pas** dans l'image, mais empêche de refaire une erreur | `scripts/70`, `scripts/72`, leçons C-25→C-29 |
+| **PREUVE** | ne va **pas** dans l'image, mais prouve que l'image fait ce qu'elle prétend | `tests/results/`, `tests/harnais.sh` |
+| ❌ **INTERDIT** | « c'est fait dans la VM, on s'en souviendra » | — c'est précisément ce que le registre empêche |
+
+**Contrôle automatique :** `sh scripts/72-verifier-acquis.sh` échoue si une cible `PRODUIT` n'existe pas
+dans le dépôt, et **affiche** ce qui est encore `OUVERT` ou `A-FAIRE` — un acquis oublié doit crier.
+
+**Ce que la règle ne dit pas :** elle n'oblige pas à tout mettre dans l'image. Mettre `hostfwd` ou un
+script de banc dans le produit serait une faute inverse. Elle oblige à **choisir et à écrire le choix**.
+
+---
+
+## M-10 — Un garde-fou qui crie à tort finit par être ignoré
+
+**Incident (2026-10-27) :** le delta du fork est passé de 17 à 20 fichiers (ajout de `pf.conf`,
+`sshd_config.nexbsd`, `pam.d/su`). `scripts/70` a répondu `[ECHEC] Suppression accidentelle probable`,
+alors qu'il n'y avait **aucune** suppression. Si l'on avait pris l'habitude de passer outre, le jour où une
+**vraie** suppression aurait lieu, personne n'aurait regardé.
+
+**Règle :** quand la référence d'un garde-fou change **légitimement**, on met à jour **la référence avec sa
+justification, le jour même**, dans le script lui-même. On ne désactive jamais le contrôle.
+
+## M-11 — Un garde-fou n'est prouvé que s'il a déjà échoué au moins une fois
+
+**Constat (2026-10-27) :** `scripts/72` a d'abord été testé sur un registre conforme — il a répondu
+`CONFORME`. Ce n'est pas une preuve : un script qui dit toujours « tout va bien » produit exactement la
+même sortie. Le registre a donc été **volontairement cassé** (une cible renommée en
+`pf-AINE-QUI-N-EXISTE-PAS.conf`) :
+
+```
+  [KO]    A-09 : cible ABSENTE du depot : fork/overlay/etc/pf-AINE-QUI-N-EXISTE-PAS.conf
+VERDICT : REGISTRE NON CONFORME — 0 destination(s) invalide(s), 1 cible(s) en defaut.
+```
+
+Puis restauré → `CONFORME`. **Le garde-fou détecte vraiment.**
+
+**Règle :** tout garde-fou nouveau doit être testé **dans les deux sens** (cas conforme + cas en défaut),
+et la sortie du cas en défaut est consignée. Même exigence que pour `nc` sous slirp (C-25) : une mesure qui
+ne peut pas dire « non » ne dit rien du tout.
