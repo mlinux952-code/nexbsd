@@ -1,6 +1,6 @@
 # ÉTAT DU PROJET NEXBSD — fiche de référence
 
-**Version de cette fiche :** 24 · **Mise à jour :** 2026-10-27 (session S-020) · **niveau d'indépendance : I2 — J1 COMPLET, noyau REPRODUCTIBLE, harnais 24/24, pare-feu `pf` ACTIF et refus par défaut PROUVÉ depuis une autre machine**
+**Version de cette fiche :** 25 · **Mise à jour :** 2026-10-27 au soir (session S-021) · **niveau d'indépendance : I2+ — J1 COMPLET, noyau REPRODUCTIBLE, pare-feu ACTIF avec refus PROUVÉ de l'extérieur, banc ADMINISTRABLE à distance (SSH par clé), horloge SYNCHRONISÉE**
 
 > **Rappel permanent (demande du responsable, 2026-10-25) :** le produit s'appelle **NexBSD**.
 > Toute occurrence de « freebsd » dans une sortie d'écran, un `uname` ou un nom d'hôte désigne
