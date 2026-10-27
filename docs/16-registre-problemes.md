@@ -561,3 +561,32 @@ tampon : fichier de **1 316 octets**).
 
 **Parade :** toujours `tcpdump -U -w …` (écriture immédiate) ; et **conserver `stderr`** (`2>/tmp/err`)
 plutôt que le jeter dans `/dev/null`, sous peine de perdre le message d'erreur qui explique tout.
+
+---
+
+## C-27 — « écart d'horloge de 22 minutes » : une affirmation non mesurée
+
+**Constaté :** 2026-10-27, pendant T-05a. J'ai annoncé au responsable qu'il existait un **écart d'horloge
+de ≈ 22 minutes** entre la VM et la station, en rapprochant la date d'un fichier dans la VM (`19:48`) et
+l'heure d'une commande sur le Mint (`20:10`), **prises à des instants différents**.
+
+**Réalité, mesurée proprement** (deux relevés séparés de 96 s de temps réel) :
+
+```
+MINT UTC   : 2026-10-27T20:13:09Z
+MINT local : 2026-10-27T21:13:09 CET (+0100)
+VM UTC     : 2026-10-27T20:14:45Z
+VM local   : 2026-10-27T20:14:45 UTC (+0000)
+```
+
+**Cause de l'erreur :** comparaison d'une heure **UTC** (VM) avec une heure **locale** (station) — deux
+choses qui *ne doivent pas* être égales. L'écart résiduel réel est **inférieur à la minute**.
+
+**Effet :** aucun sur le système. Mais j'avais inscrit une « réserve » fausse dans le rapport T-05a et je
+l'ai annoncée oralement comme un problème à traiter — un futur lecteur aurait cherché une panne inexistante.
+
+**Ce qui reste vrai et utile :** la VM n'a **aucune synchronisation automatique** (`ntpd` non armé). Une
+horloge juste peut dériver après suspension, et Kerberos exige moins de 5 minutes d'écart.
+
+**Parade :** une « réserve » doit reposer sur **deux mesures comparables**, jamais sur des horodatages
+ramassés à des moments différents. Même racine que C-24 : j'ai décrit un état sans l'avoir observé.

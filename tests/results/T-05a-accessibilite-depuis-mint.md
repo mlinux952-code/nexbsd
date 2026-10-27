@@ -297,8 +297,23 @@ et un port fermé est **réellement fermé, et de façon journalisée**.
 
 1. **La redirection `hostfwd_add` est volatile** : elle ne survit pas à l'arrêt de la VM. Elle doit être
    automatisée dans `scripts/31-lancer-vm-freebsd.sh`, sinon le banc n'est pas rejouable (T-11).
-2. **Écart d'horloge VM / station ≈ 22 min** observé le 2026-10-27 (VM `19:48`, station `20:10`). Sans
-   effet ici, mais **rédhibitoire pour Kerberos** et pour la datation des preuves → à traiter (NTP).
+2. **Horloge — mon erreur corrigée le 2026-10-27.** J'avais écrit « écart VM / station ≈ 22 min » :
+   **c'était faux**. Je comparais l'heure **UTC** de la VM à l'heure **locale** de la station, prises à des
+   instants différents. Relevés proprement :
+
+   ```
+   MINT UTC   : 2026-10-27T20:13:09Z
+   MINT local : 2026-10-27T21:13:09 CET (+0100)
+   VM UTC     : 2026-10-27T20:14:45Z
+   VM local   : 2026-10-27T20:14:45 UTC (+0000)
+   ```
+
+   96 secondes de temps réel séparent les deux relevés : **l'écart résiduel est inférieur à la minute**.
+   La VM est en **UTC**, ce qui est l'état **correct** pour un serveur ; c'est la station qui est en `+0100`.
+
+   **Ce qui reste vrai :** la VM n'a **aucune synchronisation automatique** (`ntpd` non armé). Une horloge
+   juste aujourd'hui peut dériver après une suspension. À traiter pour les identités (Kerberos exige moins
+   de 5 min d'écart) et pour la datation fiable des preuves. Incident consigné : **C-27**.
 3. **C-25 / C-26** : deux artefacts de mesure consignés ; les tests futurs utiliseront soit un échange
    applicatif réel, soit `tcpdump -U`.
 4. Le mot de passe apparaît en clair dans la ligne de commande (`-U 'omrane%omranelab'`) → acceptable au
