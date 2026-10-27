@@ -2,65 +2,90 @@
 #
 # POURQUOI CE FICHIER EXISTE (2026-10-27) :
 #   Le poste du responsable a 3,7 Go de RAM et 4 threads. `make buildworld` exige >= 8 Go
-#   (ADR-0010, profil L3). Résultat constaté : depuis le 23 octobre, TOUT ce qui a été exécuté
-#   l'a été dans une VM configurée à la main — 0 image produite. Ce fichier est la sortie du banc :
-#   il fait construire l'image par une machine FreeBSD, et dépose un ARTEFACT vérifiable.
+#   (ADR-0010, profil L3). Résultat constaté : 25 fichiers de produit, 13 scripts de banc,
+#   0 image produite en quatre jours. Ce fichier sort le projet de la VM.
 #
-# STATUT D'HONNÊTETÉ :
-#   - Ce fichier n'a JAMAIS tourné. Aucun compte CI n'est configuré à ce jour.
-#   - `image_family` ci-dessous doit être vérifiée dans le catalogue Cirrus AVANT la première
-#     exécution (https://cirrus-ci.org/guide/FreeBSD/). Je ne l'affirme pas : je l'indique.
-#   - L'espace disque des machines CI est souvent limité (~20 Go) ; buildworld en consomme
-#     davantage. Si la tâche échoue sur l'espace, la réponse est un disque additionnel, pas
-#     un contournement.
+# ⚠️ NOMS D'IMAGES VÉRIFIÉS LE 2026-10-27 dans la documentation Cirrus
+#    (https://cirrus-ci.org/guide/FreeBSD/) — familles listées à cette date :
+#       freebsd-16-0-snap
+#       freebsd-15-0-amd64-ufs   (15.0-RELEASE, UFS)   <-- utilisée ci-dessous
+#       freebsd-15-0-amd64-zfs   (15.0-RELEASE, ZFS)
+#       freebsd-14-3
+#    « freebsd-15-1 » N'EST PAS listée. Le projet cible 15.1-RELEASE (src.txz) : voir la
+#    tâche « sonder » qui vérifie si une famille 15.1 existe réellement. Ne pas supposer.
 #
-# CHOIX : Cirrus CI plutôt que GitHub Actions, parce que Cirrus propose des runners FreeBSD
-# NATIFS (pas d'émulation Linux, pas de QEMU dans QEMU) — voir docs/41-machines-distantes.md.
+# ⚠️ STATUT : ce fichier n'a JAMAIS tourné. Première exécution = première vérité.
+#    Étape 1 (tâches « controles » + « sonder ») : ~2 minutes, ne construit rien.
+#    Étape 2 (tâche « image ») : plusieurs heures, déclenchée manuellement — voir plus bas.
 
-task:
-  name: "image NexBSD (buildworld + release)"
-  timeout_in: 300m
-
+# ---------------------------------------------------------------------------
+# Tâche 0 — SONDER : existe-t-il une image 15.1 dans le catalogue ?
+#   Elle a le droit d'échouer : son but est de rapporter la vérité, pas de réussir.
+# ---------------------------------------------------------------------------
+sonder_task:
+  name: "SONDE — quelle version de FreeBSD propose Cirrus ?"
+  allow_failures: true
+  timeout_in: 10m
   freebsd_instance:
-    # À VÉRIFIER dans le catalogue Cirrus avant la 1re exécution — ne pas supposer ce nom.
-    image_family: freebsd-15-1
-    cpu: 8
-    memory: 16G
+    image_family: freebsd-15-1        # à vérifier : peut ne pas exister
+    cpu: 2
+    memory: 4G
+  version_script: |
+    uname -a
+    echo "--- version exacte ---"
+    freebsd-version -ku
 
-  # On ne construit que sur la branche principale ou sur demande : une image coûte des heures.
-  only_if: $CIRRUS_BRANCH == 'main' || $CIRRUS_TAG != ''
-
+# ---------------------------------------------------------------------------
+# Tâche 1 — CONTRÔLES : le delta est-il intact, le registre conforme, la chaîne prête ?
+#   Aucune construction. Deux minutes. C'est le premier vrai pas de la CI.
+# ---------------------------------------------------------------------------
+controles_task:
+  name: "CONTROLES — delta, registre des acquis, simulation de production"
+  timeout_in: 15m
+  freebsd_instance:
+    image_family: freebsd-15-0-amd64-ufs
+    cpu: 2
+    memory: 4G
   env:
     NEXBSD_SORTIE: ${CIRRUS_WORKING_DIR}/images
-
-  # --- Étape 1 : le delta du produit est-il intact ? -----------------------
   delta_script: |
     set -e
     sh scripts/70-verifier-delta.sh
     sh scripts/72-verifier-acquis.sh
-
-  # --- Étape 2 : simulation (vérifie tout ce qui est vérifiable sans construire)
   simulation_script: |
     set -e
     sh scripts/74-produire-image.sh --simulation
 
-  # --- Étape 3 : PRODUCTION -------------------------------------------------
-  # Une seule commande : la chaîne vérifie elle-même l'empreinte de src.txz, applique le delta,
-  # construit, produit la release et écrit le manifeste. Si une étape échoue, rien n'est publié.
-  image_script: |
+# ---------------------------------------------------------------------------
+# Tâche 2 — IMAGE : la production réelle. DÉCLENCHEMENT MANUEL.
+#   Pourquoi manuel : une construction coûte plusieurs heures de crédit CI et plusieurs Go.
+#   On ne la lance qu'une fois que (a) les contrôles passent et (b) la question 15.0/15.1
+#   est tranchée par la sonde. Sinon on dépense des heures pour découvrir un nom d'image faux.
+#   Déclenchement : pousser sur la branche `nexbsd-image`, ou poser la variable
+#   CIRRUS_NEXBSD_IMAGE=oui dans les réglages du dépôt.
+# ---------------------------------------------------------------------------
+image_task:
+  name: "IMAGE — buildworld + release + empreinte"
+  timeout_in: 300m
+  only_if: $CIRRUS_BRANCH == 'nexbsd-image' || $NEXBSD_IMAGE == 'oui'
+  freebsd_instance:
+    image_family: freebsd-15-0-amd64-ufs
+    cpu: 8
+    memory: 16G
+  env:
+    NEXBSD_SORTIE: ${CIRRUS_WORKING_DIR}/images
+  prepare_script: |
+    set -e
+    df -h
+    sysctl -n hw.ncpu hw.physmem
+  build_script: |
     set -e
     mkdir -p "$NEXBSD_SORTIE"
     sh scripts/74-produire-image.sh --sortie "$NEXBSD_SORTIE" --obj /usr/obj
-
-  # --- Étape 4 : preuve ----------------------------------------------------
-  # Le manifeste contient les empreintes. On l'affiche pour qu'il soit lisible dans le journal CI :
-  # une image sans empreinte publiée ne vaut rien.
   manifeste_script: |
     set -e
     ls -l "$NEXBSD_SORTIE"
     cat "$NEXBSD_SORTIE"/MANIFESTE-*.txt
-
-  # --- Publication : l'artefact, c'est le produit --------------------------
   images_artifacts:
     path: "images/**"
     expire_in: 30 days
