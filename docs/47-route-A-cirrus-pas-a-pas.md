@@ -102,3 +102,35 @@ dans `scripts/74` et le SHA de `src.txz`), ou (b) demander/utiliser une image 15
 | 2026-10-27 | `.cirrus.yml` écrit, YAML validé ; nom d'image corrigé (`freebsd-15-0-amd64-ufs`) | ✅ |
 | 2026-10-27 | ~~`freebsd-15-1`~~ supposé existant | ❌ **affirmation fausse**, corrigée avant première exécution |
 | _(à suivre)_ | état du dépôt local et distant | en attente de la sortie du responsable |
+
+---
+
+## 7. Constat du 2026-10-27 (soir) — l'état du dépôt distant est enfin CONNU
+
+Sortie verbatim du responsable, 🖥️ MINT, `~/Projets/nexbsd` :
+
+```
+d999b1b (HEAD -> main, origin/main, bundle/main) C-18 : recidive de C-16 ...
+69
+bundle  /home/omrane/Téléchargements/nexbsd-depot-2026-10-25-s027.bundle (fetch/push)
+origin  git@github.com:mlinux952-code/nexbsd.git (fetch/push)
+```
+`git status --short` n'a **rien** affiché → arbre de travail propre.
+
+### Ce que cela établit, sans supposition
+
+| Fait | Preuve | Conséquence |
+|---|---|---|
+| `origin/main` = `d999b1b`, soit **69 commits** | sortie ci-dessus | GitHub **n'a rien reçu depuis le 25/10** |
+| l'atelier est à **123 commits** | `git rev-list --count HEAD` | **54 commits de retard** sur le distant |
+| `d999b1b` est un **ancêtre** de `34c3449` | `git merge-base --is-ancestor` → OUI | mise à jour **en fast-forward**, aucun conflit possible |
+| l'arbre local est **propre** | `git status --short` vide | rien à sauver avant de mettre à jour |
+| le transport est **SSH** | `git@github.com:…` | le `push` exige une **clé SSH enregistrée** sur GitHub — non encore vérifié |
+| la remorque `bundle` pointe **s027** | sortie ci-dessus | obsolète ; à ne pas utiliser, ne pas supprimer sans décision |
+
+### Conclusion opérationnelle
+
+**A-33 (« état du dépôt GitHub non vérifié ») est levé** : le distant est en retard, ce n'est plus une
+inconnue. Si la tâche IMAGE avait été lancée ce soir, elle aurait construit **le code du 25 octobre**,
+sans même que ce soit visible. La règle qui en sort : **aucune exécution de CI avant une sortie `git push`
+réelle et vérifiée.**

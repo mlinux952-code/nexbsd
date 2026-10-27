@@ -51,7 +51,7 @@ A-29;2026-10-23;noyau NEXBSD_L1 + delta vs GENERIC (5 lignes motivees);T-17;PROD
 A-30;2026-10-23;20 decisions consignees (ADR-0001 a ADR-0020) — toutes a l etat PROPOSITION;docs/decisions/;GOUVERNANCE;docs/decisions/ADR-0001-base-freebsd.md;OUVERT
 A-31;2026-10-26;echelle d independance I0-I5 et grille d audit contradictoire;docs/32;METHODE;docs/32-audit-croise.md;FERME
 A-32;2026-10-23;reprise sans conversation : sequence START-HERE, ETAT, comptes rendus;docs/39;METHODE;START-HERE.md;FERME
-A-33;2026-10-23;sauvegardes : bundles Drive + depot GitHub (etat du distant NON verifie);docs/20;PREUVE;docs/20-depots-et-sauvegardes.md;OUVERT
+A-33;2026-10-23;sauvegardes : bundles Drive + depot GitHub (distant CONSTATE en retard de 54 commits le 2026-10-27 (origin/main = d999b1b/69 commits, atelier 123), le push reste a faire);docs/20;PREUVE;docs/20-depots-et-sauvegardes.md;OUVERT
 A-34;2026-10-23;11 couloirs de recherche separes du produit (MARS_NWE, noyau propre, NCP...);research/;METHODE;research/netware/fiche.md;FERME
 A-35;2026-10-25;reproductibilite du noyau : deux constructions, empreintes identiques;T-11;PREUVE;tests/results/T-11-reproductibilite.md;FERME
 A-36;2026-10-27;regles de travail R-1..R-12 et lecons M-1..M-11;docs/40;METHODE;docs/40-regles-de-travail.md;FERME
