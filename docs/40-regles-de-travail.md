@@ -128,3 +128,24 @@ le test est vert.
 **Corollaire opérationnel :** quand un script de banc écrit un fichier de configuration sur la cible
 (`cat > /usr/local/etc/… <<'CONF'`), ce contenu doit être **extrait** vers `fork/overlay/` et le script
 doit devenir un simple applicateur — sinon on maintient deux vérités qui divergeront.
+
+---
+
+## R-14 — Une session qui ne produit que du banc doit le dire
+
+**Née de la remarque du responsable, 2026-10-27 :**
+> *« depuis le début seulement tu ajustes sur une version de VM… j'espère que c'est la dernière fois
+> comme faute grave »*
+
+**Constat qui lui donne raison :** 25 fichiers de produit, 13 scripts de banc, **0 image produite** en
+quatre jours. Tout ce qui a été **exécuté** l'a été dans une VM, parce que le poste (3,7 Go de RAM) ne
+peut pas construire (ADR-0010 exige 8 Go).
+
+**Règle.** Chaque session se termine par une ligne dans `matrices/acquis.csv`. Si **aucun** acquis n'a
+progressé vers `PRODUIT` **ou** vers la **chaîne de production** (`scripts/74`, `.cirrus.yml`,
+`fork/release.conf`), la session est déclarée **« session de banc »** : utile, documentée, mais **pas un
+pas vers J5**. Le dire fait partie du travail.
+
+**Corollaire.** Un test réussi dans une VM ne rapproche pas l'image. Ce qui rapproche l'image, c'est :
+un fichier de configuration dans `fork/overlay/`, une pièce de la chaîne de production, ou une exécution
+réelle de cette chaîne.

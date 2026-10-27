@@ -1,0 +1,66 @@
+# NexBSD — intégration continue : production de l'image sur une machine FreeBSD
+#
+# POURQUOI CE FICHIER EXISTE (2026-10-27) :
+#   Le poste du responsable a 3,7 Go de RAM et 4 threads. `make buildworld` exige >= 8 Go
+#   (ADR-0010, profil L3). Résultat constaté : depuis le 23 octobre, TOUT ce qui a été exécuté
+#   l'a été dans une VM configurée à la main — 0 image produite. Ce fichier est la sortie du banc :
+#   il fait construire l'image par une machine FreeBSD, et dépose un ARTEFACT vérifiable.
+#
+# STATUT D'HONNÊTETÉ :
+#   - Ce fichier n'a JAMAIS tourné. Aucun compte CI n'est configuré à ce jour.
+#   - `image_family` ci-dessous doit être vérifiée dans le catalogue Cirrus AVANT la première
+#     exécution (https://cirrus-ci.org/guide/FreeBSD/). Je ne l'affirme pas : je l'indique.
+#   - L'espace disque des machines CI est souvent limité (~20 Go) ; buildworld en consomme
+#     davantage. Si la tâche échoue sur l'espace, la réponse est un disque additionnel, pas
+#     un contournement.
+#
+# CHOIX : Cirrus CI plutôt que GitHub Actions, parce que Cirrus propose des runners FreeBSD
+# NATIFS (pas d'émulation Linux, pas de QEMU dans QEMU) — voir docs/41-machines-distantes.md.
+
+task:
+  name: "image NexBSD (buildworld + release)"
+  timeout_in: 300m
+
+  freebsd_instance:
+    # À VÉRIFIER dans le catalogue Cirrus avant la 1re exécution — ne pas supposer ce nom.
+    image_family: freebsd-15-1
+    cpu: 8
+    memory: 16G
+
+  # On ne construit que sur la branche principale ou sur demande : une image coûte des heures.
+  only_if: $CIRRUS_BRANCH == 'main' || $CIRRUS_TAG != ''
+
+  env:
+    NEXBSD_SORTIE: ${CIRRUS_WORKING_DIR}/images
+
+  # --- Étape 1 : le delta du produit est-il intact ? -----------------------
+  delta_script: |
+    set -e
+    sh scripts/70-verifier-delta.sh
+    sh scripts/72-verifier-acquis.sh
+
+  # --- Étape 2 : simulation (vérifie tout ce qui est vérifiable sans construire)
+  simulation_script: |
+    set -e
+    sh scripts/74-produire-image.sh --simulation
+
+  # --- Étape 3 : PRODUCTION -------------------------------------------------
+  # Une seule commande : la chaîne vérifie elle-même l'empreinte de src.txz, applique le delta,
+  # construit, produit la release et écrit le manifeste. Si une étape échoue, rien n'est publié.
+  image_script: |
+    set -e
+    mkdir -p "$NEXBSD_SORTIE"
+    sh scripts/74-produire-image.sh --sortie "$NEXBSD_SORTIE" --obj /usr/obj
+
+  # --- Étape 4 : preuve ----------------------------------------------------
+  # Le manifeste contient les empreintes. On l'affiche pour qu'il soit lisible dans le journal CI :
+  # une image sans empreinte publiée ne vaut rien.
+  manifeste_script: |
+    set -e
+    ls -l "$NEXBSD_SORTIE"
+    cat "$NEXBSD_SORTIE"/MANIFESTE-*.txt
+
+  # --- Publication : l'artefact, c'est le produit --------------------------
+  images_artifacts:
+    path: "images/**"
+    expire_in: 30 days
