@@ -23,8 +23,12 @@ info() { echo "  ...     $*"; }
 
 # Les fichiers du delta et leurs empreintes de reference (relevees le 2026-10-25).
 # 2026-10-27 : 17 -> 20 fichiers. Le delta s enrichit des reglages PROUVES au banc (T-05/T-05a/T-21) :
-#   overlay/etc/pf.conf, overlay/etc/ssh/sshd_config.nexbsd, overlay/etc/pam.d/su.
-EXPECTED=20
+#   overlay/etc/pf.conf, overlay/etc/ssh/sshd_config.nexbsd, overlay/etc/pam.d/su,
+#   puis la configuration d identite extraite des scripts de banc (A-23..A-27) :
+#   overlay/usr-local-etc-openldap-slapd.conf, overlay/usr-local-etc-smb4.conf,
+#   overlay/usr-local-etc-nslcd.conf, overlay/etc-nsswitch.conf.fragment,
+#   overlay/install-annuaire-base.ldif.
+EXPECTED=25
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 
@@ -68,6 +72,9 @@ MANQUANTS=0
 for f in sys/amd64/conf/NEXBSD_L1 sys/amd64/conf/NEXBSD_L1.rapport src.conf release.conf \
          overlay/etc/motd overlay/etc/nexbsd-version overlay/etc/rc.conf.defaults \
          overlay/etc/pf.conf overlay/etc/ssh/sshd_config.nexbsd overlay/etc/pam.d/su \
+         overlay/usr-local-etc-openldap-slapd.conf overlay/usr-local-etc-smb4.conf \
+         overlay/usr-local-etc-nslcd.conf overlay/etc-nsswitch.conf.fragment \
+         overlay/install-annuaire-base.ldif \
          patches/0001-identite-version.patch tools/generer-kernel-conf.sh \
          reference/GENERIC-15.1 reference/newvers.sh-15.1 exceptions-licence.txt; do
   if git ls-files --error-unmatch "fork/$f" >/dev/null 2>&1; then

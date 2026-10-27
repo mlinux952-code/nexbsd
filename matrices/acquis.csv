@@ -20,11 +20,11 @@
 # Verifie par : sh scripts/72-verifier-acquis.sh
 id;date;acquis;preuve;destination;cible;etat
 A-01;2026-10-23;socle FreeBSD 15.1 amd64 demarre (choix ADR-0001);T-01;PRODUIT;fork/src.conf;FERME
-A-02;2026-10-23;partage SMB authentifie, lu depuis une AUTRE machine;T-03;PRODUIT;scripts/60-banc-T04-ldap.sh;OUVERT
-A-03;2026-10-24;annuaire OpenLDAP operationnel (identites centralisees);T-04;PRODUIT;scripts/60-banc-T04-ldap.sh;OUVERT
-A-04;2026-10-24;Samba authentifie VIA l annuaire (ldapsam);T-04-E;PRODUIT;scripts/62-banc-T04E-samba-ldap.sh;OUVERT
-A-05;2026-10-24;droits appliques par groupes de l annuaire;T-04-F;PRODUIT;scripts/63-banc-T04F-droits-groupes.sh;OUVERT
-A-06;2026-10-25;le banc revient seul apres redemarrage (NSS/pam_ldap);T-04-G;PRODUIT;scripts/65-resoudre-identites-nss.sh;OUVERT
+A-02;2026-10-23;partage SMB authentifie, lu depuis une AUTRE machine;T-03;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;OUVERT
+A-03;2026-10-24;annuaire OpenLDAP operationnel (identites centralisees);T-04;PRODUIT;fork/overlay/usr-local-etc-openldap-slapd.conf;OUVERT
+A-04;2026-10-24;Samba authentifie VIA l annuaire (ldapsam);T-04-E;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;OUVERT
+A-05;2026-10-24;droits appliques par groupes de l annuaire;T-04-F;PRODUIT;fork/overlay/install-annuaire-base.ldif;OUVERT
+A-06;2026-10-25;le banc revient seul apres redemarrage (NSS/pam_ldap);T-04-G;PRODUIT;fork/overlay/usr-local-etc-nslcd.conf;OUVERT
 A-07;2026-10-26;noyau NEXBSD_L1 compile, installe, reproductible a l octet;T-17 + T-11;PRODUIT;fork/sys/amd64/conf/NEXBSD_L1;FERME
 A-08;2026-10-25;identite du systeme : nom d hote nexbsd;T-16;PRODUIT;fork/overlay/etc/nexbsd-version;OUVERT
 A-09;2026-10-27;pare-feu pf : refus par defaut JOURNALISE, 11 regles;T-05;PRODUIT;fork/overlay/etc/pf.conf;FERME
@@ -41,12 +41,12 @@ A-19;2026-10-27;chaine de release + image installable (jalon J5);docs/41;PRODUIT
 A-20;2026-10-27;diagnostic materiel du PC de 2011 (livrable 9);docs/hardware.md;PREUVE;docs/hardware.md;A-FAIRE
 A-21;2026-10-27;bureau et applications NexBSD (couche C);docs/42;PRODUIT;;A-FAIRE
 A-22;2026-10-27;identite unique PAM/LDAP pour les sessions systeme;constat T-21;PRODUIT;;A-FAIRE
-A-23;2026-10-24;configuration slapd (annuaire) — n existe QUE dans les scripts 60 et 62;T-04 / T-04-E;PRODUIT;fork/overlay/usr-local-etc-openldap-slapd.conf;A-FAIRE
-A-24;2026-10-24;configuration smb4.conf (partages + ldapsam) — n existe QUE dans les scripts 62 et 63;T-04-E / T-04-F;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;A-FAIRE
-A-25;2026-10-25;nsswitch.conf (resolution des identites de l annuaire) — que dans script 65;T-04-G / C-14;PRODUIT;fork/overlay/etc-nsswitch.conf;A-FAIRE
-A-26;2026-10-25;nslcd.conf (passerelle NSS vers LDAP) — que dans script 65;T-04-G / C-14;PRODUIT;fork/overlay/usr-local-etc-nslcd.conf;A-FAIRE
-A-27;2026-10-24;annuaire de base : comptes, groupes, SID (LDIF) — que dans scripts 60 et 63;T-04 / T-04-F;PRODUIT;fork/overlay/install/annuaire-base.ldif;A-FAIRE
-A-28;2026-10-24;services armes au demarrage : slapd, nslcd, samba_server;T-04-G;PRODUIT;fork/overlay/etc/rc.conf.defaults;OUVERT
+A-23;2026-10-24;configuration slapd (annuaire) — extraite du script 60 vers le produit;T-04 / T-04-E;PRODUIT;fork/overlay/usr-local-etc-openldap-slapd.conf;FERME
+A-24;2026-10-24;configuration smb4.conf (partages + ldapsam:trusted) — extraite des scripts 62 et 63;T-04-E / T-04-F;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;FERME
+A-25;2026-10-25;nsswitch.conf (resolution des identites de l annuaire) — fragment + transformation exacte;T-04-G / C-14;PRODUIT;fork/overlay/etc-nsswitch.conf.fragment;FERME
+A-26;2026-10-25;nslcd.conf (passerelle NSS vers LDAP) — extrait du script 65;T-04-G / C-14;PRODUIT;fork/overlay/usr-local-etc-nslcd.conf;FERME
+A-27;2026-10-24;annuaire de base : comptes, groupes, SID (LDIF) — reconstitue depuis scripts 60 et 63;T-04 / T-04-F;PRODUIT;fork/overlay/install-annuaire-base.ldif;FERME
+A-28;2026-10-24;services armes au demarrage : slapd, nslcd, samba_server;T-04-G;PRODUIT;fork/overlay/etc/rc.conf.defaults;FERME
 A-29;2026-10-23;noyau NEXBSD_L1 + delta vs GENERIC (5 lignes motivees);T-17;PRODUIT;fork/sys/amd64/conf/NEXBSD_L1.rapport;FERME
 A-30;2026-10-23;20 decisions consignees (ADR-0001 a ADR-0020) — toutes a l etat PROPOSITION;docs/decisions/;GOUVERNANCE;docs/decisions/ADR-0001-base-freebsd.md;OUVERT
 A-31;2026-10-26;echelle d independance I0-I5 et grille d audit contradictoire;docs/32;METHODE;docs/32-audit-croise.md;FERME

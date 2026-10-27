@@ -127,3 +127,46 @@ avant même le `motd` : sans elle, il n'y a pas de serveur à installer.
 référencées, 20 fichiers de delta protégés par un garde-fou — mais 11 acquis ne sont pas encore dans le
 produit, dont les cinq fichiers de configuration de l'annuaire et des partages, qui n'existent
 aujourd'hui que comme commandes à l'intérieur de scripts de test.**
+
+---
+
+## 7. Le trou est REFERMÉ (même soirée, 2026-10-27 ~22h40 UTC)
+
+Le responsable a demandé : *« alors qu'est-ce que tu attends pour les mettre dans le code source,
+pour l'inscrire proprement ? »*. Exécution immédiate — la configuration d'identité est sortie des
+scripts de banc et posée dans le delta du produit :
+
+| Acquis | Fichier créé | Origine extraite de | État |
+|---|---|---|---|
+| A-23 | `fork/overlay/usr-local-etc-openldap-slapd.conf` | `scripts/60` l. 44-58 | **FERMÉ** |
+| A-24 | `fork/overlay/usr-local-etc-smb4.conf` | `scripts/62` l. 182-203 + `scripts/63` l. 315-349 | **FERMÉ** |
+| A-25 | `fork/overlay/etc-nsswitch.conf.fragment` | `scripts/65` l. 122-133 (transformation exacte) | **FERMÉ** |
+| A-26 | `fork/overlay/usr-local-etc-nslcd.conf` | `scripts/65` l. 88-118 | **FERMÉ** |
+| A-27 | `fork/overlay/install-annuaire-base.ldif` | `scripts/60` l. 83-103 + `scripts/63` l. 144-190 | **FERMÉ** |
+| A-28 | `fork/overlay/etc/rc.conf.defaults` (+ `slapd_enable`, `nslcd_enable`) | `scripts/60`, `62`, `65` | **FERMÉ** |
+
+**Delta : 20 → 25 fichiers.** `scripts/70` : `VERDICT : DELTA INTACT (25 fichiers, empreintes conformes)`.
+`scripts/72` : `VERDICT : REGISTRE CONFORME`.
+
+### Trois choix faits en écrivant ces fichiers — et assumés
+
+1. **Aucun mot de passe dans le dépôt.** Les valeurs du banc (`adminsecret`, `omranelab`, `saralab`) ne
+   sont **pas** recopiées. À la place : `@NEXBSD_LDAP_ROOTPW@`, `@NEXBSD_LDAP_BINDPW@`, `@NEXBSD_SID@`.
+   Un fichier non substitué ne doit pas être livré — c'est vérifiable, donc c'est une règle, pas une
+   intention.
+2. **Le SID de domaine ne peut pas être figé.** T-04-F a échoué (`NT_STATUS_INTERNAL_DB_CORRUPTION`)
+   tant que les groupes n'avaient pas de `sambaSID` cohérent avec le SID **généré par Samba sur la
+   machine**. Le produit doit donc lire `net getlocalsid` et substituer. Un LDIF avec un SID en dur
+   aurait reproduit exactement l'échec C-13.
+3. **`nsswitch.conf` : fragment, pas fichier complet.** Le banc a **modifié** le fichier livré par
+   FreeBSD (awk), il ne l'a pas réécrit. Recopier un « fichier complet » serait inventer un contenu non
+   relevé. Le fragment donne les **deux lignes** et la **transformation exacte**. `files` reste en
+   premier : si l'annuaire tombe, la machine reste administrable.
+
+### Ce qui reste ouvert après cette opération (9 lignes, pas 11)
+
+`A-02`→`A-06` restent **OUVERT** : la configuration existe désormais dans le dépôt, mais **aucun
+installeur ne l'applique** — c'est exactement ce que veut dire « ouvert ».
+`A-08` (`nexbsd-version`), `A-13` (SSH), `A-14` (`su`) = cibles écrites, application non automatisée.
+`A-17` (`motd`), `A-18` (ADR-0021), `A-19` (image/J5), `A-20` (matériel), `A-21` (bureau), `A-22`
+(identité PAM/LDAP), `A-30` (ADR), `A-33` (GitHub non vérifié) restent à faire.

@@ -1,0 +1,109 @@
+# NexBSD — annuaire de base (structure + comptes + groupes)
+#
+# ORIGINE : reconstitué à partir de DEUX sources réellement exécutées sur le banc :
+#   - scripts/60-banc-T04-ldap.sh  (l. 83-103) : arborescence + compte omrane      → T-04
+#   - scripts/63-banc-T04F-droits-groupes.sh (l. 144-190) : groupes + SID + membres → T-04-F
+#   Preuves : tests/results/T-04-ldap-annuaire.md, T-04F-droits-groupes.md
+#
+# ⚠️ SID DE DOMAINE : sur le banc, le SID était celui généré par Samba à l'installation
+#    (T-04-F a échoué avec NT_STATUS_INTERNAL_DB_CORRUPTION tant que les groupes n'avaient pas
+#    de sambaSID cohérent avec ce SID). Le produit ne peut donc PAS figer un SID ici :
+#    il doit le lire sur la machine (« net getlocalsid ») et substituer @NEXBSD_SID@.
+#    Les RID, eux, sont des choix stables du projet : 3001 bureau, 3002 stagiaires.
+#
+# ⚠️ MOTS DE PASSE : aucun n'est écrit en clair. L'installeur demande le mot de passe de chaque
+#    compte et pose les attributs sambaNTPassword / userPassword par « smbpasswd », comme au banc.
+#    Le banc utilisait « omranelab » / « saralab » : laboratoire uniquement.
+
+# ------------------------------------------------------------------ structure
+dn: dc=nexbsd,dc=local
+objectClass: dcObject
+objectClass: organization
+o: NexBSD
+dc: nexbsd
+
+dn: ou=people,dc=nexbsd,dc=local
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=nexbsd,dc=local
+objectClass: organizationalUnit
+ou: groups
+
+# ------------------------------------------------------------------ groupes
+# posixGroup (identités système) + sambaGroupMapping (résolution gid → SID par ldapsam:trusted)
+dn: cn=bureau,ou=groups,dc=nexbsd,dc=local
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+cn: bureau
+gidNumber: 2001
+displayName: bureau
+sambaGroupType: 2
+sambaSID: @NEXBSD_SID@-3001
+description: Groupe bureau (écriture dans [commun])
+
+dn: cn=stagiaires,ou=groups,dc=nexbsd,dc=local
+objectClass: top
+objectClass: posixGroup
+objectClass: sambaGroupMapping
+cn: stagiaires
+gidNumber: 2002
+displayName: stagiaires
+sambaGroupType: 2
+sambaSID: @NEXBSD_SID@-3002
+description: Groupe stagiaires (lecture seule)
+
+# ------------------------------------------------------------------ membres
+dn: cn=bureau,ou=groups,dc=nexbsd,dc=local
+changetype: modify
+replace: memberUid
+memberUid: omrane
+-
+
+dn: cn=stagiaires,ou=groups,dc=nexbsd,dc=local
+changetype: modify
+replace: memberUid
+memberUid: sara
+-
+
+# ------------------------------------------------------------------ compte omrane (administrateur)
+dn: uid=omrane,ou=people,dc=nexbsd,dc=local
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: sambaSamAccount
+cn: Omrane
+sn: Omrane
+uid: omrane
+uidNumber: 10000
+gidNumber: 2001
+homeDirectory: /home/omrane
+loginShell: /bin/sh
+sambaSID: @NEXBSD_SID@-1000
+sambaPrimaryGroupSID: @NEXBSD_SID@-3001
+sambaAcctFlags: [U          ]
+
+# ------------------------------------------------------------------ compte sara (identité d'annuaire SEULE)
+# Rôle dans le projet : prouver qu'un compte qui n'existe PAS dans /etc/master.passwd peut
+# s'authentifier et recevoir des droits. C'est la preuve T-04-F.
+# Dans une image de production, ce compte est un EXEMPLE : l'installeur peut le retirer.
+dn: uid=sara,ou=people,dc=nexbsd,dc=local
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+objectClass: posixAccount
+objectClass: sambaSamAccount
+cn: Sara Test
+sn: Test
+uid: sara
+uidNumber: 10002
+gidNumber: 2002
+homeDirectory: /home/sara
+loginShell: /bin/sh
+sambaSID: @NEXBSD_SID@-1010
+sambaPrimaryGroupSID: @NEXBSD_SID@-3002
+sambaAcctFlags: [U          ]

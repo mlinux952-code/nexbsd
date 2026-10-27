@@ -28,3 +28,10 @@ sshd_enable="NO"
 # Pare-feu : armé au démarrage, refus par défaut journalisé (voir etc/pf.conf, prouvé T-05/T-05a)
 pf_enable="YES"
 pflog_enable="YES"
+
+# --- identités (T-04 / T-04-E / T-04-F / T-04-G) : les trois services doivent revenir SEULS.
+#     C'est précisément ce que T-04-G a prouvé (11/11 après redémarrage, sans main humaine).
+#     ORDRE : slapd doit être joignable avant que smbd n'initialise ldapsam, et nslcd dépend de slapd.
+#     Si un jour l'ordre pose problème, la réponse est dans rc.d (REQUIRE), pas dans un « sleep ».
+slapd_enable="YES"
+nslcd_enable="YES"

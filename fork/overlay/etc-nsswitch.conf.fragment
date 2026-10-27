@@ -1,0 +1,22 @@
+# NexBSD — /etc/nsswitch.conf : les DEUX lignes modifiées par rapport au fichier livré par FreeBSD
+#
+# ORIGINE : transformation appliquée et VÉRIFIÉE sur le banc par scripts/65-resoudre-identites-nss.sh
+#          (l. 122-133), le 2026-10-25 — correctif C-14. Preuve : tests/results/T-04G-persistance.md
+#
+# POURQUOI UN FRAGMENT ET NON UN FICHIER COMPLET :
+#   le banc a MODIFIÉ le /etc/nsswitch.conf livré par FreeBSD (awk sur les lignes existantes) au lieu
+#   de le remplacer. Recopier ici un « fichier complet » reviendrait à inventer un contenu que nous
+#   n'avons pas relevé ligne par ligne. Le produit doit faire la même chose que le banc : modifier,
+#   pas remplacer.
+#
+# TRANSFORMATION EXACTE (celle du script 65) :
+#   /^passwd:/ { print "passwd: files ldap"; next }
+#   /^group:/  { print "group:  files ldap"; next }
+#   { print }
+#
+# CONSÉQUENCE, ET C'EST UNE DÉCISION DE SÉCURITÉ : « files » reste EN PREMIER.
+#   Si l'annuaire tombe, root et les comptes système restent résolvables : la machine reste
+#   administrable. L'inverse (ldap avant files) rendrait le système inutilisable dès que slapd dort.
+
+passwd: files ldap
+group:  files ldap
