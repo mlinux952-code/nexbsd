@@ -4,7 +4,8 @@
 # CE QUE FAIT CE SCRIPT
 #   1. detecte l'interface reseau reellement utilisee (jamais codee en dur)
 #   2. ecrit /etc/pf.conf : tout est FERME, seuls les ports PROUVES necessaires sont ouverts
-#   3. VALIDE A BLANC (pfctl -n -f) AVANT d'appliquer : une erreur de syntaxe n'est jamais appliquee
+#   3. CHARGE LES MODULES pf/pflog (prerequis : pfctl parle au noyau via netlink, C-22)
+#   4. VALIDE A BLANC (pfctl -n -f) AVANT d'appliquer : une erreur de syntaxe n'est jamais appliquee
 #   4. charge pf et l'arme au demarrage
 #   5. REJOUE LE HARNAIS pour prouver que rien n'a ete casse (24/24 attendu)
 #
@@ -88,7 +89,11 @@ titre "2. ecriture de $PF_CONF"
 
 # sauvegarde une seule fois : on ne veut pas ecraser la sauvegarde d'origine
 if [ -f "$PF_CONF" ] && [ ! -f "$SAUVE" ]; then
-  cp -p "$PF_CONF" "$SAUVE" && ok "sauvegarde : $SAUVE"
+  if grep -q "NexBSD" "$PF_CONF" 2>/dev/null; then
+    info "$PF_CONF est deja une version NexBSD : pas de nouvelle sauvegarde"
+  else
+    cp -p "$PF_CONF" "$SAUVE" && ok "sauvegarde : $SAUVE"
+  fi
 fi
 
 cat > "$PF_CONF" <<EOF
@@ -134,8 +139,32 @@ EOF
 
 ok "$PF_CONF ecrit ($(wc -l < "$PF_CONF") lignes)"
 
+# ------------------------------------------------------------------ modules
+# C-22 : sur FreeBSD 15, pfctl communique avec le module pf via NETLINK.
+# Sans module charge, la validation echoue avec :
+#   "pfctl: Failed to open netlink: No such file or directory"
+# Charger pf NE FILTRE RIEN : le filtrage ne commence qu'une fois des regles chargees ET pf active.
+titre "3. chargement des modules (prerequis de pfctl sur FreeBSD 15)"
+if kldstat -q -m pf 2>/dev/null; then
+  ok "module pf deja charge"
+else
+  if kldload pf 2>/tmp/kldpf.txt; then ok "module pf charge"; else ko "kldload pf a echoue : $(cat /tmp/kldpf.txt)"; exit 1; fi
+fi
+if kldstat -q -m pflog 2>/dev/null; then
+  ok "module pflog deja charge"
+else
+  kldload pflog 2>/dev/null && ok "module pflog charge (journalisation)" || att "module pflog non charge (journalisation indisponible)"
+fi
+if pfctl -s info >/dev/null 2>&1; then
+  ok "pfctl dialogue avec le noyau"
+else
+  ko "pfctl ne parvient toujours pas a joindre pf : $(pfctl -s info 2>&1 | head -1)"
+  info "verifier : kldstat -m pf ; sysctl kern.features.pf"
+  exit 1
+fi
+
 # ------------------------------------------------------------------ validation a blanc
-titre "3. validation A BLANC (aucune application)"
+titre "4. validation A BLANC (aucune application)"
 if pfctl -n -f "$PF_CONF" 2>/tmp/pf-erreur.txt; then
   ok "syntaxe valide : pfctl -n -f accepterait ces regles"
 else
@@ -146,7 +175,7 @@ else
 fi
 
 # ------------------------------------------------------------------ activation
-titre "4. activation"
+titre "5. activation"
 kldload pf 2>/dev/null; kldload pflog 2>/dev/null
 sysrc pf_enable=YES >/dev/null && ok "pf_enable=YES (arme au demarrage)"
 sysrc pflog_enable=YES >/dev/null && ok "pflog_enable=YES (journalisation au demarrage)"
@@ -163,7 +192,7 @@ info "regles actives : $NR"
 pfctl -s info 2>/dev/null | grep -E "Status|State Table" | sed 's/^/  ...     /'
 
 # ------------------------------------------------------------------ preuve : le harnais
-titre "5. PREUVE : le banc fonctionne-t-il encore ?"
+titre "6. PREUVE : le banc fonctionne-t-il encore ?"
 for c in /tmp/harnais2.sh /tmp/harnais.sh /root/harnais.sh /root/harnais2.sh; do
   [ -f "$c" ] && HARNAIS="$c" && break
 done

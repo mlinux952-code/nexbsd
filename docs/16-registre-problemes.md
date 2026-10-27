@@ -441,3 +441,37 @@ Options ajoutées : `--etat` (diagnostic sans rien lancer) et `--stop` (arrêt p
 
 **Leçon générale :** **un script de lancement doit interroger la réalité** (quel hyperviseur ? quel domaine ?)
 **avant** d'agir. Un script qui suppose est pire qu'aucun script : il fait douter de la machine.
+
+---
+
+## C-22 — `pfctl` échoue avec « Failed to open netlink » : le module `pf` doit être chargé **avant**
+
+**Constaté :** 2026-10-27, première activation du pare-feu (`scripts/71` v1.1). Les deux étapes précédant
+l'application réussissent (interface `vtnet0` / `10.0.2.15` détectée, `/etc/pf.conf` écrit, 38 lignes), puis :
+
+```
+----- 3. validation A BLANC (aucune application) -----
+  [KO]    SYNTAXE INVALIDE — rien n'a ete applique
+  ...     pfctl: Failed to open netlink: No such file or directory
+```
+
+**Cause :** sur **FreeBSD 15**, `pfctl` parle au module noyau `pf` par **netlink**. Si `pf.ko` **n'est pas
+chargé**, `pfctl` ne peut même pas **analyser** un fichier de règles : il échoue à ouvrir le canal netlink.
+Le message « SYNTAXE INVALIDE » était donc **trompeur** — la syntaxe n'y était pour rien.
+
+**Faute de conception dans le script (la mienne) :** `kldload pf` figurait à l'**étape 4 (activation)**,
+c'est-à-dire **après** la validation de l'étape 3. L'ordre était inversé : on demandait à `pfctl` de valider
+un fichier alors que son interlocuteur n'existait pas encore.
+
+**Conséquence heureuse :** le garde-fou a **fonctionné** — rien n'a été appliqué, `/etc/pf.conf` a été
+restauré, l'état est resté strictement inchangé. Un échec propre vaut mieux qu'un succès douteux.
+
+**Correctif (v1.2 de `scripts/71`, 2026-10-27) :**
+1. nouvelle **étape 3** : chargement de `pf` et `pflog`, puis contrôle explicite que `pfctl -s info`
+   répond — si ce n'est pas le cas, le script **s'arrête** avec la cause ;
+2. la validation à blanc devient l'**étape 4**, l'activation l'**étape 5** ;
+3. la sauvegarde ne recopie plus une version NexBSD de `pf.conf` comme si c'était l'originale.
+
+**Point important pour la confiance :** charger le module `pf` **ne filtre rien**. Le filtrage ne commence
+que lorsque des règles sont chargées **et** `pf` activé (`pfctl -e`). `kldload pf` est donc sans risque et
+réversible (`kldunload pf`).
