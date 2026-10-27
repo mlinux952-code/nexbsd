@@ -1,19 +1,31 @@
 #!/bin/sh
 # 31-lancer-vm-freebsd.sh — lance la VM du banc NexBSD.
 #
-# HISTORIQUE (C-21, constate le 2026-10-27)
+# HISTORIQUE
 #   v1 : supposait une image QEMU directe (FreeBSD-15.1-ufs.qcow2 dans ~/.cache/nexbsd-vm).
-#        Or le banc reel tourne sous **libvirt** : domaine `nexbsd-test`, lance par virt-manager,
-#        console serie ttyu0. Le script echouait donc avec "image absente" alors que la VM existait.
-#   v2 (ce fichier) : DETECTE le mode reel avant d'agir.
-#        1. si un domaine libvirt existe (nexbsd-test, ou tout domaine contenant "nexbsd") -> libvirt
-#        2. sinon, si l'image QEMU directe existe -> ancien chemin (conserve, il reste valable)
-#        3. sinon, message clair avec les deux solutions, sans rien inventer.
+#        Or le banc reel tourne sous **libvirt** : domaine `nexbsd-test`, console serie ttyu0.
+#        Le script echouait donc avec "image absente" alors que la VM existait (C-21).
+#   v2 (2026-10-27) : DETECTE le mode reel avant d'agir (libvirt / QEMU direct / erreur claire).
+#   v3 (2026-10-27, apres T-05a) : ajoute la PIECE MANQUANTE du reseau.
+#        Constat de T-05a : sous libvirt le domaine est en interface `type='user'` (slirp) et
+#        AUCUNE redirection n'est declaree ; or T-03 avait besoin de 127.0.0.1:4450 -> VM:445.
+#        Sans redirection, aucune preuve de T-05a n'est rejouable (T-11 restait partiel).
+#        v3 applique donc la redirection A CHAUD, de facon IDEMPOTENTE et VERIFIEE :
+#          1. lit le nom du netdev slirp avec `info network`   (jamais devine)
+#          2. ne l'ajoute que si `info usernet` ne le montre pas deja
+#          3. relit `info usernet` pour PROUVER l'ajout
+#        Limite assumee : `hostfwd_add` est une commande de moniteur, elle ne survit pas a l'arret
+#        de la VM. C'est pour cela qu'elle est ici et non dans le XML du domaine.
 #
 # Usage :
-#   sh 31-lancer-vm-freebsd.sh            # demarre la VM et ouvre la console
+#   sh 31-lancer-vm-freebsd.sh            # demarre la VM, applique la redirection, ouvre la console
+#   sh 31-lancer-vm-freebsd.sh --reseau   # (re)applique la redirection sur une VM deja lancee
 #   sh 31-lancer-vm-freebsd.sh --etat     # dit seulement quel mode serait utilise
 #   sh 31-lancer-vm-freebsd.sh --stop     # arrete proprement la VM libvirt
+#   sh 31-lancer-vm-freebsd.sh --aide
+#
+# Variable d'environnement :
+#   PORT=4450   port d'ecoute sur la station (borne sur 127.0.0.1, jamais 0.0.0.0)
 #
 set -u
 
@@ -22,12 +34,65 @@ for a in "$@"; do
     case "$a" in
         --etat) MODE="etat" ;;
         --stop) MODE="stop" ;;
-        --aide|-h) sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --reseau) MODE="reseau" ;;
+        --aide|-h) sed -n '2,32p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "option inconnue : $a" >&2; exit 2 ;;
     esac
 done
 
 URI="qemu:///session"
+PORT=${PORT:-4450}
+GPORT=445
+
+# ---------------------------------------------------------------------------
+# appliquer_redirection DOMAINE
+#   Ajoute 127.0.0.1:$PORT -> VM:$GPORT dans le slirp du domaine, si absent,
+#   puis le PROUVE en relisant `info usernet`. Code retour 0 = redirection vue.
+# ---------------------------------------------------------------------------
+appliquer_redirection() {
+    _dom="$1"
+
+    # 1. nom du netdev slirp : on le LIT, on ne le devine pas (lecon C-24)
+    _netdev=$(virsh -c "$URI" qemu-monitor-command "$_dom" --hmp "info network" 2>/dev/null \
+              | tr -d '\\' \
+              | awk '/type=user/ { for (i=1;i<=NF;i++) if ($i ~ /:$/) { sub(":$","",$i); print $i; exit } }')
+    if [ -z "$_netdev" ]; then
+        echo "  [KO]    netdev slirp introuvable (la VM n'a pas d'interface type=user ?)"
+        echo "          sortie brute :"
+        virsh -c "$URI" qemu-monitor-command "$_dom" --hmp "info network" 2>&1 | sed 's/^/          /'
+        return 1
+    fi
+    echo "  [OK]    netdev slirp detecte : $_netdev"
+
+    # 2. idempotence : deja presente ?
+    if virsh -c "$URI" qemu-monitor-command "$_dom" --hmp "info usernet" 2>/dev/null \
+         | grep -qE "(^|[[:space:]])${PORT}([[:space:]]|$)"; then
+        echo "  [OK]    redirection 127.0.0.1:${PORT} -> VM:${GPORT} deja en place (rien ajoute)"
+    else
+        # 3. ajout a chaud. QEMU ne dit rien quand il reussit : le silence n'est PAS une preuve,
+        #    d'ou la relecture a l'etape 4.
+        virsh -c "$URI" qemu-monitor-command "$_dom" --hmp \
+            "hostfwd_add ${_netdev} tcp:127.0.0.1:${PORT}-:${GPORT}" >/tmp/nexbsd-hostfwd.err 2>&1
+        if [ -s /tmp/nexbsd-hostfwd.err ]; then
+            echo "  [KO]    hostfwd_add a repondu :"
+            sed 's/^/          /' /tmp/nexbsd-hostfwd.err
+            return 1
+        fi
+        echo "  [OK]    hostfwd_add 127.0.0.1:${PORT} -> VM:${GPORT} (silence = succes cote QEMU)"
+    fi
+
+    # 4. PREUVE : la redirection doit apparaitre dans `info usernet`
+    _ligne=$(virsh -c "$URI" qemu-monitor-command "$_dom" --hmp "info usernet" 2>/dev/null \
+             | grep "HOST_FORWARD" | grep -E "(^|[[:space:]])${PORT}([[:space:]]|$)")
+    if [ -n "$_ligne" ]; then
+        echo "  [OK]    redirection PROUVEE par le moniteur :"
+        echo "$_ligne" | sed 's/^ */          /'
+        echo "          -> le partage n'est joignable que depuis CETTE station (127.0.0.1), jamais du reseau"
+        return 0
+    fi
+    echo "  [KO]    la redirection n'apparait pas dans info usernet"
+    return 1
+}
 
 # --- 1. recherche d'un domaine libvirt -----------------------------------
 DOMAINE=""
@@ -43,10 +108,21 @@ if [ -n "$DOMAINE" ]; then
         etat)
             virsh -c "$URI" list --all
             echo "-> demarrage possible avec : virsh -c $URI start $DOMAINE"
-            echo "-> console                : virsh -c $URI console $DOMAINE   (sortie : Ctrl+])"
+            echo "-> console                : virsh -c $URI console $DOMAINE   (sortie : Ctrl+]"
+            echo "-> reseau                 : sh $0 --reseau  (127.0.0.1:${PORT} -> VM:${GPORT})"
             exit 0 ;;
         stop)
             virsh -c "$URI" shutdown "$DOMAINE" >/dev/null 2>&1 && echo "-> arret demande ($DOMAINE)" || echo "-> arret impossible (deja arretee ?)"
+            echo "-> rappel : la redirection de port disparait avec la VM, --reseau la remet"
+            exit 0 ;;
+        reseau)
+            if [ "${ETAT:-}" != "running" ]; then
+                echo "ERREUR : '$DOMAINE' n'est pas en cours d'execution (etat : ${ETAT:-inconnu})" >&2
+                echo "         lancer d'abord : virsh -c $URI start $DOMAINE" >&2
+                exit 1
+            fi
+            echo "----- redirection reseau (slirp) -----"
+            appliquer_redirection "$DOMAINE" || exit 1
             exit 0 ;;
         lancer)
             if [ "$ETAT" != "running" ]; then
@@ -55,6 +131,8 @@ if [ -n "$DOMAINE" ]; then
             else
                 echo "-> deja en cours d'execution"
             fi
+            echo "----- redirection reseau (slirp) -----"
+            appliquer_redirection "$DOMAINE" || echo "  (la VM demarre quand meme, mais T-05a/T-03 ne seront pas rejouables)"
             echo "-> ouverture de la console (login root, puis Ctrl+] pour detacher)"
             exec virsh -c "$URI" console "$DOMAINE"
             ;;
@@ -62,12 +140,14 @@ if [ -n "$DOMAINE" ]; then
 fi
 
 
+# ===========================================================================
+# Ancien chemin : QEMU direct (conserve, il reste valable sans libvirt)
+# ===========================================================================
 DIR=${1:-$HOME/.cache/nexbsd-vm}
 IMAGE="$DIR/FreeBSD-15.1-ufs.qcow2"
 OVERLAY="$DIR/disque-test.qcow2"
 SER="$DIR/console.sock"
 MON="$DIR/moniteur.sock"
-PORT=${PORT:-4450}
 
 # --- Ressources : surchargeables par l'environnement ---------------------
 # Sur une machine de 3,7 Go de RAM avec 4 threads (i3-3110M), 1536 Mo / 2 vCPU
@@ -76,8 +156,6 @@ RAM_MO=${RAM_MO:-1536}
 VCPU=${VCPU:-2}
 
 # --- Acceleration materielle --------------------------------------------
-# La recette du 2026-10-23 tournait en emulation pure (81 s de demarrage).
-# Avec KVM, le meme demarrage prend quelques secondes.
 if [ -r /dev/kvm ]; then
     ACCEL="-enable-kvm -cpu host"
     echo "-> acceleration KVM detectee : la VM tournera a pleine vitesse"
@@ -106,9 +184,6 @@ fi
 rm -f "$SER" "$MON"
 
 # --- Lancement ----------------------------------------------------------
-# Pas de KVM sur cet hôte : émulation TCG, 1 vCPU, 768 Mo.
-# Le disque est en virtio (vtblk0) et le réseau en virtio avec redirection
-# de port, pour tester depuis la station Linux : 127.0.0.1:4450 → VM:445.
 echo "→ démarrage : ${RAM_MO} Mo de RAM, ${VCPU} vCPU"
 echo "→ AU MENU DU CHARGEUR : taper 5 puis Entrée (sinon rien ne s'affiche)"
 echo "→ console série : socat - UNIX-CONNECT:$SER"
@@ -118,6 +193,5 @@ exec qemu-system-x86_64 \
     -serial "unix:$SER,server,nowait" \
     -monitor "unix:$MON,server,nowait" \
     -drive "file=$OVERLAY,if=virtio,cache=writeback" \
-    -netdev "user,id=n0,hostfwd=tcp:127.0.0.1:$PORT-:445" \
-    -device virtio-net-pci,netdev=n0 \
-    -rtc base=utc
+    -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:${PORT}-:${GPORT}" \
+    -device virtio-net-pci,netdev=net0
