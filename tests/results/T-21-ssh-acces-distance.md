@@ -118,3 +118,45 @@ consigné. À ne pas confondre avec un succès.
 2. puis `PermitRootLogin no` et `PasswordAuthentication no` — **seulement après** que la clé fonctionne ;
 3. corriger `/etc/motd` (identité NexBSD) ;
 4. chantier **identité PAM/LDAP**.
+
+---
+
+## 10. Addendum — authentification par clé (2026-10-27, ~20h30 UTC)
+
+**But :** poser l'échelle avant de retirer l'échelle. Aucune modification de `sshd_config` avant qu'une
+connexion **sans mot de passe** soit prouvée.
+
+**Clé créée sur la station** (🖥️ MINT) :
+
+```
+-rw-r--r-- 1 omrane omrane 93 oct.  27 23:08 /home/omrane/.ssh/nexbsdk.pub
+SHA256:E1SxAPYOOKIYRrY0JAs9D7gf6tWrPcK/oUhEPAbyzmY omrane@mint
+```
+
+**Dépôt** (`ssh-copy-id`) : `Number of key(s) added: 1`.
+
+**Preuve de connexion par clé seule** (🖥️ MINT, sortie verbatim) :
+
+```
+$ ssh -p 2222 -i "$HOME/.ssh/nexbsdk" -o PreferredAuthentications=publickey -o PasswordAuthentication=no omrane@127.0.0.1 'echo "=== CONNEXION SANS MOT DE PASSE : OK ==="; hostname; uname -r; echo -n "cles autorisees : "; grep -c . ~/.ssh/authorized_keys; ssh-keygen -lf ~/.ssh/authorized_keys'
+
+=== CONNEXION SANS MOT DE PASSE : OK ===
+nexbsd
+15.1-NEXBSD-L1
+cles autorisees : 1
+256 SHA256:E1SxAPYOOKIYRrY0JAs9D7gf6tWrPcK/oUhEPAbyzmY omrane@mint (ED25519)
+```
+
+**Quatre vérifications :** session ouverte **sans mot de passe** (`PasswordAuthentication=no` l'interdisait) ·
+machine = `nexbsd`, noyau = `15.1-NEXBSD-L1` · **une seule** clé autorisée (aucun résidu d'essai) ·
+empreinte serveur **identique** à celle de la station ⇒ la clé autorisée est bien la nôtre.
+
+**Incident de manipulation consigné (C-28)** : deux commandes ont d'abord été lancées **dans la VM** au lieu
+de la station (invites `omrane@nexbsd` vs `omrane@omrane-Inspiron-3520` confondues ; `exit;` en tête d'une
+ligne multi-commandes n'exécute pas la suite). Conséquence : une paire de clés créée inutilement **dans la
+VM** (inoffensive, `ssh-copy-id` ayant échoué, donc aucune autorisation ajoutée). Parade retenue : nom de
+clé **sans underscore** (`nexbsdk`) pour résister à la mise en forme, et **garde-fou `hostname`** dans la
+commande.
+
+**Reste à faire pour clore le durcissement :** `PasswordAuthentication no` et `PermitRootLogin no` dans
+`/etc/ssh/sshd_config` — **désormais sans risque de verrouillage**, la clé étant prouvée.
