@@ -1,6 +1,6 @@
 # Conformité au méga-prompt maître — audit des 20 livrables
 
-**Version :** 1.2 — 2026-10-27 (session S-020) — révision demandée par le responsable
+**Version :** 1.3 — 2026-10-27 (soir, session S-021) — révision après T-05a, T-20 et T-21
 **Rôle :** vérifier, livrable par livrable, ce que le document fondateur exige (Partie XIV) et ce que le projet possède réellement.
 **Règle :** « non fait » est une information ; « fait » sans preuve est une faute.
 
@@ -137,3 +137,45 @@ sorties de console).
 syntaxe inventée (C-23), mauvais fichier téléchargé. La cause commune est **d'avoir écrit de mémoire au lieu
 de valider contre la réalité**. La parade est désormais systématique : **validation à blanc avant toute
 application**, et **empreinte vérifiée avant toute exécution**. C'est inscrit dans `docs/40`.
+
+---
+
+# Révision v1.3 — 2026-10-27 au soir (session S-021)
+
+**Déclencheur :** quatre tests réussis en une soirée (T-05a, T-19 à blanc, T-20, T-21) et **une erreur de ma
+part corrigée** (C-27 : « écart d'horloge de 22 minutes » qui n'existait pas).
+
+## 1. Livrables dont l'état change
+
+| # | Livrable | v1.2 | **v1.3** | Preuve nouvelle |
+|---|---|---|---|---|
+| 11 | Prototype minimal | 🟢 substance réelle | 🟢 **substance prouvée de l'extérieur** | un client SMB **d'une autre machine** lit le partage **à travers `pf`** (T-05a) ; l'administration se fait en **SSH par clé** (T-21) ; l'horloge est **synchronisée** (T-20). Toujours **non packagé** |
+| 12 | Rapport de tests | 🟢 10 tests / 20 | 🟢 **13 tests / 22** | + T-05a, T-20, T-21 ; **15 comptes rendus** verbatim dans `tests/results/`. Manque toujours le **rapport de validation unique** de sortie de phase 4 |
+| 16 | Politique de sécurité | 🟢 document + `pf` actif | 🟢 **document + mesures PROUVÉES** | refus par défaut **journalisé et observé depuis l'extérieur** (8 SYN bloqués, `pflog`) ; SSH **clé seule**, `PasswordAuthentication=no` testé |
+| 9 | Diagnostic matériel | 🟡 mesures absentes | 🟡 **inchangé** | toujours aucune commande sur le PC de 2011 — **seul blocage externe restant** |
+| 20 | Rapport final | ❌ | ❌ | par nature |
+
+## 2. Bilan
+
+**12 faits, 6 partiels, 2 non faits.** Le livrable **10** (plan de tests) passe de « fait, 15 tests, aucun
+exécuté » à « **fait, 22 tests, 13 exécutés avec succès** » — c'est un changement de nature, pas de
+déclaration : chaque réussite porte un compte rendu et une sortie de console.
+
+## 3. Ce que cette soirée a changé dans la MÉTHODE (et pas seulement dans les tests)
+
+| Leçon | Incident | Règle qui en découle |
+|---|---|---|
+| Une mesure sous proxy ne mesure pas la cible | **C-25** : `nc -z` « réussi » sur un port bloqué (slirp accepte à la place de la VM) | tester les refus par **échange applicatif** ou par **trace `pflog`** |
+| Un fichier vide peut être une preuve en mémoire | **C-26** : `tcpdump -w` sans `-U`, fichier à 0 octet alors que la capture tournait | toujours `-U` ; ne jamais jeter `stderr` |
+| Une affirmation non mesurée est une invention | **C-27** : « 22 minutes d'écart d'horloge » → en réalité **< 1 min** | toute réserve doit reposer sur **deux mesures comparables** |
+| La commande parfaite dans la mauvaise machine ne prouve rien | **C-28** : clé créée dans la VM au lieu de la station | nommer le terminal **et** mettre un garde-fou `hostname` dans la commande |
+| Un service « démarré » n'est pas un service joignable | T-05a / T-21 : vérifier l'**écoute** (`sockstat`) **avant** la redirection | ordre imposé : écoute → redirection → client |
+
+## 4. Ce que le mur exige encore, et qui n'a PAS bougé ce soir
+
+1. **Livrable 9** : le diagnostic matériel du PC de 2011 (seul verrou externe).
+2. **Image installable** : `release.sh` + CI ; le prototype n'est toujours pas un produit.
+3. **Bureau et applications NexBSD** : **zéro ligne** — la couche C n'est pas commencée.
+4. **Identité unique** : Samba/LDAP valident les fichiers, le compte Unix valide la session. **Deux
+   autorités, deux secrets** — chantier ouvert, révélé par T-21.
+5. **`/etc/motd` annonce encore FreeBSD** : défaut produit relevé, non corrigé.
