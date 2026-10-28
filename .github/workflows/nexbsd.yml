@@ -1,55 +1,67 @@
 # NexBSD — chaîne de production sur GitHub Actions, avec une VRAIE VM FreeBSD
 #
-# POURQUOI CE FICHIER EXISTE (2026-10-28, nuit)
-#   Cirrus CI est injoignable : trois adresses (cirrus-ci.com, api., .org) renvoient toutes une
-#   coupure pendant la poignée de main TLS, depuis deux réseaux indépendants (Tunis et atelier).
-#   On ne peut pas construire d'image sur un service éteint. GitHub Actions, lui, répond 200.
+# ÉTAT : la version précédente de ce fichier a ÉCHOUÉ le 2026-10-28 (exécution #1).
+#   Symptôme : les 3 tâches en `ssh exited with code 1`, en 1 min 04 s au total — la VM n'a donc
+#   jamais démarré. Ce n'était pas nos scripts (ils sortent en code 0, vérifié), c'était la VM.
 #
-# CE QUE ÇA CHANGE, ET EN MIEUX
-#   - durée maximale par tâche : 5 à 6 h (Cirrus : 2 h). C'est le facteur qui nous manquait.
-#   - dépôt PUBLIC : minutes illimitées et gratuites (Cirrus : 50 crédits/mois).
-#   - contrepartie : FreeBSD tourne dans une VM QEMU/KVM sur un hôte Linux, pas sur du métal
-#     FreeBSD. Pour `buildworld` c'est acceptable (KVM accélère le x86_64) ; c'est en revanche
-#     inutilisable pour de l'émulation aarch64 (~20x plus lent, constaté par d'autres projets).
+# DEUX CORRECTIONS, appuyées sur des faits vérifiés :
+#  1. `runs-on: ubuntu-latest` -> `ubuntu-24.04` (ÉPINGLÉ). Le log de l'exécution #1 contenait
+#     cet avertissement : "The ubuntu-latest label will migrate to Ubuntu 26 beginning
+#     October 19, 2026". Nous sommes le 28 octobre 2026 : `ubuntu-latest` n'est plus le système
+#     sur lequel l'action a été testée. On ne subit plus une migration silencieuse.
+#  2. `release: "15.1"` — la documentation de vmactions liste **15.1 comme supporté** sur x86_64,
+#     et c'est même la version PAR DÉFAUT de l'action. Plus d'hypothèse 15.0/15.1 : c'est notre cible.
 #
-# ⚠️ RISQUES MESURÉS, PAS CACHÉS
-#   1. ESPACE DISQUE : un runner `ubuntu-latest` a ~14 Go libres. `buildworld` en réclame 25-30.
-#      D'où l'étape « libérer de l'espace » ci-dessous, qui supprime les outils préinstallés dont
-#      nous n'avons pas besoin. Le contrôle échoue AVANT la compilation si l'espace manque.
-#   2. `release: "15.0"` : la version exacte des images préconstruites de l'action n'est pas
-#      vérifiée par nous. Notre cible est 15.1. La tâche de sonde le dira.
-#   3. La VM démarre à chaque tâche (1 à 3 min de surcoût).
+# On supprime aussi tout ce qui n'était pas dans l'exemple documenté (usesh, mem sur les petites
+# tâches) : moins on s'écarte de l'exemple officiel, plus on a de chances que ça démarre. La tâche
+# SONDE est réduite au strict minimum (deux commandes) pour ISOLER le problème si ça échoue encore.
 #
-# ÉTAT : JAMAIS EXÉCUTÉ. Ce fichier n'a encore jamais tourné.
+# JAMAIS EXÉCUTÉ dans cette version.
 
 name: NexBSD
 
 on:
   push:
     branches: [main, nexbsd-image]
-  workflow_dispatch:        # lancement manuel depuis l'onglet Actions
+  workflow_dispatch:
 
 jobs:
 
   # ---------------------------------------------------------------------------
-  # 1. CONTRÔLES — 3 minutes, aucune construction. C'est le premier vrai pas.
+  # 0. SONDE — le strict minimum : la VM démarre-t-elle, et quelle version ?
+  #    Aucun script du dépôt n'est appelé. Si CETTE tâche échoue, la cause est la VM,
+  #    pas notre code. C'est le diagnostic le plus court possible.
+  # ---------------------------------------------------------------------------
+  sonde:
+    name: "SONDE — la VM FreeBSD démarre-t-elle ?"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: "FreeBSD 15.1 : deux commandes, rien d'autre"
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.1"
+          run: |
+            uname -a
+            freebsd-version -ku
+
+  # ---------------------------------------------------------------------------
+  # 1. CONTRÔLES — delta, registre, simulation. ~5 minutes, aucune construction.
   # ---------------------------------------------------------------------------
   controles:
     name: "CONTRÔLES — delta, registre, simulation"
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
-      - name: "Contrôles dans une vraie VM FreeBSD"
+      - name: "Contrôles dans une vraie VM FreeBSD 15.1"
         uses: vmactions/freebsd-vm@v1
         with:
-          release: "15.0"
-          usesh: false
-          cpu: 2
-          mem: 2048
+          release: "15.1"
           run: |
-            set -e
             uname -a
             freebsd-version -ku
             echo "--- 1. le delta du produit est-il intact ? ---"
@@ -60,70 +72,56 @@ jobs:
             sh scripts/74-produire-image.sh --simulation
 
   # ---------------------------------------------------------------------------
-  # 2. BUREAU — les tests du bureau, exécutés dans la vraie VM.
-  #    Ils tournent aussi sur le runner Linux (node), mais ici c'est du FreeBSD.
+  # 2. BUREAU — les 31 cas de test, sur FreeBSD.
   # ---------------------------------------------------------------------------
   bureau:
     name: "BUREAU — tests de session et d'authentification"
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
       - name: "Tests du bureau"
         uses: vmactions/freebsd-vm@v1
         with:
-          release: "15.0"
-          usesh: false
-          cpu: 2
-          mem: 2048
+          release: "15.1"
+          prepare: |
+            pkg install -y node >/dev/null 2>&1 || pkg install -y node22 >/dev/null 2>&1 || true
           run: |
-            set -e
             echo "--- logique de session (17 cas) ---"
-            if command -v node >/dev/null 2>&1; then
-              node fork/bureau/tester-session.js
-            else
-              pkg install -y node >/dev/null 2>&1 || pkg install -y node22 >/dev/null 2>&1
-              node fork/bureau/tester-session.js
-            fi
+            node fork/bureau/tester-session.js
             echo "--- authentification (14 cas, avec un faux su) ---"
             sh fork/bureau/tester-authentification.sh
 
   # ---------------------------------------------------------------------------
   # 3. IMAGE — la production réelle. Déclenchement MANUEL uniquement.
-  #    Pourquoi manuel : 1 à 2 h de calcul, et on ne veut pas le payer à chaque push.
   # ---------------------------------------------------------------------------
   image:
     name: "IMAGE — buildworld + configuration + media"
-    runs-on: ubuntu-latest
-    timeout-minutes: 350            # 5 h 50 : sous la limite GitHub, très au-dessus de nos besoins
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/nexbsd-image'
     steps:
       - uses: actions/checkout@v4
 
-      # Les runners GitHub sont livrés avec des outils dont nous n'avons pas besoin (SDK Android,
-      # .NET, Haskell, images Docker). Les supprimer rend ~25 Go : sans cela, buildworld échoue.
       - name: "Libérer de l'espace disque"
         run: |
-          echo "--- avant ---"
           df -h /
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
                       /usr/local/share/boost /opt/hostedtoolcache/CodeQL || true
           sudo docker image prune --all --force || true
-          echo "--- après ---"
           df -h /
 
-      - name: "Production de l'image dans une vraie VM FreeBSD"
+      - name: "Production de l'image dans une vraie VM FreeBSD 15.1"
         uses: vmactions/freebsd-vm@v1
         with:
-          release: "15.0"
-          usesh: false
+          release: "15.1"
           cpu: 4
           mem: 8192
           run: |
-            set -e
             date -u +"DEBUT %Y-%m-%dT%H:%M:%SZ"
             uname -a
+            freebsd-version -ku
             echo "--- CPU ---";   sysctl -n hw.ncpu
             echo "--- RAM ---";   sysctl -n hw.physmem
             echo "--- DISQUE ---"; df -h
@@ -147,38 +145,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nexbsd-images
-          path: |
-            images/**
-            !images/**/*.o
+          path: images/**
           if-no-files-found: warn
           retention-days: 30
-
-  # ---------------------------------------------------------------------------
-  # 4. SONDE — quelle version de FreeBSD l'action sait-elle vraiment démarrer ?
-  #    `continue-on-error` : son but est de rapporter, pas de réussir.
-  # ---------------------------------------------------------------------------
-  sonde:
-    name: "SONDE — quelle version de FreeBSD ?"
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    continue-on-error: true
-    strategy:
-      fail-fast: false
-      matrix:
-        version: ["15.0"]
-    steps:
-      - uses: actions/checkout@v4
-      - name: "Démarrage FreeBSD ${{ matrix.version }}"
-        uses: vmactions/freebsd-vm@v1
-        with:
-          release: "${{ matrix.version }}"
-          usesh: false
-          cpu: 2
-          mem: 2048
-          run: |
-            echo "=== VERSION RÉELLE ==="
-            uname -a
-            freebsd-version -ku
-            echo "=== pkg disponible ? ==="
-            pkg bootstrap -y || true
-            pkg -v

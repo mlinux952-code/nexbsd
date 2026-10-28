@@ -686,3 +686,47 @@ awk -F';' '!/^#/ && NF>0 && NF!=7 {print "MALFORME l." NR " : " NF " champs"}' m
 la cause (« la ligne N a K champs au lieu de 7 : un `;` s'est glissé dans la description »), et non
 seulement un décompte de destinations invalides. Tant que ce n'est pas fait, le contrôle reste une
 ligne que je dois penser à taper — donc il sera un jour oublié.
+
+---
+
+## C-33 — 2026-10-28 — première exécution CI : la VM FreeBSD n'a jamais démarré
+
+**Constat, sortie verbatim du responsable (page Actions, exécution #1) :**
+
+```
+NexBSD    BASCULE Cirrus -> GitHub Actions … #1
+Status Failure
+Total duration 1m 4s
+2 errors, 3 warnings, and 3 notices
+CONTRÔLES — delta, registre, simulation   ssh exited with code 1
+BUREAU — tests de session et d'authentification   ssh exited with code 1
+SONDE — quelle version de FreeBSD ? (15.0)   ssh exited with code 1
+```
+
+**Lecture.** Les **trois** tâches échouent avec le **même** message, en **1 min 04 s**. La VM n'a donc
+jamais démarré — sinon la SONDE (deux commandes triviales) aurait réussi. Ce n'est **pas** notre code :
+`scripts/70`, `72` et `74 --simulation` sortent tous en **code 0**, vérifié avant l'envoi.
+
+**Deux causes candidates, dont une écrite noir sur blanc dans le log :**
+
+1. **`ubuntu-latest` a migré vers Ubuntu 26** — le log contient :
+   *« The ubuntu-latest label will migrate to Ubuntu 26 beginning October 19, 2026 »*.
+   Nous sommes le **28 octobre 2026** : `ubuntu-latest` n'est plus le système sur lequel l'action a
+   été testée. **Cause la plus probable.**
+2. `release: "15.0"` : possible si l'image 15.0 a été retirée. Depuis, la documentation de
+   `vmactions` a été lue : **15.1 est supporté et c'est même la version par défaut**.
+
+**Corrections appliquées :**
+- `runs-on: ubuntu-24.04` **épinglé** partout (on ne subit plus une migration silencieuse) ;
+- `release: "15.1"` partout — notre cible exacte, plus aucune hypothèse ;
+- suppression de `usesh` et de `mem` sur les petites tâches : on revient à l'exemple **documenté** ;
+- **SONDE réduite à deux commandes** (`uname -a`, `freebsd-version -ku`), sans aucun script du dépôt :
+  si elle échoue encore, la cause est la VM, sans ambiguïté possible. `continue-on-error: true`.
+
+**Leçon.** Une exécution qui échoue en 1 minute a coûté **5 minutes** et a rapporté trois informations
+vraies : la CI se déclenche, les trois tâches sont reconnues, et l'échec est **au niveau de la VM**.
+C'est plus que ce que quatre jours de banc ont produit sur ce point précis.
+
+**Ce qui reste à savoir** : la prochaine exécution dira si l'épinglage d'Ubuntu suffit. Sinon, il
+faudra lire le journal complet de la tâche SONDE (étapes « Installing dependencies » / « Starting VM »),
+qui n'est pas dans le résumé fourni.
