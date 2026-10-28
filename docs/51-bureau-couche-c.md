@@ -106,3 +106,54 @@ authentification** : c'est un défaut au regard de votre exigence du 27 octobre.
   *« première pierre posée : interface autonome, session écrite, jamais affichée »* ;
 - **A-54** (nouveau) : *la session bureau existe et est décrite* → **OUVERT** (écrite, non exécutée) ;
 - delta du produit : **27 → 30 fichiers**.
+
+---
+
+## 7. AUTHENTIFICATION DU BUREAU — ajoutée le 2026-10-28 (nuit)
+
+**Exigence du responsable (27/10) :** *« un serveur doit demander quelque chose pour entrer »*, et
+*« je fais tout ça sans mot de passe, il n'a pas demandé »*. Le bureau livré une heure plus tôt
+s'ouvrait **sans rien demander** : c'était un défaut, il est traité.
+
+### Comment le mot de passe est réellement vérifié
+
+| Élément | Choix |
+|---|---|
+| Où | **dans la session**, avant l'ouverture du navigateur — pas dans la page |
+| Par quoi | **`su -l <utilisateur> -c /usr/bin/true`** → interroge **PAM** |
+| Pourquoi `su` | c'est le même mécanisme que le banc (A-14), et il fonctionnera **sans modification** quand les identités viendront de l'annuaire LDAP |
+| Ce que la page fait | **rien** : elle refuse explicitement de faire semblant. Son bouton « Entrer » affiche : *« cette page ne peut pas vérifier un mot de passe de système »* |
+
+### La règle de sécurité la plus importante de cette session
+
+**La session refuse de tourner en root.** Raison, écrite dans le code : en root, `su` ne demande
+**aucun** mot de passe — l'écran d'ouverture serait purement décoratif. C'est la conséquence directe
+du défaut que vous avez constaté au banc (Cmd 25bis : `su -` passait sans mot de passe).
+Autrement dit : **A-14 n'est pas un détail de laboratoire, il conditionne la sécurité du bureau.**
+
+### Tests réellement exécutés
+
+| Suite | Cas | Résultat |
+|---|---|---|
+| `fork/bureau/tester-session.js` (node) | 17 | ✅ **17/17** — dont noms hostiles (`<script>`, `omrane;reboot`, nom de 40 caractères), `demo=0` qui n'ouvre **pas** de session, décodage d'URL |
+| `fork/bureau/tester-authentification.sh` (avec un **faux `su`**) | 14 | ✅ **14/14** — dont : nom invalide refusé **avant** tout appel à `su`, exactement 2 essais quand on en demande 2, mot de passe **jamais** en argument de commande |
+
+**Ce que ces tests ne prouvent pas** : que PAM vérifie correctement un mot de passe. `su` était un
+faux. **La vérification réelle reste non prouvée** et le restera jusqu'à une exécution sur NexBSD.
+
+### L'interface
+
+- écran d'ouverture au démarrage : logo NexBSD, champ utilisateur, champ mot de passe, bouton **Entrer** ;
+- bouton distinct **« Voir le bureau en mode démonstration (aucune vérification) »** → le bandeau passe
+  en **rouge** et affiche *« MODE DÉMONSTRATION — aucune authentification n'a eu lieu »* ;
+- une fois entré : le nom de l'utilisateur s'affiche dans la barre supérieure, avec un point **vert**
+  (session) ou **rouge** (démo) ;
+- menu **Verrouiller** : ferme toutes les fenêtres et ramène l'écran d'ouverture.
+
+### Faiblesse connue, nommée
+
+La page reçoit le nom d'utilisateur par l'adresse (`?utilisateur=…`). **Toute personne ayant accès à
+la machine peut ouvrir le fichier HTML directement** et contourner l'écran. L'authentification protège
+donc l'**usage normal**, pas un utilisateur malveillant déjà connecté à la machine. Pour fermer cela
+il faudrait que la page ne puisse être lue que par la session (droits de fichier + service local) —
+**ce n'est pas fait**, et c'est à traiter avant de considérer le bureau comme sûr.

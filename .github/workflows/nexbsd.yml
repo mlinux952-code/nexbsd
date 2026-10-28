@@ -1,0 +1,184 @@
+# NexBSD — chaîne de production sur GitHub Actions, avec une VRAIE VM FreeBSD
+#
+# POURQUOI CE FICHIER EXISTE (2026-10-28, nuit)
+#   Cirrus CI est injoignable : trois adresses (cirrus-ci.com, api., .org) renvoient toutes une
+#   coupure pendant la poignée de main TLS, depuis deux réseaux indépendants (Tunis et atelier).
+#   On ne peut pas construire d'image sur un service éteint. GitHub Actions, lui, répond 200.
+#
+# CE QUE ÇA CHANGE, ET EN MIEUX
+#   - durée maximale par tâche : 5 à 6 h (Cirrus : 2 h). C'est le facteur qui nous manquait.
+#   - dépôt PUBLIC : minutes illimitées et gratuites (Cirrus : 50 crédits/mois).
+#   - contrepartie : FreeBSD tourne dans une VM QEMU/KVM sur un hôte Linux, pas sur du métal
+#     FreeBSD. Pour `buildworld` c'est acceptable (KVM accélère le x86_64) ; c'est en revanche
+#     inutilisable pour de l'émulation aarch64 (~20x plus lent, constaté par d'autres projets).
+#
+# ⚠️ RISQUES MESURÉS, PAS CACHÉS
+#   1. ESPACE DISQUE : un runner `ubuntu-latest` a ~14 Go libres. `buildworld` en réclame 25-30.
+#      D'où l'étape « libérer de l'espace » ci-dessous, qui supprime les outils préinstallés dont
+#      nous n'avons pas besoin. Le contrôle échoue AVANT la compilation si l'espace manque.
+#   2. `release: "15.0"` : la version exacte des images préconstruites de l'action n'est pas
+#      vérifiée par nous. Notre cible est 15.1. La tâche de sonde le dira.
+#   3. La VM démarre à chaque tâche (1 à 3 min de surcoût).
+#
+# ÉTAT : JAMAIS EXÉCUTÉ. Ce fichier n'a encore jamais tourné.
+
+name: NexBSD
+
+on:
+  push:
+    branches: [main, nexbsd-image]
+  workflow_dispatch:        # lancement manuel depuis l'onglet Actions
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # 1. CONTRÔLES — 3 minutes, aucune construction. C'est le premier vrai pas.
+  # ---------------------------------------------------------------------------
+  controles:
+    name: "CONTRÔLES — delta, registre, simulation"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Contrôles dans une vraie VM FreeBSD"
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.0"
+          usesh: false
+          cpu: 2
+          mem: 2048
+          run: |
+            set -e
+            uname -a
+            freebsd-version -ku
+            echo "--- 1. le delta du produit est-il intact ? ---"
+            sh scripts/70-verifier-delta.sh
+            echo "--- 2. le registre des acquis est-il conforme ? ---"
+            sh scripts/72-verifier-acquis.sh
+            echo "--- 3. la chaîne de production est-elle simulable ? ---"
+            sh scripts/74-produire-image.sh --simulation
+
+  # ---------------------------------------------------------------------------
+  # 2. BUREAU — les tests du bureau, exécutés dans la vraie VM.
+  #    Ils tournent aussi sur le runner Linux (node), mais ici c'est du FreeBSD.
+  # ---------------------------------------------------------------------------
+  bureau:
+    name: "BUREAU — tests de session et d'authentification"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Tests du bureau"
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.0"
+          usesh: false
+          cpu: 2
+          mem: 2048
+          run: |
+            set -e
+            echo "--- logique de session (17 cas) ---"
+            if command -v node >/dev/null 2>&1; then
+              node fork/bureau/tester-session.js
+            else
+              pkg install -y node >/dev/null 2>&1 || pkg install -y node22 >/dev/null 2>&1
+              node fork/bureau/tester-session.js
+            fi
+            echo "--- authentification (14 cas, avec un faux su) ---"
+            sh fork/bureau/tester-authentification.sh
+
+  # ---------------------------------------------------------------------------
+  # 3. IMAGE — la production réelle. Déclenchement MANUEL uniquement.
+  #    Pourquoi manuel : 1 à 2 h de calcul, et on ne veut pas le payer à chaque push.
+  # ---------------------------------------------------------------------------
+  image:
+    name: "IMAGE — buildworld + configuration + media"
+    runs-on: ubuntu-latest
+    timeout-minutes: 350            # 5 h 50 : sous la limite GitHub, très au-dessus de nos besoins
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/nexbsd-image'
+    steps:
+      - uses: actions/checkout@v4
+
+      # Les runners GitHub sont livrés avec des outils dont nous n'avons pas besoin (SDK Android,
+      # .NET, Haskell, images Docker). Les supprimer rend ~25 Go : sans cela, buildworld échoue.
+      - name: "Libérer de l'espace disque"
+        run: |
+          echo "--- avant ---"
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /usr/local/share/boost /opt/hostedtoolcache/CodeQL || true
+          sudo docker image prune --all --force || true
+          echo "--- après ---"
+          df -h /
+
+      - name: "Production de l'image dans une vraie VM FreeBSD"
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "15.0"
+          usesh: false
+          cpu: 4
+          mem: 8192
+          run: |
+            set -e
+            date -u +"DEBUT %Y-%m-%dT%H:%M:%SZ"
+            uname -a
+            echo "--- CPU ---";   sysctl -n hw.ncpu
+            echo "--- RAM ---";   sysctl -n hw.physmem
+            echo "--- DISQUE ---"; df -h
+            GO=$(df -k /usr/obj 2>/dev/null | awk 'NR==2 {print int($4/1048576)}' || echo 0)
+            echo "libres dans /usr/obj : ${GO} Go"
+            [ "${GO:-0}" -ge 20 ] || { echo "ERREUR : ${GO} Go libres seulement, 20 Go minimum."; exit 1; }
+
+            mkdir -p images
+            NEXBSD_SID="S-1-5-21-0000000000-0000000000-0000000000" \
+            NEXBSD_LDAP_ROOTPW="mdp-de-laboratoire-a-remplacer" \
+            NEXBSD_LDAP_BINDPW="mdp-de-laboratoire-a-remplacer" \
+              sh scripts/74-produire-image.sh --sortie images --obj /usr/obj
+
+            date -u +"FIN %Y-%m-%dT%H:%M:%SZ"
+            echo "--- ce qui a été produit ---"
+            ls -l images || true
+            sha256 -q images/*.img 2>/dev/null || sha256 -q images/*.ufs 2>/dev/null || echo "AUCUNE IMAGE"
+
+      - name: "Déposer l'artefact"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexbsd-images
+          path: |
+            images/**
+            !images/**/*.o
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # 4. SONDE — quelle version de FreeBSD l'action sait-elle vraiment démarrer ?
+  #    `continue-on-error` : son but est de rapporter, pas de réussir.
+  # ---------------------------------------------------------------------------
+  sonde:
+    name: "SONDE — quelle version de FreeBSD ?"
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ["15.0"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: "Démarrage FreeBSD ${{ matrix.version }}"
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: "${{ matrix.version }}"
+          usesh: false
+          cpu: 2
+          mem: 2048
+          run: |
+            echo "=== VERSION RÉELLE ==="
+            uname -a
+            freebsd-version -ku
+            echo "=== pkg disponible ? ==="
+            pkg bootstrap -y || true
+            pkg -v
