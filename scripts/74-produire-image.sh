@@ -182,30 +182,65 @@ cp "$ICI/fork/src.conf" "$TRAVAIL/src.conf" || exit 1
 cp "$ICI/fork/sys/amd64/conf/NEXBSD_L1" "$TRAVAIL/sys/amd64/conf/" || exit 1
 ok "src.conf et NEXBSD_L1 en place"
 
-etape "7. buildworld + buildkernel (plusieurs heures)"
-NCPU=$(sysctl -n hw.ncpu 2>/dev/null || echo 2)
-( cd "$TRAVAIL" && MAKEOBJDIRPREFIX="$OBJ" make -j"$NCPU" buildworld ) || { ko "buildworld a échoué"; exit 1; }
-ok "buildworld terminé"
-( cd "$TRAVAIL" && MAKEOBJDIRPREFIX="$OBJ" make -j"$NCPU" KERNCONF=NEXBSD_L1 buildkernel ) || { ko "buildkernel a échoué"; exit 1; }
-ok "buildkernel terminé"
+# ═══════════════════════════════════════════════════════════════════════════════
+# C-39 (2026-10-28) — LE TROU LE PLUS GRAVE DU PROJET, TROUVE ET BOUCHE ICI
+# ═══════════════════════════════════════════════════════════════════════════════
+# Jusqu'ici cette chaîne appelait `make release`. Or release.sh produit le média DU SOCLE :
+# il n'applique PAS fork/overlay/. Une image ainsi obtenue aurait été « FreeBSD + noyau maison » :
+# motd NexBSD absent, smb4.conf absent, LDAP absent, nsswitch absent, pf.conf absent, bureau
+# absent, session absente. Autrement dit : tous les composants du produit, écrits et testés,
+# seraient restés SUR LE DISQUE DU DÉPÔT au lieu d'entrer dans le système.
+#
+# C'est exactement la règle du projet : « ce qui n'est pas dans l'image n'est pas dans le
+# produit ». Une image verte sans la configuration aurait été le pire des mensonges : un rond
+# vert, et rien dedans.
+#
+# La chaîne emploie désormais fork/build-nexbsd.sh, qui fait dans le bon ordre :
+#   1. buildworld                          (le monde, avec src.conf NexBSD)
+#   2. buildkernel NEXBSD_L1               (le noyau du profil PC faible)
+#   3. installworld + distribution DESTDIR (le système, dans une racine maîtrisée)
+#   4. installkernel NEXBSD_L1 DESTDIR
+#   5. fork/70-appliquer-overlay.sh        (LA CONFIGURATION DU PRODUIT ENTRE DANS LE SYSTÈME)
+#   6. makefs + mkimg                      (le média bootable)
+#
+# buildworld est fait ICI et NULLE PART AILLEURS : l'ancienne version compilait à l'étape 7
+# puis aurait recompilé dans build-nexbsd.sh. Deux compilations de six heures pour un seul
+# résultat : c'est le genre d'erreur qui ne se voit qu'à la facture.
+RACINE="$OBJ/nexbsd-rootfs"
+etape "7. construction ET assemblage du produit (plusieurs heures)"
+info "arbre source : $TRAVAIL"
+info "racine systeme : $RACINE"
+info "sortie attendue : $OBJ/nexbsd.img (et $OBJ/nexbsd.ufs)"
+echo
+NEXBSD_SID="${NEXBSD_SID:-}" \
+NEXBSD_LDAP_ROOTPW="${NEXBSD_LDAP_ROOTPW:-}" \
+NEXBSD_LDAP_BINDPW="${NEXBSD_LDAP_BINDPW:-}" \
+RACINE="$RACINE" OBJ="$OBJ" \
+  sh "$ICI/fork/build-nexbsd.sh" "$TRAVAIL" \
+  || { ko "la construction ou l'assemblage a échoué — voir les lignes ci-dessus"; exit 1; }
+ok "construction et assemblage terminés"
 
-etape "8. release"
-# C-38 (2026-10-28) : OU SORT L'IMAGE ? Question qui valait six heures de calcul.
-# Avec MAKEOBJDIRPREFIX=/usr/obj, FreeBSD place la release dans
-# /usr/obj/usr/src/<cible>.<arch>/release/ — PAS dans <arbre>/release/.
-# L'ancienne version cherchait au mauvais endroit et aurait annoncé « la release n'a rien produit »
-# alors qu'elle l'aurait bel et bien produite : un mensonge, à la fin d'une construction de 6 h.
-# Correctif : on IMPOSE le repertoire de sortie avec RELEASEDIR, qui est l'option prevue par
-# release.sh(7). Ainsi l'emplacement est decide ici, et non devine.
-RELEASEDIR="$OBJ/nexbsd-release"
-rm -rf "$RELEASEDIR" && mkdir -p "$RELEASEDIR"
-info "RELEASEDIR imposé : $RELEASEDIR"
-( cd "$TRAVAIL" && . "$ICI/fork/release.conf" \
-    && MAKEOBJDIRPREFIX="$OBJ" RELEASEDIR="$RELEASEDIR" make release ) \
-    || { ko "release a échoué"; exit 1; }
-ok "release terminé"
-info "contenu de RELEASEDIR :"
-ls -l "$RELEASEDIR" 2>/dev/null | sed 's/^/          /' || true
+# Contrôle immédiat : l'image doit contenir la configuration du produit, sinon on ne va pas
+# plus loin. Un média sans /etc/nexbsd-version n'est pas NexBSD, quelle que soit sa taille.
+etape "8. l'image contient-elle vraiment NexBSD ? (contrôle AVANT de l'annoncer)"
+if [ ! -f "$RACINE/etc/nexbsd-version" ]; then
+    ko "RACINE/etc/nexbsd-version ABSENT : la configuration du produit n'est pas dans le système"
+    ko "-> ne pas appeler cette image « NexBSD »"
+    exit 1
+fi
+ok "racine : etc/nexbsd-version présent"
+for f in etc/motd etc/pf.conf etc/pam.d/su usr/local/etc/smb4.conf usr/local/etc/nslcd.conf; do
+    if [ -e "$RACINE/$f" ]; then ok "racine : $f présent"; else ko "racine : $f ABSENT"; MANQUE_CONF=$((MANQUE_CONF + 1)); fi
+done
+MANQUE_CONF=${MANQUE_CONF:-0}
+[ "$MANQUE_CONF" -eq 0 ] && ok "les 6 pièces de configuration vérifiables sont dans le système" \
+    || info "$MANQUE_CONF pièce(s) manquante(s) — certaines sont créées par l'installeur, pas par l'overlay"
+if [ -f "$RACINE/boot/kernel/kernel" ]; then
+    ok "racine : noyau présent ($(ls -l "$RACINE/boot/kernel/kernel" | awk '{print $5}') octets)"
+else
+    ko "racine : AUCUN noyau dans boot/kernel — l'image ne démarrerait pas"
+    exit 1
+fi
 
 etape "9. empreintes et manifeste"
 mkdir -p "$SORTIE"
@@ -216,8 +251,8 @@ echo "# NexBSD — image produite le $(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> "$MANI
 echo "# arbre : $TRAVAIL" >> "$MANIFESTE"
 # On regarde d'abord la ou l'on a IMPOSE la sortie, puis, en secours seulement, les deux
 # emplacements historiques. Le but : ne jamais annoncer « rien produit » sans avoir cherche.
-CANDIDATS=$(ls -1 "$RELEASEDIR"/*.img "$RELEASEDIR"/*.iso "$RELEASEDIR"/*.txz 2>/dev/null
-            ls -1 "$OBJ"/usr/src/*/release/*.img "$OBJ"/usr/src/*/release/*.iso 2>/dev/null
+CANDIDATS=$(ls -1 "$OBJ"/nexbsd.img "$OBJ"/nexbsd.ufs 2>/dev/null
+            ls -1 "$RACINE"/../nexbsd.img "$RACINE"/../nexbsd.ufs 2>/dev/null
             ls -1 "$TRAVAIL"/release/*.img "$TRAVAIL"/release/*.iso 2>/dev/null)
 info "candidats trouvés : $(echo "$CANDIDATS" | grep -c . ) fichier(s)"
 for img in $CANDIDATS; do
@@ -232,8 +267,8 @@ if [ "$TROUVE" -gt 0 ]; then
     ok "$TROUVE artefact(s) produit(s) dans $SORTIE"
 else
     ko "aucune image trouvée — VOICI OÙ L'ON A CHERCHÉ, pour ne pas accuser à tort :"
-    info "  1. $RELEASEDIR"
-    info "  2. $OBJ/usr/src/*/release"
+    info "  1. $OBJ/nexbsd.img et $OBJ/nexbsd.ufs"
+    info "  2. $RACINE/../nexbsd.img et .ufs"
     info "  3. $TRAVAIL/release"
     info "  contenu de $OBJ (2 niveaux) :"
     find "$OBJ" -maxdepth 3 -type d 2>/dev/null | head -20 | sed 's/^/          /'

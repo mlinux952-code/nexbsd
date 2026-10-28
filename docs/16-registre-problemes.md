@@ -1177,3 +1177,61 @@ Or la production est lancée avec `MAKEOBJDIRPREFIX="$OBJ" make release`. Dans c
 **Leçon générale, à retenir pour la suite :** un script qui lance une tâche de six heures doit
 savoir **où** cette tâche écrira. Ce n'est pas un détail de finition : c'est la différence entre
 « l'image existe » et « le programme dit qu'elle n'existe pas alors qu'elle existe ».
+
+---
+
+## C-39 — 2026-10-28 — **la chaîne de production ne produisait pas NexBSD**, et c'était le trou le plus grave
+
+**Déclencheur : une critique du responsable, fondée.**
+
+> *« faire une révision complète où nous sommes arrivés et pour les autres composants il y a
+> beaucoup mais tu n'as pas fait rien »*
+
+En établissant l'inventaire (docs/54), un défaut majeur est apparu : `scripts/74-produire-image.sh`
+appelait `make release`. Or `release.sh` produit le média **du socle**. Il n'applique **pas**
+`fork/overlay/`. L'image aurait donc contenu le noyau NexBSD et le monde compilé avec `src.conf`,
+mais **aucune** des pièces du produit :
+
+```
+/etc/motd            (l'identité affichée)        ABSENT
+/usr/local/etc/smb4.conf  (le partage)            ABSENT
+slapd.conf + LDIF     (l'annuaire)                ABSENT
+/etc/nsswitch.conf    (les identités)             ABSENT
+/etc/pf.conf          (le pare-feu)               ABSENT
+/etc/ssh/sshd_config  (clé seule)                 ABSENT
+/etc/pam.d/su         (mot de passe exigé)        ABSENT
+le bureau et sa session                            ABSENTS
+```
+
+**Conséquence si on ne l'avait pas vu :** deux à cinq heures de calcul, un rond vert, une image de
+plusieurs centaines de mégaoctets — **et tous les composants du projet restés sur le disque du
+dépôt**. Le pire résultat possible : le succès affiché sans le produit dedans.
+
+C'est exactement ce que la règle du projet interdit : *« ce qui n'est pas dans l'image n'est pas
+dans le produit ; une configuration présente dans le dépôt que rien n'applique n'y est pas non
+plus. »*
+
+**Le défaut était pourtant écrit noir sur blanc dans `fork/build-nexbsd.sh`, ligne 88 :**
+
+> `release.sh -c release.conf produit un média DU SOCLE : il n'applique pas fork/overlay/.`
+
+Le savoir existait. La chaîne de production ne l'appliquait pas. **Une documentation qui contredit
+le code ne protege personne.** C'est le même schéma que C-37 (la bonne empreinte existait
+ailleurs) : l'information était là, l'assemblage ne la suivait pas.
+
+**Correctifs :**
+
+1. `scripts/74` appelle désormais **`fork/build-nexbsd.sh`**, qui enchaîne dans le bon ordre :
+   `buildworld` → `buildkernel NEXBSD_L1` → `installworld` + `distribution DESTDIR` →
+   `installkernel` → **`70-appliquer-overlay.sh`** (la configuration entre enfin dans le système)
+   → `makefs` + `mkimg`.
+2. **`buildworld` n'est plus fait deux fois** : l'ancienne version compilait à l'étape 7, puis
+   `build-nexbsd.sh` aurait recompilé. On ne paie plus deux fois six heures.
+3. **Nouvelle étape 8 : contrôle AVANT d'annoncer.** Si `$RACINE/etc/nexbsd-version` est absent,
+   ou s'il n'y a pas de noyau dans `$RACINE/boot/kernel/`, le script **échoue**. Une image sans
+   configuration du produit ne sera plus jamais appelée « NexBSD ».
+4. `build-nexbsd.sh` reçoit `OBJ` de l'appelant et exporte `MAKEOBJDIRPREFIX` : sans cela, `make`
+   place les objets dans l'arbre source dès que celui-ci n'est pas `/usr/src`.
+
+**Statut : écrit, syntaxiquement validé, JAMAIS EXÉCUTÉ.** La prochaine tâche IMAGE le mettra à
+l'épreuve. On ne le compte pas comme acquis.

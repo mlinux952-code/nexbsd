@@ -10,6 +10,11 @@ set -eu
 
 SRC=${1:-/usr/src}
 ICI=$(cd "$(dirname "$0")" && pwd)
+# C-39 (2026-10-28) : le repertoire des objets est DECIDE par l'appelant, pas subi.
+# Sans MAKEOBJDIRPREFIX explicite, make place les objets DANS l'arbre source quand celui-ci
+# n'est pas /usr/src — ce qui rend la construction impossible a retrouver ensuite.
+OBJ=${OBJ:-/usr/obj}
+export MAKEOBJDIRPREFIX="$OBJ"
 
 # --- Garde-fous (le script s'arrête plutôt que d'abîmer) ------------------
 [ "$(uname -s)" = "FreeBSD" ] || { echo "ERREUR : la construction exige un hôte FreeBSD." >&2; exit 1; }
@@ -17,8 +22,8 @@ ICI=$(cd "$(dirname "$0")" && pwd)
 RAM_MO=$(sysctl -n hw.physmem | awk '{print int($1/1048576)}')
 [ "$RAM_MO" -ge 7000 ] || { echo "ERREUR : ${RAM_MO} Mo de RAM ; le profil L3 exige >= 8 Go (ADR-0010)." >&2; exit 1; }
 
-FREE_GO=$(df -k /usr/obj | awk 'NR==2 {print int($4/1048576)}')
-[ "$FREE_GO" -ge 40 ] || { echo "ERREUR : ${FREE_GO} Go libres dans /usr/obj ; 40 Go minimum." >&2; exit 1; }
+FREE_GO=$(df -k "$OBJ" | awk 'NR==2 {print int($4/1048576)}')
+[ "$FREE_GO" -ge 40 ] || { echo "ERREUR : ${FREE_GO} Go libres dans $OBJ ; 40 Go minimum." >&2; exit 1; }
 
 [ -f "$SRC/Makefile" ] && [ -d "$SRC/sys" ] || { echo "ERREUR : $SRC n'est pas un arbre source FreeBSD." >&2; exit 1; }
 [ -f "$ICI/sys/amd64/conf/NEXBSD_L1" ] || { echo "ERREUR : noyau NexBSD absent (lancer tools/generer-kernel-conf.sh)." >&2; exit 1; }
@@ -45,7 +50,7 @@ env SRCCONF="$SRC/nexbsd-src.conf" KERNCONF=NEXBSD_L1 make -j"$(sysctl -n hw.ncp
 # produit présente dans le dépôt, mais ABSENTE du système. On installe donc le monde dans une
 # racine maîtrisée, on y applique la configuration du produit, et seulement ensuite on fabrique
 # le média. RESTE À VÉRIFIER PAR EXÉCUTION : `distribution`, `makefs`, `mkimg`.
-RACINE=${RACINE:-/usr/obj/nexbsd-rootfs}
+RACINE=${RACINE:-$OBJ/nexbsd-rootfs}
 echo "→ racine du système : $RACINE"
 [ "$RACINE" != "/" ] || { echo "ERREUR : RACINE = / refusée." >&2; exit 1; }
 rm -rf "$RACINE"

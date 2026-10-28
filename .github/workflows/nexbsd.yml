@@ -329,10 +329,12 @@ jobs:
           cat /tmp/r.txt >> rapport-ci.txt; cat /tmp/r.txt
           [ "${RESULTAT:-echec}" = ok ] || { echo "::error::etape 2/4 en echec — voir le rapport ci-dessus"; exit 1; }
 
-      # ── Étape 3 : la construction, la vraie ──────────────────────────────────
-      # scripts/74 reçoit --source : il n'a donc plus à télécharger ni extraire, et va
-      # directement au delta, au buildworld, à la release, puis au manifeste d'empreintes.
-      - name: "3/4 — buildworld + buildkernel + release (plusieurs heures)"
+      # ── Étape 3 : la construction ET l'assemblage du produit ─────────────────
+      # scripts/74 reçoit --source : il ne télécharge plus rien et va directement à la
+      # construction, PUIS à l'application de la configuration NexBSD dans le système,
+      # puis au média. C-39 : l'ancienne chaîne appelait `make release`, qui produit un
+      # média du SOCLE sans fork/overlay/ — l'image aurait été FreeBSD, pas NexBSD.
+      - name: "3/4 — construction + assemblage NexBSD (plusieurs heures)"
         shell: freebsd {0}
         run: |
           date -u +"DEBUT %Y-%m-%dT%H:%M:%SZ"
