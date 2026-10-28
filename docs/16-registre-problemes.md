@@ -1289,3 +1289,78 @@ abandonné : le commit suivant le remplace.
 les étapes. Le responsable n'a plus à copier des pages : le diagnostic se fait côté outil, et les
 échecs sont vus **avant** qu'il ait à les signaler. C'est la fin d'un goulot d'étranglement qui a
 coûté plusieurs tours.
+
+---
+
+## C-41 — 2026-10-28 — exécution #14 : **le pré-vol a trouvé la panne en 10 secondes** (et il avait lui-même un défaut)
+
+**Rouge, oui — mais un rouge qui parle.** Verbatim de l'étape `2bis` (exécution #14, `24dd3cf`) :
+
+```
+cible buildworld    : ABSENTE du Makefile — l'arbre source est incomplet
+cible buildkernel   : ABSENTE du Makefile — l'arbre source est incomplet
+cible installworld  : ABSENTE du Makefile — l'arbre source est incomplet
+cible distribution  : ABSENTE du Makefile — l'arbre source est incomplet
+cible installkernel : ABSENTE du Makefile — l'arbre source est incomplet
+NEXBSD_L1 : ABSENT de l'arbre
+overlay : present
+Error: pre-vol en echec
+```
+
+Et, deux étapes plus haut, la ligne qui explique tout :
+
+```
+arbres extraits : usr
+```
+
+**LA CAUSE — et elle se voit en un mot :** `src.txz` n'est pas un arbre nu. C'est une archive
+**destinée à être extraite à la racine `/`** : ses membres s'appellent `usr/src/...`. Extraite dans
+`/usr/obj/nexbsd-src`, elle a donc produit **`/usr/obj/nexbsd-src/usr/src/`** — un niveau trop bas.
+Le pré-vol cherchait l'arbre un niveau trop haut, et il n'y avait qu'un seul répertoire : `usr`.
+
+Vérifié sur l'archive **réelle** (téléchargée le 2026-10-28, 253 039 000 octets) :
+
+```
+$ tar -tf src.txz | head -3
+usr/src/
+usr/src/README.md
+usr/src/.gitignore
+```
+
+**Ce que le pré-vol a évité :** sans lui, la construction se serait lancée, aurait échoué au bout de
+quelques minutes sur `make: don't know how to make buildworld`, et on aurait cherché la cause dans
+un journal de plusieurs milliers de lignes. **Il a coûté dix secondes et évité un aller-retour.**
+
+**Correctif 1 :** l'étape 2/4 ne **devine** plus l'emplacement, elle le **cherche** (`Makefile` à la
+racine ? dans `usr/src/` ?), l'**écrit** dans `.nexbsd-srcdir` (donc il survit au passage d'une étape
+à l'autre grâce à `copyback`), et les étapes `2bis` et `3/4` le **relisent**.
+
+**Correctif 2 — et celui-ci compte autant :** la première version du pré-vol était **fausse**. Elle
+cherchait des lignes `buildworld:` dans le `Makefile`. Or l'arbre FreeBSD 15.1 ne définit pas ces
+cibles une par une : il définit **`${TGTS}:`** (ligne 377 du `Makefile` réel) et met les noms dans
+la variable `TGTS`. Le pré-vol aurait donc **bloqué une construction parfaitement valide**.
+
+> Un garde-fou trop strict n'est pas un garde-fou : c'est un mur. Même leçon que M-10.
+
+Le pré-vol vérifie désormais ce qui existe vraiment :
+
+- la règle `^${TGTS}:` est présente ;
+- les cinq cibles sont **listées** dans `TGTS` ;
+- les quatre pièces structurantes existent : `Makefile.inc1`, `share/mk/bsd.subdir.mk`,
+  `tools/build`, `sys/Makefile`.
+
+**Testé sur l'arbre réel extrait de `src.txz` :** `PRE-VOL : ok` (les dix contrôles passent).
+**Testé sur un faux arbre :** `PRE-VOL : echec` (il refuse). Les deux sens sont vérifiés.
+
+**Autres faits de l'exécution #14, tous bons :**
+
+```
+1/4  RAM : 8139 Mo (minimum 7000) · libres dans /usr/obj : 194 Go (minimum 20) · fetch : /usr/bin/fetch
+2/4  empreinte obtenue  : cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1
+     empreinte attendue : cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1
+     empreinte VERIFIEE
+     debut 22:34:47Z -> fin 22:35:08Z   (21 secondes pour 253 Mo + 1,7 Go extraits)
+```
+
+Le cache de la VM est désormais utilisé (`Cache hit for: freebsd-15.1-2.2.8-amd64-v3`, 976 Mo) :
+le démarrage est passé à une quinzaine de secondes.
