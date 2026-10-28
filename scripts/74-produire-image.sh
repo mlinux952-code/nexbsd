@@ -190,9 +190,22 @@ ok "buildworld terminé"
 ok "buildkernel terminé"
 
 etape "8. release"
-( cd "$TRAVAIL" && . "$ICI/fork/release.conf" && MAKEOBJDIRPREFIX="$OBJ" make release ) \
+# C-38 (2026-10-28) : OU SORT L'IMAGE ? Question qui valait six heures de calcul.
+# Avec MAKEOBJDIRPREFIX=/usr/obj, FreeBSD place la release dans
+# /usr/obj/usr/src/<cible>.<arch>/release/ — PAS dans <arbre>/release/.
+# L'ancienne version cherchait au mauvais endroit et aurait annoncé « la release n'a rien produit »
+# alors qu'elle l'aurait bel et bien produite : un mensonge, à la fin d'une construction de 6 h.
+# Correctif : on IMPOSE le repertoire de sortie avec RELEASEDIR, qui est l'option prevue par
+# release.sh(7). Ainsi l'emplacement est decide ici, et non devine.
+RELEASEDIR="$OBJ/nexbsd-release"
+rm -rf "$RELEASEDIR" && mkdir -p "$RELEASEDIR"
+info "RELEASEDIR imposé : $RELEASEDIR"
+( cd "$TRAVAIL" && . "$ICI/fork/release.conf" \
+    && MAKEOBJDIRPREFIX="$OBJ" RELEASEDIR="$RELEASEDIR" make release ) \
     || { ko "release a échoué"; exit 1; }
 ok "release terminé"
+info "contenu de RELEASEDIR :"
+ls -l "$RELEASEDIR" 2>/dev/null | sed 's/^/          /' || true
 
 etape "9. empreintes et manifeste"
 mkdir -p "$SORTIE"
@@ -201,7 +214,13 @@ MANIFESTE="$SORTIE/MANIFESTE-$(date -u +%Y%m%dT%H%M%SZ).txt"
 : > "$MANIFESTE"
 echo "# NexBSD — image produite le $(date -u '+%Y-%m-%dT%H:%M:%SZ')" >> "$MANIFESTE"
 echo "# arbre : $TRAVAIL" >> "$MANIFESTE"
-for img in "$TRAVAIL"/release/*.img "$TRAVAIL"/release/*.iso "$TRAVAIL"/release/*.txz; do
+# On regarde d'abord la ou l'on a IMPOSE la sortie, puis, en secours seulement, les deux
+# emplacements historiques. Le but : ne jamais annoncer « rien produit » sans avoir cherche.
+CANDIDATS=$(ls -1 "$RELEASEDIR"/*.img "$RELEASEDIR"/*.iso "$RELEASEDIR"/*.txz 2>/dev/null
+            ls -1 "$OBJ"/usr/src/*/release/*.img "$OBJ"/usr/src/*/release/*.iso 2>/dev/null
+            ls -1 "$TRAVAIL"/release/*.img "$TRAVAIL"/release/*.iso 2>/dev/null)
+info "candidats trouvés : $(echo "$CANDIDATS" | grep -c . ) fichier(s)"
+for img in $CANDIDATS; do
     [ -f "$img" ] || continue
     cp "$img" "$SORTIE/" 2>/dev/null || true
     EMP=$(sha256 -q "$img" 2>/dev/null || sha256sum "$img" | cut -d' ' -f1)
@@ -209,7 +228,17 @@ for img in "$TRAVAIL"/release/*.img "$TRAVAIL"/release/*.iso "$TRAVAIL"/release/
     echo "$EMP  $(basename "$img")  $TAILLE o" | tee -a "$MANIFESTE"
     TROUVE=$((TROUVE + 1))
 done
-[ "$TROUVE" -gt 0 ] && ok "$TROUVE artefact(s) produit(s) dans $SORTIE" || { ko "aucune image trouvée : la release n'a rien produit"; exit 1; }
+if [ "$TROUVE" -gt 0 ]; then
+    ok "$TROUVE artefact(s) produit(s) dans $SORTIE"
+else
+    ko "aucune image trouvée — VOICI OÙ L'ON A CHERCHÉ, pour ne pas accuser à tort :"
+    info "  1. $RELEASEDIR"
+    info "  2. $OBJ/usr/src/*/release"
+    info "  3. $TRAVAIL/release"
+    info "  contenu de $OBJ (2 niveaux) :"
+    find "$OBJ" -maxdepth 3 -type d 2>/dev/null | head -20 | sed 's/^/          /'
+    exit 1
+fi
 ok "manifeste : $MANIFESTE"
 echo
 echo "ETAT : IMAGE PRODUITE — l'empreinte est la preuve, le manifeste est la trace."

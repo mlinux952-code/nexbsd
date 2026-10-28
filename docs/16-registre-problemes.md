@@ -1117,3 +1117,63 @@ l'origine. **C'est exactement pour ce cas qu'il existe.**
 
 **Faute reconnue, sans détour** : inventer une empreinte est une violation directe de la règle
 « ne jamais inventer ni arranger un résultat ». Elle a été commise, elle est écrite ici.
+
+---
+
+## C-38 — 2026-10-28 — exécution #8 verte, IMAGE « skipped », et un piège de six heures évité de justesse
+
+**Verbatim du responsable (page Actions, exécution #8) :**
+
+```
+NexBSD   C-37 : une empreinte SHA256 avait ete INVENTEE. Echec de l execution …  #8
+Re-run triggered 8 minutes ago   @mlinux952-code   pushed 707aec8   main
+
+Status Success
+Total duration 1m 1s
+
+SONDE      ✅
+CONTRÔLES  ✅   1/3 code 0 · 2/3 code 0 · 3/3 code 0
+BUREAU     ✅   node22-22.23.4 · 17 cas 0 échec · 14 cas 0 échec
+IMAGE — buildworld + configuration + media
+This job was skipped
+```
+
+**Premier point : « skipped » n'est pas un échec.** La tâche IMAGE ne s'exécute que sur
+`workflow_dispatch` (bouton « Run workflow ») ou sur la branche `nexbsd-image`, par choix
+délibéré : une construction de plusieurs heures ne doit pas partir à chaque `push`. Sur un
+`push` — et sur un **Re-run**, qui rejoue le même événement — elle est donc **ignorée**, ce qui
+est exactement le comportement écrit dans le workflow.
+
+**Deuxième point : deuxième exécution verte consécutive**, cette fois sur le commit `707aec8`,
+donc sur le dépôt réellement poussé. Le correctif C-37 n'a rien cassé.
+
+**Troisième point, le plus important — un piège qui aurait coûté six heures.**
+
+En relisant `scripts/74` avant de lancer la construction, une faute a été trouvée à l'étape 9.
+Le script cherchait l'image ici :
+
+```sh
+for img in "$TRAVAIL"/release/*.img ...
+```
+
+Or la production est lancée avec `MAKEOBJDIRPREFIX="$OBJ" make release`. Dans ce mode, FreeBSD
+écrit la release dans **`/usr/obj/usr/src/<cible>.<arch>/release/`** — et **pas** dans
+`<arbre>/release/`. Le script n'aurait donc **rien trouvé**, et aurait affiché :
+
+> `[KO] aucune image trouvée : la release n'a rien produit`
+
+… alors que la release l'aurait bel et bien produite, après six heures de calcul. **Un mensonge
+à l'arrivée**, exactement le genre de choses que ce projet refuse.
+
+**Correctifs :**
+
+1. L'emplacement de sortie est désormais **imposé**, pas deviné : `RELEASEDIR="$OBJ/nexbsd-release"`
+   est passé explicitement à `make release` — c'est l'option prévue par `release.sh(7)`.
+2. L'étape 9 cherche **d'abord** là où la sortie a été imposée, puis, en secours seulement, aux
+   deux emplacements historiques.
+3. Si rien n'est trouvé, le script **liste où il a cherché** et affiche le contenu de `$OBJ` :
+   on ne pourra plus accuser la release à tort sans preuve du contraire.
+
+**Leçon générale, à retenir pour la suite :** un script qui lance une tâche de six heures doit
+savoir **où** cette tâche écrira. Ce n'est pas un détail de finition : c'est la différence entre
+« l'image existe » et « le programme dit qu'elle n'existe pas alors qu'elle existe ».
