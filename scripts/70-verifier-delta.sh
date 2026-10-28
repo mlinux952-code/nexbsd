@@ -42,7 +42,14 @@ info() { echo "  ...     $*"; }
 #   fork/bureau/nexbsd-session.sh       (la session X : openbox + WebKitGTK en mode application)
 #   fork/overlay/usr-local-share-xsessions/nexbsd.desktop  (entree de session)
 #   Le bureau est le produit le plus VISIBLE : sans lui, NexBSD reste un serveur sans ecran.
-EXPECTED=30
+# 2026-10-28 (nuit) : 30 -> 33 fichiers. AUTHENTIFICATION du bureau (exigence du responsable :
+#   « un serveur doit demander quelque chose pour entrer ») :
+#   fork/bureau/nexbsd-authentifier.sh      (verifie le mot de passe par PAM via su ; refuse root)
+#   fork/bureau/tester-session.js           (17 cas, execute par node)
+#   fork/bureau/tester-authentification.sh  (14 cas, execute avec un faux su)
+#   Les deux fichiers de test sont dans le delta produit : un test qui ne voyage pas avec le produit
+#   ne prouve rien sur le produit. Ils ne sont pas installes dans l image, seulement verifiables.
+EXPECTED=33
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 

@@ -63,7 +63,29 @@ export XDG_CURRENT_DESKTOP=NexBSD
 export XDG_SESSION_DESKTOP=nexbsd
 export DESKTOP_SESSION=nexbsd
 
-# --- 3. gestionnaire de fenêtres ------------------------------------------
+# --- 3. authentification (l'écran d'ouverture) -----------------------------
+# Refus de root : en root, `su` ne demande aucun mot de passe et l'écran serait décoratif.
+if [ "$(id -u)" -eq 0 ]; then
+	ko "la session refuse de tourner en root"
+	info "en root, 'su' ne demande pas de mot de passe : l'écran d'ouverture serait décoratif"
+	info "lancer la session sous un compte ordinaire, non membre de wheel"
+	exit 1
+fi
+
+if [ ! -x "$ICI/nexbsd-authentifier.sh" ] && [ ! -r "$ICI/nexbsd-authentifier.sh" ]; then
+	ko "l'authentificateur est absent : $ICI/nexbsd-authentifier.sh"
+	exit 1
+fi
+
+info "ouverture de session : saisir un nom d'utilisateur et son mot de passe"
+UTILISATEUR=$(sh "$ICI/nexbsd-authentifier.sh" 3) || {
+	ko "authentification échouée — le bureau ne s'ouvre pas"
+	info "trois tentatives, puis retour à la console : on n'ouvre rien sans identité vérifiée"
+	exit 1
+}
+ok "authentifié : $UTILISATEUR (mot de passe vérifié par PAM via su)"
+
+# --- 4. gestionnaire de fenêtres ------------------------------------------
 if command -v openbox >/dev/null 2>&1; then
 	openbox >>"$JOURNAL" 2>&1 &
 	WM_PID=$!
@@ -75,7 +97,7 @@ else
 	WM_PID=""
 fi
 
-# --- 4. le bureau ---------------------------------------------------------
+# --- 5. le bureau ---------------------------------------------------------
 # --application-mode : pas d'onglets, pas de barre d'adresse — on veut une application, pas un site.
 info "lancement du bureau : $BUREAU"
 info "journal : $JOURNAL"
@@ -83,7 +105,7 @@ info "journal : $JOURNAL"
 BOUCLE=0
 while [ "$BOUCLE" -lt 3 ]; do
 	BOUCLE=$((BOUCLE+1))
-	"$NAVIGATEUR" --application-mode "file://$BUREAU" >>"$JOURNAL" 2>&1 || true
+	"$NAVIGATEUR" --application-mode "file://$BUREAU?utilisateur=$UTILISATEUR" >>"$JOURNAL" 2>&1 || true
 	# Si le bureau se ferme, on le relance. Après 3 fermetures, on rend la main :
 	# un utilisateur qui veut sortir doit pouvoir sortir (ne pas emprisonner).
 	info "le bureau s'est fermé (tentative $BOUCLE sur 3)"

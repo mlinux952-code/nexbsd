@@ -35,6 +35,53 @@
     user-select: none;
   }
 
+  /* ---------- écran de verrouillage ---------- */
+  #verrou {
+    position: fixed; inset: 0; z-index: 9500;
+    background:
+      radial-gradient(circle at 50% 30%, #1b2a3a 0%, transparent 55%),
+      linear-gradient(#0c1116, #080c10);
+    display: flex; align-items: center; justify-content: center;
+  }
+  #verrou.cache { display: none; }
+  .boite-verrou {
+    width: 380px; background: var(--fond2); border: 1px solid var(--bord);
+    border-radius: 10px; padding: 30px 28px 24px;
+    box-shadow: 0 24px 70px rgba(0,0,0,.75);
+  }
+  .boite-verrou .logo { text-align: center; margin-bottom: 6px; font-size: 25px; font-weight: 700; letter-spacing: .5px; color: #fff; }
+  .boite-verrou .logo span { color: var(--accent); }
+  .boite-verrou .sous { text-align: center; color: var(--texte2); font-size: 12px; margin-bottom: 22px; }
+  .champ { margin-bottom: 13px; }
+  .champ label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .7px; color: var(--texte2); margin-bottom: 5px; }
+  .champ input {
+    width: 100%; padding: 9px 11px; background: #0d141b; color: var(--texte);
+    border: 1px solid var(--bord); border-radius: 6px; font-size: 13.5px; font-family: inherit;
+    -webkit-user-select: text; user-select: text;
+  }
+  .champ input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(61,157,240,.18); }
+  .bouton {
+    width: 100%; padding: 10px; margin-top: 6px; border: none; border-radius: 6px;
+    background: linear-gradient(var(--accent), var(--accent2)); color: #fff;
+    font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .bouton:hover { filter: brightness(1.1); }
+  #message-verrou {
+    margin-top: 14px; font-size: 12px; line-height: 1.5; color: var(--alerte);
+    min-height: 18px; text-align: center;
+  }
+  .note-verrou { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--bord); font-size: 11px; color: var(--texte2); line-height: 1.55; }
+  .note-verrou b { color: var(--texte); }
+  .mode-demo {
+    margin-top: 10px; width: 100%; padding: 7px; background: transparent;
+    border: 1px dashed var(--bord); border-radius: 6px; color: var(--texte2);
+    font-size: 11.5px; cursor: pointer; font-family: inherit;
+  }
+  .mode-demo:hover { border-color: var(--alerte); color: var(--alerte); }
+  #chip-session { cursor: default; }
+  #chip-session.demo .point { background: var(--erreur); }
+  #chip-session.session .point { background: var(--ok); }
+
   /* ---------- barre supérieure ---------- */
   #barre {
     position: fixed; top: 0; left: 0; right: 0; height: 34px;
@@ -136,6 +183,34 @@
 </head>
 <body>
 
+
+<div id="verrou">
+  <div class="boite-verrou">
+    <div class="logo">Nex<span>BSD</span></div>
+    <div class="sous">Serveur de fichiers — ouverture de session</div>
+
+    <div class="champ">
+      <label for="champ-utilisateur">Utilisateur</label>
+      <input id="champ-utilisateur" type="text" autocomplete="username" spellcheck="false">
+    </div>
+    <div class="champ">
+      <label for="champ-mdp">Mot de passe</label>
+      <input id="champ-mdp" type="password" autocomplete="current-password">
+    </div>
+
+    <button class="bouton" id="bouton-entrer">Entrer</button>
+    <div id="message-verrou"></div>
+
+    <div class="note-verrou">
+      <b>L'authentification est réelle — mais elle n'a pas lieu ici.</b> Le mot de passe est vérifié
+      par <b>PAM</b> dans la session, avant l'ouverture du bureau : exactement le même mécanisme que
+      <b>su</b>. Une page web ne peut pas vérifier un mot de passe de système ; elle ne doit donc pas
+      prétendre le faire.
+    </div>
+    <button class="mode-demo" id="bouton-demo">Voir le bureau en mode démonstration (aucune vérification)</button>
+  </div>
+</div>
+
 <div id="barre">
   <div id="marque">Nex<span>BSD</span></div>
   <div class="menu" data-ouvre="commandes">Commandes</div>
@@ -144,6 +219,8 @@
     <div class="pastille"><span class="point att"></span> annuaire</div>
     <div class="pastille"><span class="point att"></span> partages</div>
     <div class="pastille"><span class="point att"></span> pare-feu</div>
+    <div class="pastille" id="chip-session"><span class="point att"></span> <span id="nom-session">verrouillé</span></div>
+    <div class="menu" id="menu-verrouiller" style="display:none">Verrouiller</div>
     <div id="horloge">--:--</div>
   </div>
 </div>
@@ -253,6 +330,38 @@
         'qui est ajouté par-dessus et que l\u2019utilisateur voit.</p>'
     }
   };
+
+  /* ===== DEBUT-FONCTIONS-TESTABLES =====
+     Ces deux fonctions ne touchent pas au DOM : elles sont donc testables hors navigateur
+     (voir fork/bureau/tester-session.js). Un test qui ne peut pas tourner ne prouve rien. */
+
+  // Décide de l'état de la session à partir de la chaîne de requête.
+  //   "?utilisateur=omrane" -> session ouverte (mot de passe DÉJÀ vérifié par PAM dans la session)
+  //   "?demo=1"             -> mode démonstration explicite, aucune authentification
+  //   ""                    -> écran de verrouillage
+  function lireSession(recherche) {
+    var params = {};
+    var brut = String(recherche || "").replace(/^\?/, "");
+    if (brut) {
+      var morceaux = brut.split("&");
+      for (var i = 0; i < morceaux.length; i++) {
+        var kv = morceaux[i].split("=");
+        if (kv.length === 2 && kv[0]) {
+          params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1].replace(/\+/g, " "));
+        }
+      }
+    }
+    if (params.demo === "1") { return { mode: "demo", utilisateur: "démonstration" }; }
+    if (params.utilisateur)  { return { mode: "session", utilisateur: params.utilisateur }; }
+    return { mode: "verrou", utilisateur: "" };
+  }
+
+  // Un nom d'utilisateur n'est affichable que s'il ne contient que des caractères attendus.
+  // Objectif : empêcher qu'un nom bricolé casse l'affichage ou serve à injecter du balisage.
+  function utilisateurValide(nom) {
+    return /^[a-z_][a-z0-9_-]{0,31}$/.test(String(nom || ""));
+  }
+  /* ===== FIN-FONCTIONS-TESTABLES ===== */
 
   var zone = document.getElementById("bureau");
   var barreTaches = document.getElementById("taches");
@@ -386,8 +495,80 @@
   horloge();
   setInterval(horloge, 15000);
 
+  // ---------------------------------------------------------------------
+  // VERROUILLAGE / OUVERTURE DE SESSION
+  // ---------------------------------------------------------------------
+  var ecranVerrou = document.getElementById("verrou");
+  var chip        = document.getElementById("chip-session");
+  var nomSession  = document.getElementById("nom-session");
+  var menuVerrou  = document.getElementById("menu-verrouiller");
+  var message     = document.getElementById("message-verrou");
+  var champUser   = document.getElementById("champ-utilisateur");
+
+  function afficherSession(session) {
+    ecranVerrou.classList.add("cache");
+    menuVerrou.style.display = "block";
+    chip.className = "pastille " + session.mode;
+    if (session.mode === "session") {
+      nomSession.textContent = session.utilisateur;
+      chip.title = "Session ouverte — mot de passe vérifié par PAM dans la session";
+    } else {
+      nomSession.textContent = "démo — non authentifié";
+      chip.title = "Aucune authentification : mode démonstration";
+      var b = document.getElementById("demo");
+      b.textContent = "MODE DÉMONSTRATION — aucune authentification n'a eu lieu, et ce bureau n'interroge aucun service.";
+      b.style.background = "#4a1f1f"; b.style.borderBottomColor = "#7a2f2f"; b.style.color = "#f0a0a0";
+    }
+    ouvrir("commandes");
+  }
+
+  function verrouiller() {
+    fermer("commandes");
+    fermer("fichiers");
+    fermer("terminal");
+    fermer("systeme");
+    ecranVerrou.classList.remove("cache");
+    menuVerrou.style.display = "none";
+    chip.className = "pastille";
+    nomSession.textContent = "verrouillé";
+    message.textContent = "";
+    champUser.value = "";
+    document.getElementById("champ-mdp").value = "";
+    champUser.focus();
+  }
+
+  document.getElementById("bouton-entrer").addEventListener("click", function () {
+    // Honnêteté : cette page NE VÉRIFIE PAS le mot de passe. Elle ne fait pas semblant.
+    message.textContent =
+      "Cette page ne peut pas vérifier un mot de passe de système. " +
+      "Dans NexBSD, la vérification a lieu dans la session, par PAM, avant l'ouverture du bureau.";
+  });
+
+  document.getElementById("champ-mdp").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { document.getElementById("bouton-entrer").click(); }
+  });
+
+  document.getElementById("bouton-demo").addEventListener("click", function () {
+    afficherSession({ mode: "demo", utilisateur: "démonstration" });
+  });
+
+  menuVerrou.addEventListener("click", verrouiller);
+
+  // --- démarrage : on lit la requête, et on n'ouvre RIEN sans décision explicite ---
+  var session = lireSession(window.location.search);
+  if (session.mode === "session" && !utilisateurValide(session.utilisateur)) {
+    // un nom bricolé est refusé : on retombe sur le verrou, sans rien afficher d'inattendu
+    session = { mode: "verrou", utilisateur: "" };
+  }
+  if (session.mode === "verrou") {
+    chip.className = "pastille";
+    nomSession.textContent = "verrouillé";
+    champUser.focus();
+  } else {
+    afficherSession(session);
+  }
+
   rendreTaches();
-  ouvrir("commandes");   // on ouvre le centre de commandes au démarrage
 })();
 </script>
 </body>
