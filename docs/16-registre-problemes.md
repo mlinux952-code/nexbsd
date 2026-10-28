@@ -995,3 +995,36 @@ système FreeBSD, **les 17 cas de logique de session du bureau passent**, et l'i
 par `pkg` fonctionne. Ce sont les deux premières preuves d'exécution réelle du projet — elles ne
 valent que pour ce qu'elles valent (de la logique, pas PAM), mais elles ont été obtenues dans la
 machine, pas sur un banc.
+
+---
+
+## CLÔTURE C-33 → C-36 — 2026-10-28, exécution #5 : **SUCCESS**
+
+Les quatre problèmes ci-dessus sont **fermés par une mesure**, pas par une opinion. La preuve
+verbatim complète est dans **`docs/53-premiere-execution-verte.md`**. Résumé :
+
+```
+Exécution #5 — push f6c78a7 — Status Success — Total duration 1m 16s
+SONDE     ✅   FreeBSD 15.1-RELEASE-p3 … GENERIC amd64 · root · pkg present · git ABSENT
+CONTRÔLES ✅   1/3 delta code 0 · 2/3 registre code 0 · 3/3 simulation code 0
+BUREAU    ✅   node22-22.23.4 · 17 cas 0 échec · 14 cas 0 échec · code de sortie 0
+```
+
+| Problème | Fermé par |
+|---|---|
+| **C-33** la VM ne démarre pas | `Starting VM with anyvm.org` puis une exécution verte complète |
+| **C-34** `git` absent de FreeBSD | le rapport affiche `mode de comptage : disque — git absent` et trouve **33/33** |
+| **C-35** le texte de l'erreur n'arrivait jamais | l'étape `3/3 — 14 cas d'authentification (sh)` a été **nommée**, avec son code de sortie |
+| **C-36** le refus de root pris pour un bug | `utilisateur de la CI avant : root (uid 0)` → `compte de test : nexbsd-test` → **14 cas, 0 échec** |
+
+**Deux faits nouveaux, mesurés, qui changent la suite :**
+
+1. **195 Go libres sur `/usr`** dans la VM. L'inquiétude sur le disque (« 25–30 Go requis ») tombe :
+   le seul frein qui reste pour produire une image est le **temps**, pas l'espace.
+2. La VM de la tâche CONTRÔLES a **6091 Mo** de RAM, sous le seuil de 7000 de `scripts/74` — d'où
+   les deux `[KO]` de la simulation. Ce n'est pas un échec : c'est le garde-fou de capacité qui dit
+   vrai. La tâche IMAGE, elle, déclare `mem: 8192`.
+
+**Ce qui n'est toujours pas prouvé, et qu'aucune exécution verte ne change :** PAM n'a jamais
+vérifié un mot de passe, aucune session graphique n'a été affichée, aucune image n'existe, le noyau
+`NEXBSD_L1` n'a jamais été compilé, l'installeur `fork/80` n'a jamais tourné.

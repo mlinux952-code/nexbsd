@@ -240,40 +240,146 @@ jobs:
           sudo docker image prune --all --force || true
           df -h /
 
-      - name: "Production de l'image dans une vraie VM FreeBSD 15.1"
+      # La VM de cette tâche : 4 processeurs et 8 Go de mémoire, au-dessus du seuil de 7 Go
+      # vérifié par scripts/74 (profil L3). La SONDE a mesuré 195 Go libres sur /usr : le
+      # disque n'est pas le frein, le temps l'est.
+      - name: "DÉMARRER LA VM FreeBSD 15.1 (4 CPU, 8 Go)"
+        id: vm
         uses: vmactions/freebsd-vm@v1
         with:
           release: "15.1"
           cpu: 4
           mem: 8192
-          run: |
-            date -u +"DEBUT %Y-%m-%dT%H:%M:%SZ"
+
+      # ── Étape 1 : ce qui échoue vite doit échouer TOUT DE SUITE ──────────────
+      # Un buildworld dure des heures. Vérifier la capacité et le réseau en 30 secondes,
+      # avant de payer quatre heures, est la seule façon honnête de lancer ça.
+      - name: "1/4 — la machine peut-elle construire ? (30 secondes)"
+        shell: freebsd {0}
+        run: |
+          {
+            echo "### 1/4 — capacité de la machine"
+            echo '```'
             uname -a
             freebsd-version -ku
-            echo "--- CPU ---";   sysctl -n hw.ncpu
-            echo "--- RAM ---";   sysctl -n hw.physmem
-            echo "--- DISQUE ---"; df -h
-            GO=$(df -k /usr/obj 2>/dev/null | awk 'NR==2 {print int($4/1048576)}' || echo 0)
-            echo "libres dans /usr/obj : ${GO} Go"
-            [ "${GO:-0}" -ge 20 ] || { echo "ERREUR : ${GO} Go libres seulement, 20 Go minimum."; exit 1; }
+            echo "CPU : $(sysctl -n hw.ncpu)"
+            echo "RAM : $(( $(sysctl -n hw.physmem) / 1048576 )) Mo (minimum 7000)"
+            mkdir -p /usr/obj /usr/obj/nexbsd-src
+            df -h /usr /usr/obj
+            GO=$(df -k /usr/obj | awk 'NR==2 {print int($4/1048576)}')
+            echo "libres dans /usr/obj : ${GO} Go (minimum 20)"
+            echo "fetch : $(command -v fetch || echo ABSENT)"
+          } > /tmp/r.txt 2>&1
+          cat /tmp/r.txt >> rapport-ci.txt; cat /tmp/r.txt
 
-            # R-15 : AUCUN mot de passe dans ce fichier. Le dépôt est public.
-            PW_ROOT="${{ secrets.NEXBSD_LDAP_ROOTPW }}"
-            PW_BIND="${{ secrets.NEXBSD_LDAP_BINDPW }}"
-            [ -n "$PW_ROOT" ] || PW_ROOT=$(openssl rand -hex 16)
-            [ -n "$PW_BIND" ] || PW_BIND=$(openssl rand -hex 16)
-            echo "mot de passe annuaire : longueur ${#PW_ROOT} caracteres, NON affiche"
+          RAM=$(sysctl -n hw.physmem | awk '{print int($1/1048576)}')
+          GO=$(df -k /usr/obj | awk 'NR==2 {print int($4/1048576)}')
+          [ "$RAM" -ge 7000 ] || { echo "::error::RAM insuffisante : ${RAM} Mo"; exit 1; }
+          [ "$GO" -ge 20 ]   || { echo "::error::disque insuffisant : ${GO} Go"; exit 1; }
+          command -v fetch >/dev/null || { echo "::error::fetch absent"; exit 1; }
+          echo "capacité suffisante : ${RAM} Mo de RAM, ${GO} Go libres"
 
-            mkdir -p images
-            NEXBSD_SID="S-1-5-21-0000000000-0000000000-0000000000" \
-            NEXBSD_LDAP_ROOTPW="$PW_ROOT" \
-            NEXBSD_LDAP_BINDPW="$PW_BIND" \
-              sh scripts/74-produire-image.sh --sortie images --obj /usr/obj
+      # ── Étape 2 : les sources, vérifiées par empreinte ───────────────────────
+      # Si le téléchargement ou l'empreinte échoue, on le sait en ~10 minutes au lieu de
+      # le découvrir après quatre heures de construction. src.txz est extrait sur le grand
+      # disque (/usr/obj), PAS dans /tmp : c'est un arbre de plus de 1 Go.
+      - name: "2/4 — télécharger, VÉRIFIER l'empreinte, extraire src.txz (~10 minutes)"
+        shell: freebsd {0}
+        run: |
+          SHA_ATTENDU="cf5762da46e4d3a74caef1b4a09b6ab4f7db5a9cfff02e8e1d0cb5e50a5a89e1"
+          URL="https://download.freebsd.org/releases/amd64/amd64/15.1-RELEASE/src.txz"
+          # Tout est écrit dans /tmp/r.txt, PUIS affiché, PUIS le code de sortie est rendu :
+          # ainsi rien n'est perdu même quand ça échoue (leçon de C-35).
+          {
+            echo "### 2/4 — sources FreeBSD 15.1-RELEASE"
+            echo '```'
+            date -u +"debut %Y-%m-%dT%H:%M:%SZ"
+          } > /tmp/r.txt 2>&1
 
-            date -u +"FIN %Y-%m-%dT%H:%M:%SZ"
-            echo "--- ce qui a été produit ---"
-            ls -l images || true
-            sha256 -q images/*.img 2>/dev/null || sha256 -q images/*.ufs 2>/dev/null || echo "AUCUNE IMAGE"
+          if fetch -q -o /tmp/src.txz "$URL"; then
+            { ls -l /tmp/src.txz
+              EMP=$(sha256 -q /tmp/src.txz)
+              echo "empreinte obtenue  : $EMP"
+              echo "empreinte attendue : $SHA_ATTENDU"
+            } >> /tmp/r.txt 2>&1
+            if [ "$EMP" = "$SHA_ATTENDU" ]; then
+              echo "empreinte VERIFIEE" >> /tmp/r.txt
+              rm -rf /usr/obj/nexbsd-src && mkdir -p /usr/obj/nexbsd-src
+              if tar -xpf /tmp/src.txz -C /usr/obj/nexbsd-src >>/tmp/r.txt 2>&1; then
+                { echo "arbres extraits : $(ls /usr/obj/nexbsd-src | tr '\n' ' ')"
+                  df -h /usr/obj
+                  date -u +"fin %Y-%m-%dT%H:%M:%SZ"
+                } >> /tmp/r.txt 2>&1
+                RESULTAT=ok
+              else
+                echo "EXTRACTION IMPOSSIBLE" >> /tmp/r.txt; RESULTAT=echec
+              fi
+            else
+              echo "EMPREINTE INCORRECTE — ARRET" >> /tmp/r.txt; RESULTAT=echec
+            fi
+          else
+            echo "TELECHARGEMENT IMPOSSIBLE (reseau ou URL)" >> /tmp/r.txt; RESULTAT=echec
+          fi
+          echo '```' >> /tmp/r.txt; echo "" >> /tmp/r.txt
+
+          cat /tmp/r.txt >> rapport-ci.txt; cat /tmp/r.txt
+          [ "${RESULTAT:-echec}" = ok ] || { echo "::error::etape 2/4 en echec — voir le rapport ci-dessus"; exit 1; }
+
+      # ── Étape 3 : la construction, la vraie ──────────────────────────────────
+      # scripts/74 reçoit --source : il n'a donc plus à télécharger ni extraire, et va
+      # directement au delta, au buildworld, à la release, puis au manifeste d'empreintes.
+      - name: "3/4 — buildworld + buildkernel + release (plusieurs heures)"
+        shell: freebsd {0}
+        run: |
+          date -u +"DEBUT %Y-%m-%dT%H:%M:%SZ"
+          echo "DEBUT $(date -u +%FT%TZ)" > /tmp/debut.txt
+
+          # R-15 : AUCUN mot de passe dans ce fichier. Le dépôt est public.
+          # Priorité au secret GitHub ; sinon tirage aléatoire local, jamais affiché.
+          PW_ROOT="${{ secrets.NEXBSD_LDAP_ROOTPW }}"
+          PW_BIND="${{ secrets.NEXBSD_LDAP_BINDPW }}"
+          [ -n "$PW_ROOT" ] || PW_ROOT=$(openssl rand -hex 16)
+          [ -n "$PW_BIND" ] || PW_BIND=$(openssl rand -hex 16)
+          echo "mot de passe annuaire : longueur ${#PW_ROOT} caracteres, NON affiche"
+
+          mkdir -p images
+          NEXBSD_SID="S-1-5-21-0000000000-0000000000-0000000000" \
+          NEXBSD_LDAP_ROOTPW="$PW_ROOT" \
+          NEXBSD_LDAP_BINDPW="$PW_BIND" \
+            sh scripts/74-produire-image.sh \
+              --source /usr/obj/nexbsd-src --sortie images --obj /usr/obj > /tmp/build.log 2>&1
+          CODE=$?
+
+          { echo "### 3/4 — construction — code $CODE"
+            tail -40 /tmp/build.log
+            echo ""; } >> rapport-ci.txt
+          # tout est affiché dans le journal de l'étape, pour que le responsable n'ait pas
+          # à chercher : les 40 dernières lignes, puis le manifeste s'il existe.
+          tail -40 /tmp/build.log
+          [ -f images/MANIFESTE-*.txt ] && cat images/MANIFESTE-*.txt
+          exit $CODE
+
+      - name: "4/4 — empreintes des fichiers produits"
+        if: always()
+        shell: freebsd {0}
+        run: |
+          {
+            echo "### 4/4 — ce qui a été produit"
+            echo '```'
+            ls -l images 2>/dev/null || echo "aucun fichier dans images/"
+            for f in images/*; do
+              [ -f "$f" ] || continue
+              echo "$(sha256 -q "$f")  $(basename "$f")  $(wc -c < "$f") octets"
+            done
+            echo '```'
+            echo ""; } > /tmp/r.txt 2>&1
+          cat /tmp/r.txt >> rapport-ci.txt; cat /tmp/r.txt
+
+      - name: "Rapport lisible (en haut de la page, sans rien déplier)"
+        if: always()
+        run: |
+          echo "## NexBSD — IMAGE produite dans une vraie VM FreeBSD 15.1" >> "$GITHUB_STEP_SUMMARY"
+          cat rapport-ci.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "_Aucun rapport produit._" >> "$GITHUB_STEP_SUMMARY"
 
       - name: "Déposer l'artefact"
         if: always()
