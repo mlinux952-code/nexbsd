@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # Résultat T-21 — accès SSH distant sur le banc — **RÉUSSI**
 
 **Date :** 2026-10-27, ~20h25 UTC
@@ -65,7 +72,7 @@ OpenSSH refuse la tentative, il n'y a pas de verrouillage.
 mot de passe simple est désactivée et que c'est **PAM** qui valide — donc que la connexion **arrive bien
 jusqu'à `sshd`**. Le transport était déjà prouvé à cet instant.
 
-**Correctif appliqué** (🐧 VM) : `passwd omrane`, valeur **`omranelab`** (même secret que l'annuaire, pour que
+**Correctif appliqué** (🐧 VM) : `passwd omrane`, valeur **`[mot de passe du banc — masqué]`** (même secret que l'annuaire, pour que
 le banc n'ait qu'un seul secret par compte).
 
 ## 5. Connexion réussie — sortie verbatim (🖥️ MINT)

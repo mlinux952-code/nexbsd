@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # Compte rendu de session — modèle et dernier état
 
 **Rôle :** livrable exigé par la **Partie XVIII** (continuité et mémoire) et la **Partie XX §7** (continuité entre
@@ -79,7 +86,7 @@ sh -c 'tail -30 /var/log/samba4/log.smbd; echo "==MDP-LDAP=="; ldapsearch -x -b 
 ```
 
 ```
-service samba_server restart; sleep 12; smbclient //127.0.0.1/commun -U 'omrane%omranelab' -c 'ls'
+service samba_server restart; sleep 12; smbclient //127.0.0.1/commun -U 'omrane%[mot de passe du banc — masqué]' -c 'ls'
 ```
 
 ### 6. Prochaines actions, dans l'ordre
@@ -97,7 +104,7 @@ service samba_server restart; sleep 12; smbclient //127.0.0.1/commun -U 'omrane%
 - **Ne jamais relancer 60/62/63 après un redémarrage** pour « faire marcher » : cela masquerait C-14.
 - Le **serveur HTTP** du Mint sert `~/Projets/nexbsd/scripts` : après une fusion, la VM voit les nouveaux
   scripts **sans redémarrage** du serveur.
-- Les **mots de passe du banc sont de laboratoire** (`adminsecret`, `omranelab`, `saralab`) — VM jetable,
+- Les **mots de passe du banc sont de laboratoire** (`[mot de passe du banc — masqué]`, `[mot de passe du banc — masqué]`, `[mot de passe du banc — masqué]`) — VM jetable,
   non exposée au réseau. Ils ne doivent jamais servir ailleurs.
 - **L'IA n'a aucun accès à GitHub.** L'état du dépôt distant ne peut être affirmé que par le responsable.
 

@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # Audit rétrospectif — du 23 au 27 octobre 2026 : tout ce qui a été fait, et où ça a atterri
 
 **Demande du responsable, 2026-10-27 :** *« ne pas ce soir seulement, c'est chaque soir, du début à la
@@ -150,7 +157,7 @@ scripts de banc et posée dans le delta du produit :
 
 ### Trois choix faits en écrivant ces fichiers — et assumés
 
-1. **Aucun mot de passe dans le dépôt.** Les valeurs du banc (`adminsecret`, `omranelab`, `saralab`) ne
+1. **Aucun mot de passe dans le dépôt.** Les valeurs du banc (`[mot de passe du banc — masqué]`, `[mot de passe du banc — masqué]`, `[mot de passe du banc — masqué]`) ne
    sont **pas** recopiées. À la place : `@NEXBSD_LDAP_ROOTPW@`, `@NEXBSD_LDAP_BINDPW@`, `@NEXBSD_SID@`.
    Un fichier non substitué ne doit pas être livré — c'est vérifiable, donc c'est une règle, pas une
    intention.

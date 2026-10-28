@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # Reprise du banc — mode opératoire en 5 étapes
 
 **Version :** 1.0 — 2026-10-24 (session S-014)
@@ -92,7 +99,7 @@ Coller cette sortie dans `tests/results/T-04-ldap-annuaire.md` §3 (tableau du j
 - **Ne jamais** copier un long script dans la fenêtre graphique de virt-manager (tabulations perdues).
 - **Ne jamais** taper une commande sans lire la sortie de la précédente.
 - **Ne pas** toucher au PC de 2011 : il reste intact jusqu'au test par clé USB (T-02).
-- **Ne pas** réutiliser les mots de passe de laboratoire (`adminsecret`) ailleurs.
+- **Ne pas** réutiliser les mots de passe de laboratoire (`[mot de passe du banc — masqué]`) ailleurs.
 
 ## Après la session
 

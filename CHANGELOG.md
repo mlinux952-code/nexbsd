@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # Historique des versions — NexBSD
 
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
@@ -59,7 +66,7 @@ Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 - **Acquis** : Samba compilé avec LDAP (`smbd` lié à `libldap`), `samba.schema` chargé et validé par `slaptest`, `sambaSID` de `omrane` **stocké dans l'annuaire**, `smbpasswd -a` opérant sur `ldapsam`.
 - **Diagnostiqué** : la preuve 3 échoue en `NT_STATUS_CONNECTION_REFUSED` **non** à cause d'une identité refusée, mais parce que `smbd` met ≈ 9 s à être à l'écoute alors que le script attendait un délai fixe de 3 s (`sockstat` montre `*:445` en écoute, journal : démarrage 12:16:15 → prêt 12:16:24). Consigné en **C-11** (`docs/16`), C-10 passé à **clos**.
 - **Corrigé** : `scripts/62-banc-T04E-samba-ldap.sh` **version 3** — attente active de l'écoute sur `:445` (90 s max), 5 reprises sur la preuve 3, repli sur l'adresse réseau de la VM, messages différenciés service / identité.
-- **REUSSI** : T-04-E **essai 3** (2026-10-24) — `smbclient //127.0.0.1/partage -U 'omrane%omranelab'` s'authentifie et liste le partage ; les trois preuves sont réunies. Verdict consigné, réserves (rejouabilité, droits multi-utilisateurs, TLS) écrites.
+- **REUSSI** : T-04-E **essai 3** (2026-10-24) — `smbclient //127.0.0.1/partage -U 'omrane%[mot de passe du banc — masqué]'` s'authentifie et liste le partage ; les trois preuves sont réunies. Verdict consigné, réserves (rejouabilité, droits multi-utilisateurs, TLS) écrites.
 - **Bilan des tests** : **4 sur 16** réussis (T-01, T-03, T-04, T-04-E).
 - **Ajouté** : `scripts/63-banc-T04F-droits-groupes.sh` — **T-04-F** : les droits décidés par des groupes de l'annuaire (`ldapsam:trusted = yes`, groupes `bureau`/`stagiaires`, compte `sara` créé **uniquement** dans l'annuaire). Syntaxe vérifiée ; **jamais exécuté**.
 - **Ajouté** : `tests/results/T-04F-droits-groupes.md` — fiche du test, avec la règle posée d'avance : un test de droits sans refus ne prouve rien.

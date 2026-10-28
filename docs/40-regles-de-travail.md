@@ -149,3 +149,30 @@ pas vers J5**. Le dire fait partie du travail.
 **Corollaire.** Un test réussi dans une VM ne rapproche pas l'image. Ce qui rapproche l'image, c'est :
 un fichier de configuration dans `fork/overlay/`, une pièce de la chaîne de production, ou une exécution
 réelle de cette chaîne.
+
+---
+
+## R-15 — 2026-10-28 — Aucun mot de passe de laboratoire nulle part, ni dans le code, ni dans les preuves
+
+**Règle.** Une valeur d'authentification, même « de laboratoire », même sur une VM jetable, **n'a rien
+à faire dans le dépôt** : ni ligne active, ni commentaire, ni compte rendu. Un dépôt se copie, se
+bundle, se publie.
+
+**Pourquoi cette règle existe.** Mesuré le 2026-10-28 : les valeurs du banc figuraient **30 fois dans
+10 documents** et dans **6 scripts actifs**, en plus de 4 commentaires de configuration. Le garde-fou
+de `scripts/74` ne regardait que `fork/` — il disait « aucun mot de passe » depuis quatre jours, en
+toute bonne foi. Un garde-fou mal cadré est pire qu'aucun garde-fou : il rassure à tort.
+
+**Corollaires :**
+1. tout script qui a besoin d'un mot de passe le reçoit par **variable obligatoire**
+   (`${NEXBSD_…:?…}`), jamais par valeur par défaut — pas de retour silencieux ;
+2. le garde-fou de `scripts/74` couvre `fork/` + `scripts/` + `tests/*.sh`, et ses motifs sont
+   assemblés à l'exécution pour qu'il ne se détecte pas lui-même ;
+3. les comptes rendus de test restent des **preuves verbatim** mais les valeurs y sont **masquées**,
+   avec une note d'en-tête indiquant où se trouve l'original et son empreinte ;
+4. **l'historique Git conserve ce qui a été committé.** Masquer dans la version courante ne lave pas
+   les commits antérieurs. Une valeur ayant séjourné dans un dépôt doit donc être considérée comme
+   **brûlée** : jamais réutilisée, même en laboratoire.
+
+**Statut au 2026-10-28 : appliqué.** `git grep` sur tout le contenu courant → aucune occurrence.
+Historique : **9 commits** contiennent encore les valeurs (assumé, voir `docs/50` §5).

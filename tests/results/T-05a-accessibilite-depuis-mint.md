@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # Résultat T-05a — accessibilité depuis une autre machine et preuve de refus — **EN COURS**
 
 **Date d'ouverture :** 2026-10-27, ~19h20 UTC (Tunis)
@@ -167,7 +174,7 @@ Source vérifiée dans nos propres rapports : `T-04E-samba-ldap.md:197`, `docs/2
 🖥️ MINT, sortie **verbatim** :
 
 ```
-$ smbclient //127.0.0.1/commun -p 4450 -U 'omrane%omranelab' -c 'ls'
+$ smbclient //127.0.0.1/commun -p 4450 -U 'omrane%[mot de passe du banc — masqué]' -c 'ls'
 
   .                                   D        0  Tue Oct 27 20:10:47 2026
   ..                                  D        0  Tue Oct 27 20:10:47 2026
@@ -285,7 +292,7 @@ par « personne n'écoutait ». La seule différence entre 445 (accepté, `smbcl
 
 | Volet | Preuve | Résultat |
 |---|---|---|
-| 1 — port déclaré joignable depuis une autre machine | `smbclient //127.0.0.1/commun -p 4450 -U 'omrane%omranelab'` → 4 fichiers listés | ✅ |
+| 1 — port déclaré joignable depuis une autre machine | `smbclient //127.0.0.1/commun -p 4450 -U 'omrane%[mot de passe du banc — masqué]'` → 4 fichiers listés | ✅ |
 | 2 — port non déclaré refusé | 8 SYN vers `10.0.2.15:8080` → `rule 0/0(match): block in on vtnet0` | ✅ |
 | 3 — refus **journalisé** | `pflog0` a enregistré chaque blocage (1 316 o) | ✅ |
 | 4 — le refus n'est pas « absence de service » | `sockstat` : `nc` écoutait sur `*:8080` avant et pendant le test | ✅ |
@@ -316,5 +323,5 @@ et un port fermé est **réellement fermé, et de façon journalisée**.
    de 5 min d'écart) et pour la datation fiable des preuves. Incident consigné : **C-27**.
 3. **C-25 / C-26** : deux artefacts de mesure consignés ; les tests futurs utiliseront soit un échange
    applicatif réel, soit `tcpdump -U`.
-4. Le mot de passe apparaît en clair dans la ligne de commande (`-U 'omrane%omranelab'`) → acceptable au
+4. Le mot de passe apparaît en clair dans la ligne de commande (`-U 'omrane%[mot de passe du banc — masqué]'`) → acceptable au
    banc, à proscrire en usage réel (fichier d'identifiants en `600`).

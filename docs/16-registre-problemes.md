@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # Registre des problèmes connus
 
 **Version :** 1.0 — 2026-10-23
@@ -625,11 +632,11 @@ non exécutable — sinon le défaut reviendra à la prochaine réécriture, com
 
 | Fichier | Ce qui y était |
 |---|---|
-| `scripts/60-banc-T04-ldap.sh` | `rootpw  adminsecret` + `ldapadd … -w adminsecret` |
-| `scripts/62-banc-T04E-samba-ldap.sh` | `ADMIN_PW="adminsecret"`, `MDP_USER="omranelab"` |
-| `scripts/63-banc-T04F-droits-groupes.sh` | `adminsecret`, `omranelab`, `saralab` |
-| `scripts/64-banc-T04G-persistance.sh` | `omranelab`, `saralab` |
-| `scripts/65-resoudre-identites-nss.sh` | `adminsecret` + 3 lignes `smbclient -U 'omrane%omranelab'` |
+| `scripts/60-banc-T04-ldap.sh` | `rootpw  [mot de passe du banc — masqué]` + `ldapadd … -w [mot de passe du banc — masqué]` |
+| `scripts/62-banc-T04E-samba-ldap.sh` | `ADMIN_PW="[mot de passe du banc — masqué]"`, `MDP_USER="[mot de passe du banc — masqué]"` |
+| `scripts/63-banc-T04F-droits-groupes.sh` | `[mot de passe du banc — masqué]`, `[mot de passe du banc — masqué]`, `[mot de passe du banc — masqué]` |
+| `scripts/64-banc-T04G-persistance.sh` | `[mot de passe du banc — masqué]`, `[mot de passe du banc — masqué]` |
+| `scripts/65-resoudre-identites-nss.sh` | `[mot de passe du banc — masqué]` + 3 lignes `smbclient -U 'omrane%[mot de passe du banc — masqué]'` |
 | `tests/harnais.sh` | `MDP_OMRANE`, `MDP_SARA` |
 
 **Cause racine — deux défauts cumulés :**
@@ -644,7 +651,7 @@ non exécutable — sinon le défaut reviendra à la prochaine réécriture, com
   (`${NEXBSD_ADMIN_PW:?…}`), donc **le script refuse de tourner** si le mot de passe n'est pas fourni.
   Aucune valeur par défaut : pas de retour silencieux à l'ancien comportement ;
 - `scripts/74` : le contrôle couvre désormais `fork/` + `scripts/` + `tests/*.sh` ;
-- testé **dans les deux sens** : mot de passe remis à la main → `[KO] … 10:MDP_SARA="saralab"` ;
+- testé **dans les deux sens** : mot de passe remis à la main → `[KO] … 10:MDP_SARA="[mot de passe du banc — masqué]"` ;
   restauré → `[OK] aucun mot de passe en clair dans le delta`.
 
 **Deuxième leçon (auto-détection)** : à la première version élargie, le garde-fou **s'accusait
@@ -652,6 +659,6 @@ lui-même**, parce qu'il contient les motifs recherchés. Corrigé en assemblant
 l'exécution (`MOTIF1="admin""secret"`). Un garde-fou qui crie à tort finit par être désactivé (M-10).
 
 **Ce qui reste, et qui n'est PAS corrigé volontairement** : `tests/results/*.md` contiennent encore
-les valeurs, dans des **preuves verbatim** (ex. `smbclient … -U 'omrane%omranelab'`). **On ne réécrit
+les valeurs, dans des **preuves verbatim** (ex. `smbclient … -U 'omrane%[mot de passe du banc — masqué]'`). **On ne réécrit
 pas un compte rendu de test** : ce serait falsifier une preuve. Conséquence pratique : **ce dépôt
 n'est pas prêt à être rendu public en l'état.** Deux options propres sont écrites dans `docs/50`.

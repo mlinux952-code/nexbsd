@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # T-04-F — Les droits sont décidés par des groupes de l'annuaire — **RÉUSSI**
 
 **Protocole exécutable :** `scripts/63-banc-T04F-droits-groupes.sh` (blocs A→F, verdict en fin).
@@ -33,7 +40,7 @@ Les ACL NT (droits Windows « à la NetWare ») feront l'objet d'un test sépar�
 | Groupes (dans l'annuaire) | `bureau` → gid **2001** · `stagiaires` → gid **2002** |
 | `omrane` | uidNumber **10000**, gidNumber **2001** (bureau) — existe aussi en local (héritage T-04) |
 | `sara` | uidNumber **10002**, gidNumber **2002** (stagiaires) — **créée dans l'annuaire seulement**, aucun compte local |
-| Mot de passe `sara` | `saralab` — **laboratoire uniquement** |
+| Mot de passe `sara` | `[mot de passe du banc — masqué]` — **laboratoire uniquement** |
 | `[commun]` | `/var/samba/commun` — `root:2001`, mode `2770` → écriture réservée au groupe `bureau` |
 | `[public]` | `/var/samba/public` — mode `0755`, partage en lecture seule |
 

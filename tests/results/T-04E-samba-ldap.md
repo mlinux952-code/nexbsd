@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # T-04-E — Samba authentifie via l'annuaire OpenLDAP — **RÉUSSI (2026-10-24)**
 
 **Protocole exécutable :** `scripts/62-banc-T04E-samba-ldap.sh` (blocs A→F, verdict en fin).
@@ -22,7 +29,7 @@
 | Élément | Valeur |
 |---|---|
 | Domaine Samba | `NEXBSD` (netbios `NEXBSDFS`) |
-| Compte | `omrane` / `omranelab` — **laboratoire uniquement** |
+| Compte | `omrane` / `[mot de passe du banc — masqué]` — **laboratoire uniquement** |
 | Partage | `//127.0.0.1/partage` → `/var/samba/partage` |
 
 ## 3. Journal d'exécution
@@ -194,7 +201,7 @@ faussée par une course de délai.
 Commande :
 
 ```
-smbclient //127.0.0.1/partage -U 'omrane%omranelab' -c 'ls'
+smbclient //127.0.0.1/partage -U 'omrane%[mot de passe du banc — masqué]' -c 'ls'
 ```
 
 Sortie **verbatim** :

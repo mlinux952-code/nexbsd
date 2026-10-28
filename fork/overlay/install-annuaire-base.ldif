@@ -13,7 +13,7 @@
 #
 # ⚠️ MOTS DE PASSE : aucun n'est écrit en clair. L'installeur demande le mot de passe de chaque
 #    compte et pose les attributs sambaNTPassword / userPassword par « smbpasswd », comme au banc.
-#    Le banc utilisait « omranelab » / « saralab » : laboratoire uniquement.
+#    Le banc utilisait « [mot de passe du banc — masqué] » / « [mot de passe du banc — masqué] » : laboratoire uniquement.
 
 # ------------------------------------------------------------------ structure
 dn: dc=nexbsd,dc=local

@@ -1,3 +1,10 @@
+> **Valeurs masquées le 2026-10-28, avant publication du dépôt.**
+> Un ou plusieurs mots de passe de **laboratoire** apparaissaient dans ce document. Ils ont été
+> remplacés par `[mot de passe du banc — masqué]`. **Le fond de la preuve est inchangé** : commandes,
+> sorties, verdicts et réserves sont intacts. L'original se trouve dans le bundle privé **s055**
+> (sha256 `044c6b53…c2da2641`). Ces valeurs sont **brûlées** : elles ne doivent jamais resservir,
+> même en laboratoire.
+
 # T-04 — Annuaire OpenLDAP opérationnel — **REUSSI**
 
 **Date d'exécution :** 2026-10-24, 10:31:10 UTC (fin ~10:34 UTC)
@@ -25,7 +32,7 @@
 | Élément | Valeur | Remarque |
 |---|---|---|
 | Suffixe | `dc=nexbsd,dc=local` | arborescence d'essai |
-| Admin annuaire | `cn=admin,dc=nexbsd,dc=local` | mot de passe `adminsecret` — **laboratoire uniquement** |
+| Admin annuaire | `cn=admin,dc=nexbsd,dc=local` | mot de passe `[mot de passe du banc — masqué]` — **laboratoire uniquement** |
 | Utilisateur test | `uid=omrane,ou=people,…` | `uidNumber=10000` |
 
 **Ces secrets ne doivent jamais être réutilisés hors de cette VM jetable.** Le système final ne les contiendra pas.
