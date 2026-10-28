@@ -897,3 +897,101 @@ même jour, depuis ce banc :
 
 Un nom qui se ressemble n'est pas la même chose. **La bascule vers GitHub Actions reste valable**,
 et ne doit pas être défaite sur la foi d'une homonymie. À ne pas retester avant plusieurs jours.
+
+---
+
+## C-36 — 2026-10-28 — exécution #4 : **le texte de l'erreur est enfin arrivé**, et la « panne » était notre sécurité
+
+**Verbatim du responsable (annotations + tâche BUREAU, exécution #4) :**
+
+```
+NexBSD   C-35 + workflow v4 : le vrai probleme etait l INFORMATION. 4 executio…  #4
+
+Annotations
+1 error
+3/3 — 14 cas d'authentification (sh)
+Process completed with exit code 1.
+
+BUREAU — tests de session et d'authentification
+failed 1 minute ago in 1m 5s
+3s / 1s / 45s / 12s / 1s / 0s
+
+Run sh fork/bureau/tester-authentification.sh > /tmp/r.txt 2>&1; CODE=$?
+
+########## NexBSD — authentification de session ##########
+
+----- 1. nom valide + mot de passe correct : le nom doit sortir SEUL sur stdout -----
+  [ECHEC] code de sortie
+          attendu : 0
+          obtenu  : 2
+  ...
+----- 3. nom invalide : refuse AVANT tout appel a su -----
+  [ECHEC] code de sortie (majuscules refusees)
+          attendu : 1
+          obtenu  : 2
+```
+
+**PREMIÈRE VICTOIRE MESURABLE : le diagnostic mis en place en v4 fonctionne.**
+L'étape rouge est nommée (`3/3 — 14 cas d'authentification`), et son **texte** est remonté.
+Plus aucune correction à l'aveugle. `shell: freebsd {0}` + étapes séparées + `copyback` font exactement
+le travail pour lequel ils ont été ajoutés.
+
+**Deuxième constat : les deux étapes précédentes sont passées.** Il n'y a qu'**une seule**
+annotation d'erreur, sur `3/3`. Donc, dans une vraie VM FreeBSD 15.1 :
+
+- `1/3 — installer node (pkg)` : **réussie** (`node22` s'installe) ;
+- `2/3 — 17 cas de logique de session` : **réussie** ;
+- `3/3 — 14 cas d'authentification` : échoue.
+
+> ⚠️ **Non prouvé à cette heure** : le sort de la tâche CONTRÔLES n'apparaît pas dans le document
+> fourni. On ne peut pas affirmer qu'elle est verte — seulement qu'aucune erreur de CONTRÔLES n'a
+> été rapportée.
+
+**LA CAUSE — et ce n'est pas un défaut de logique : c'est la règle A-14 qui s'applique.**
+
+Tous les cas sortent en **code 2**. Or `fork/bureau/nexbsd-authentifier.sh` contient, dès sa
+première instruction utile :
+
+```sh
+if [ "$(id -u)" -eq 0 ]; then
+	echo "ERREUR : l'authentification de session refuse de tourner en root." >&2
+	echo "         En root, 'su' ne demande aucun mot de passe : l'écran serait décoratif." >&2
+	exit 2
+fi
+```
+
+Dans la VM de la CI, tout tourne **en root**. Le script testé refuse donc de s'exécuter, comme il
+doit. Le test, lui, traduisait ce refus en dix « [ECHEC] attendu 0, obtenu 2 » — illisibles, et
+accusant à tort la logique.
+
+Sur le banc, le même test donne `VERDICT : 14 cas, 0 échec` uniquement parce que le banc n'est pas
+root (`uid 1000`). L'écart entre les deux mondes était donc un écart d'**utilisateur**, pas de code.
+
+> Le garde-fou avait raison. C'est le test qui ne savait pas dire pourquoi.
+
+**Correctif, en deux parties :**
+
+1. **La CI lance le test sous un compte ordinaire**, comme la session réelle le fera :
+   ```sh
+   pw useradd -n nexbsd-test -m -s /bin/sh
+   cp -a "$PWD" /tmp/nexbsd-test && chown -R nexbsd-test /tmp/nexbsd-test
+   su -l nexbsd-test -c "cd /tmp/nexbsd-test && sh fork/bureau/tester-authentification.sh"
+   ```
+2. **Le test refuse maintenant root explicitement**, avec un message qui explique quoi faire, et
+   sort en **code 3** au lieu de produire dix échecs trompeurs.
+
+**Vérification faite sur le banc :**
+
+```
+=== non-root (banc) : doit passer ===        VERDICT : 14 cas, 0 échec.
+=== root simule : doit sortir en 3 ===       code=3
+ERREUR : ce test doit tourner sous un compte ORDINAIRE (uid different de 0).
+  Ce n'est pas un defaut du code teste : nexbsd-authentifier.sh refuse root
+  VOLONTAIREMENT (regle A-14). ...
+```
+
+**Ce que l'on peut enfin écrire noir sur blanc :** dans une vraie VM FreeBSD 15.1, sur un vrai
+système FreeBSD, **les 17 cas de logique de session du bureau passent**, et l'installation de node
+par `pkg` fonctionne. Ce sont les deux premières preuves d'exécution réelle du projet — elles ne
+valent que pour ce qu'elles valent (de la logique, pas PAM), mais elles ont été obtenues dans la
+machine, pas sur un banc.

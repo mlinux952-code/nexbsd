@@ -182,14 +182,37 @@ jobs:
           cat /tmp/r.txt
           exit $CODE
 
-      - name: "3/3 — 14 cas d'authentification (sh)"
+      # EXÉCUTION #4 : cette étape échouait parce qu'elle tournait en ROOT. Le script testé
+      # (nexbsd-authentifier.sh) refuse root volontairement — en root, `su` ne demande aucun
+      # mot de passe et l'écran d'ouverture serait décoratif (A-14). Ce n'était donc pas un
+      # défaut de logique : c'était la sécurité qui s'appliquait. On lance maintenant le test
+      # sous un compte ORDINAIRE, exactement comme la session réelle le fera.
+      - name: "3/3 — 14 cas d'authentification (sh), sous un compte ORDINAIRE"
         shell: freebsd {0}
         run: |
-          sh fork/bureau/tester-authentification.sh > /tmp/r.txt 2>&1; CODE=$?
-          { echo "### 3/3 — authentification (14 cas) — code $CODE"
-            tail -25 /tmp/r.txt
+          UTIL=nexbsd-test
+          {
+            echo "### 3/3 — authentification (14 cas), sous un compte ordinaire"
+            echo '```'
+            echo "utilisateur de la CI avant : $(id -un) (uid $(id -u))"
+            pw useradd -n "$UTIL" -m -s /bin/sh 2>&1 || echo "(compte deja present)"
+            echo "compte de test : $UTIL"
+          } > /tmp/entete.txt 2>&1
+
+          REP=/tmp/nexbsd-test
+          rm -rf "$REP"
+          cp -a "$PWD" "$REP" && chown -R "$UTIL" "$REP"
+
+          su -l "$UTIL" -c "cd '$REP' && sh fork/bureau/tester-authentification.sh" \
+            > /tmp/r.txt 2>&1; CODE=$?
+
+          { cat /tmp/entete.txt
+            tail -30 /tmp/r.txt
+            echo '```'
+            echo ""
+            echo "code de sortie : $CODE"
             echo ""; } >> rapport-ci.txt
-          cat /tmp/r.txt
+          cat /tmp/entete.txt /tmp/r.txt
           exit $CODE
 
       - name: "Rapport lisible (en haut de la page, sans rien déplier)"

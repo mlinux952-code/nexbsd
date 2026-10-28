@@ -9,6 +9,27 @@
 # il garantit seulement que le script ne se trompe pas de logique autour.
 set -u
 
+# --- GARDE-FOU DE DIAGNOSTIC (2026-10-28, cause de l'echec CI #4) -----------------
+# Le script teste refuse root par conception (A-14 : en root, `su` ne demande rien et
+# l'ecran serait decoratif). Lance en root, il sort donc en code 2 pour CHAQUE cas, et
+# ce test accusait a tort la logique : 10 echecs illisibles au lieu d'une phrase.
+# Mesure : execution CI #4, tache BUREAU, etape 3/3, dans une VM ou l'on est root.
+if [ "$(id -u)" -eq 0 ]; then
+	cat >&2 <<'MSG'
+ERREUR : ce test doit tourner sous un compte ORDINAIRE (uid different de 0).
+
+  Ce n'est pas un defaut du code teste : nexbsd-authentifier.sh refuse root
+  VOLONTAIREMENT (regle A-14). En root, `su` ne demande aucun mot de passe et
+  l'ecran d'ouverture serait decoratif. Lance ici, chaque cas sortirait en
+  code 2 et le test accuserait a tort la logique.
+
+  Pour le lancer correctement :
+    pw useradd -n nexbsd-test -m -s /bin/sh
+    su -l nexbsd-test -c "cd $PWD && sh fork/bureau/tester-authentification.sh"
+MSG
+	exit 3
+fi
+
 ICI=$(cd "$(dirname "$0")" && pwd)
 AUTH="$ICI/nexbsd-authentifier.sh"
 BAC=$(mktemp -d)

@@ -79,6 +79,27 @@ reçoit déjà nos `push`.
 | **les contrôles passent dans la VM** | ❌ **pas encore** — cause trouvée (C-34), correctif non testé |
 | **une image a été produite** | ❌ **JAMAIS** |
 
+### 5 quinquies. Exécution #4 — le diagnostic mis en place FONCTIONNE (C-36)
+
+Pour la première fois, l'erreur est **nommée et lisible** :
+
+```
+3/3 — 14 cas d'authentification (sh)        <- l'étape fautive, nommée
+Process completed with exit code 1.
+  [ECHEC] code de sortie   attendu : 0   obtenu : 2
+```
+
+Et il n'y a **qu'une seule** annotation d'erreur, sur `3/3`. Les deux étapes précédentes sont donc
+passées : `pkg` installe `node22`, et **les 17 cas de logique de session passent dans une vraie VM
+FreeBSD 15.1**.
+
+**La cause n'était pas un bug** : tous les cas sortent en code **2**, qui est le refus de root de
+`nexbsd-authentifier.sh` (règle A-14). Dans la CI tout tourne en root ; le script refuse par
+conception. Le test traduisait ce refus en dix échecs trompeurs.
+
+**Correctif** : le test tourne désormais sous un compte ordinaire (`pw useradd` + `su -l`), et le
+script de test **refuse root explicitement** avec un message d'explication (code 3).
+
 ### 5 ter. Exécution #3 — le problème était l'information (C-35)
 
 | | #2 | #3 |
