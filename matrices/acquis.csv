@@ -51,7 +51,7 @@ A-29;2026-10-23;noyau NEXBSD_L1 + delta vs GENERIC (5 lignes motivees);T-17;PROD
 A-30;2026-10-23;20 decisions consignees (ADR-0001 a ADR-0020) — toutes a l etat PROPOSITION;docs/decisions/;GOUVERNANCE;docs/decisions/ADR-0001-base-freebsd.md;OUVERT
 A-31;2026-10-26;echelle d independance I0-I5 et grille d audit contradictoire;docs/32;METHODE;docs/32-audit-croise.md;FERME
 A-32;2026-10-23;reprise sans conversation : sequence START-HERE, ETAT, comptes rendus;docs/39;METHODE;START-HERE.md;FERME
-A-33;2026-10-23;sauvegardes : bundles Drive + depot GitHub (distant CONSTATE en retard de 54 commits le 2026-10-27 (origin/main = d999b1b/69 commits, atelier 123), le push reste a faire);docs/20;PREUVE;docs/20-depots-et-sauvegardes.md;OUVERT
+A-33;2026-10-23;sauvegardes : bundles Drive + depot GitHub — PUSH REEL PROUVE le 2026-10-28 (d999b1b..624ac02 main -> main), sortie verbatim dans docs/47 §8;docs/47-route-A-cirrus-pas-a-pas.md;PREUVE;docs/20-depots-et-sauvegardes.md;FERME
 A-34;2026-10-23;11 couloirs de recherche separes du produit (MARS_NWE, noyau propre, NCP...);research/;METHODE;research/netware/fiche.md;FERME
 A-35;2026-10-25;reproductibilite du noyau : deux constructions, empreintes identiques;T-11;PREUVE;tests/results/T-11-reproductibilite.md;FERME
 A-36;2026-10-27;regles de travail R-1..R-12 et lecons M-1..M-11;docs/40;METHODE;docs/40-regles-de-travail.md;FERME
@@ -69,3 +69,5 @@ A-47;2026-10-27;preuve du harnais 24/24;T-18;PREUVE;tests/results/T-18-harnais.m
 A-48;2026-10-27;preuve de rejouabilite du reseau du banc;T-19;PREUVE;tests/results/T-19-rejouabilite-reseau-banc.md;FERME
 A-49;2026-10-27;preuve de synchronisation de l horloge;T-20;PREUVE;tests/results/T-20-horloge-synchronisation.md;FERME
 A-50;2026-10-27;preuve d acces SSH distant par cle;T-21;PREUVE;tests/results/T-21-ssh-acces-distance.md;FERME
+A-51;2026-10-28;la configuration du produit (11 fichiers de fork/overlay/) est APPLIQUEE sur une racine de systeme par fork/70-appliquer-overlay.sh (substitution des 3 placeholders, fusions sans ecrasement, idempotent, 4 essais dont 2 d echec volontaire);tests d execution du 2026-10-28 dans docs/48;PRODUIT;fork/70-appliquer-overlay.sh;FERME
+A-52;2026-10-28;l image produite CONTIENT la configuration NexBSD : build-nexbsd.sh installe le monde dans une racine puis applique overlay AVANT de fabriquer le media;JAMAIS EXECUTE — aucune image n a encore ete produite;PRODUIT;fork/build-nexbsd.sh;OUVERT

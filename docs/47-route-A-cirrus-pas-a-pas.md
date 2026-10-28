@@ -134,3 +134,31 @@ origin  git@github.com:mlinux952-code/nexbsd.git (fetch/push)
 inconnue. Si la tâche IMAGE avait été lancée ce soir, elle aurait construit **le code du 25 octobre**,
 sans même que ce soit visible. La règle qui en sort : **aucune exécution de CI avant une sortie `git push`
 réelle et vérifiée.**
+
+## 8. LE PUSH — 2026-10-28, première sortie réelle depuis le 23 octobre
+
+Sortie verbatim du responsable, 🖥️ MINT, `~/Projets/nexbsd` :
+
+```
+omrane@omrane-Inspiron-3520:~$ cd ~/Projets/nexbsd && GIT_SSH_COMMAND="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new" git push origin main 2>&1 | tee ~/Téléchargements/push-2026-10-27.txt
+To github.com:mlinux952-code/nexbsd.git
+   d999b1b..624ac02  main -> main
+omrane@omrane-Inspiron-3520:~/Projets/nexbsd$
+```
+
+**Ce que cela ferme définitivement** :
+
+| Question restée ouverte depuis le 23/10 | Réponse prouvée |
+|---|---|
+| Le dépôt GitHub existe-t-il et accepte-t-il les écritures ? | **oui** (`To github.com:…` sans erreur) |
+| La clé SSH est-elle valide ? | **oui** (aucun `Permission denied`) |
+| Les 55 commits sont-ils arrivés ? | **oui** (`d999b1b..624ac02`, fast-forward) |
+| Le code construit par la CI sera-t-il le bon ? | **oui**, à partir de maintenant |
+
+**A-33 est FERME.** Il n'y a plus d'inconnue sur le dépôt distant.
+
+**Reste à pousser** (C-30, bit exécutable) : commits `6978f9f` et `eac9621`, soit 2 commits
+d'avance de l'atelier. Ils partiront au push suivant, avant toute exécution de la CI.
+
+**Règle qui reste en vigueur** : aucune exécution de CI sans `git ls-remote` confirmant que le distant
+est bien au commit qu'on croit construire.

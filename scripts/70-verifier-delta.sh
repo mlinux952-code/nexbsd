@@ -28,7 +28,12 @@ info() { echo "  ...     $*"; }
 #   overlay/usr-local-etc-openldap-slapd.conf, overlay/usr-local-etc-smb4.conf,
 #   overlay/usr-local-etc-nslcd.conf, overlay/etc-nsswitch.conf.fragment,
 #   overlay/install-annuaire-base.ldif.
-EXPECTED=25
+# 2026-10-28 : 25 -> 26 fichiers. Ajout de fork/70-appliquer-overlay.sh : le script qui APPLIQUE
+#   la configuration du produit sur une racine de systeme. Justification : sans lui, les 11 fichiers
+#   de overlay/ existaient dans le depot mais n'arrivaient JAMAIS dans le systeme (build-nexbsd.sh
+#   ne les mentionnait pas). Ce n est pas un script de banc, c est un maillon de la chaine de
+#   production : sa place est dans le delta produit.
+EXPECTED=26
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 
@@ -101,9 +106,36 @@ echo "########## RESUME ##########"
 info "les 5 lignes du delta vs GENERIC :"
 grep -nE "^(ident|# \[NEXBSD-L1\] retiré)" fork/sys/amd64/conf/NEXBSD_L1 | sed 's/^/  ...     /'
 echo
-if [ "$H_CONF" = "$SHA_CONF" ] && [ "$H_GEN" = "$SHA_GENERIC" ]; then
+echo "########## BLOC E - garde-fou C-30 : les scripts sont-ils executables ? ##########"
+NON_EXEC=0
+for f in scripts/*.sh fork/*.sh fork/tools/*.sh; do
+  [ -f "$f" ] || continue
+  if [ -x "$f" ]; then
+    :
+  else
+    NON_EXEC=$((NON_EXEC+1))
+    echo "  [KO] $f n'est pas executable (chmod +x manquant)"
+  fi
+done
+if [ "$NON_EXEC" -eq 0 ]; then
+  ok "tous les scripts portent le bit executable (garde-fou C-30)"
+else
+  ko "$NON_EXEC script(s) sans bit executable — sur une machine reelle, ./script echoue (C-30)"
+fi
+# C-30 : l'atelier perd le bit executable a chaque reecriture d'un fichier. Sans ce controle,
+# le defaut revient a chaque fois — exactement comme le dossier build/ efface (C-16 puis C-18).
+NON_EXEC_OK=$([ "$NON_EXEC" -eq 0 ] && echo oui || echo non)
+
+echo
+if [ "$H_CONF" = "$SHA_CONF" ] && [ "$H_GEN" = "$SHA_GENERIC" ] && [ "$NON_EXEC_OK" = oui ]; then
   echo "VERDICT : DELTA INTACT ($EXPECTED fichiers, empreintes conformes)"
   exit 0
+fi
+# Verdicts separes : nommer la VRAIE cause. Un garde-fou qui dit "empreintes non conformes"
+# alors que le probleme est un chmod fait perdre du temps et finit par etre ignore.
+if [ "$NON_EXEC" -ne 0 ]; then
+  echo "VERDICT : ECHEC — $NON_EXEC script(s) sans bit executable (C-30). Rien a voir avec les empreintes."
+  exit 1
 fi
 echo "VERDICT : DELTA PRESENT MAIS EMPREINTES NON CONFORMES — a examiner"
 exit 1

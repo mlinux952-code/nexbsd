@@ -39,10 +39,54 @@ env SRCCONF="$SRC/nexbsd-src.conf" make -j"$(sysctl -n hw.ncpu)" buildworld
 echo "→ buildkernel NEXBSD_L1"
 env SRCCONF="$SRC/nexbsd-src.conf" KERNCONF=NEXBSD_L1 make -j"$(sysctl -n hw.ncpu)" buildkernel
 
-# --- 4. Image ------------------------------------------------------------
-echo "→ release.sh (média USB bootable)"
-cd "$SRC/release"
-sh release.sh -c "$ICI/release.conf"
+# --- 4. Racine du système : le monde installé dans un dossier -------------
+# AJOUT DU 2026-10-28 (constat mesuré : ce script ne mentionnait JAMAIS overlay/).
+# Une image construite par release.sh seul était « FreeBSD + noyau maison » : configuration du
+# produit présente dans le dépôt, mais ABSENTE du système. On installe donc le monde dans une
+# racine maîtrisée, on y applique la configuration du produit, et seulement ensuite on fabrique
+# le média. RESTE À VÉRIFIER PAR EXÉCUTION : `distribution`, `makefs`, `mkimg`.
+RACINE=${RACINE:-/usr/obj/nexbsd-rootfs}
+echo "→ racine du système : $RACINE"
+[ "$RACINE" != "/" ] || { echo "ERREUR : RACINE = / refusée." >&2; exit 1; }
+rm -rf "$RACINE"
+mkdir -p "$RACINE"
+
+cd "$SRC"
+echo "→ installworld + distribution dans $RACINE (30 à 60 min)"
+env SRCCONF="$SRC/nexbsd-src.conf" make installworld DESTDIR="$RACINE"
+env SRCCONF="$SRC/nexbsd-src.conf" make distribution DESTDIR="$RACINE"
+echo "→ installkernel NEXBSD_L1 dans $RACINE"
+env SRCCONF="$SRC/nexbsd-src.conf" KERNCONF=NEXBSD_L1 make installkernel DESTDIR="$RACINE"
+
+# --- 5. La configuration du produit entre dans le système ----------------
+echo "→ application de la configuration NexBSD (fork/overlay/)"
+sh "$ICI/70-appliquer-overlay.sh" -r "$RACINE" \
+	-p "${NEXBSD_SID:?ERREUR : NEXBSD_SID non fourni (net getlocalsid sur le système installé)}" \
+	-b "${NEXBSD_LDAP_BINDPW:?ERREUR : NEXBSD_LDAP_BINDPW non fourni}" \
+	-R "${NEXBSD_LDAP_ROOTPW:?ERREUR : NEXBSD_LDAP_ROOTPW non fourni}"
+echo "  VERIFIE : /etc/nexbsd-version, /etc/pam.d/su, /etc/pf.conf sont désormais DANS le système."
+
+# --- 6. Média bootable ---------------------------------------------------
+# ⚠️ NON VÉRIFIÉ : la syntaxe exacte de `mkimg` (partition efi avec fichier) n'a pas été
+# confrontée à un système réel. Si elle échoue, le repli MBR ci-dessous s'applique. La route
+# sûre pour un premier essai est de produire `nexbsd.ufs` (makefs) et de le monter/démarrer
+# directement, sans table de partitions — on prouve ainsi que le SYSTÈME est bon avant de
+# prouver que le MÉDIA est bon. Ne pas présenter comme acquis ce qui n'a pas tourné.
+echo "→ makefs + mkimg (image disque UFS, 4 Go)"
+TAILLE_MO=${TAILLE_MO:-4096}
+makefs -t ffs -s "${TAILLE_MO}m" -o version=2 "$RACINE/../nexbsd.ufs" "$RACINE"
+mkimg -s gpt -f raw -b "$RACINE/boot/pmbr" \
+	-p efi:="${RACINE}/../nexbsd.ufs" -o "$RACINE/../nexbsd.img" 2>/dev/null || \
+	mkimg -s mbr -f raw -b "$RACINE/boot/boot0" \
+	-p freebsd:="${RACINE}/../nexbsd.ufs" -o "$RACINE/../nexbsd.img"
+echo "→ image : $RACINE/../nexbsd.img"
+echo "→ ET CE FICHIER EST LE PRODUIT : il contient le noyau NexBSD ET la configuration NexBSD."
+
+# --- 7. Ancien chemin conservé, mais il ne contient PAS la configuration du produit ---
+echo
+echo "ATTENTION — chemin release.sh NON utilisé ci-dessus. Conservé pour mémoire."
+echo "  release.sh -c release.conf produit un média DU SOCLE : il n'applique pas fork/overlay/."
+echo "  Ne pas livrer une image issue de release.sh en croyant qu'elle contient NexBSD."
 
 echo
 echo "ÉTAPES SUIVANTES, HUMAINES ET OBLIGATOIRES :"
