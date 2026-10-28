@@ -86,3 +86,47 @@ Ainsi la preuve reste consultable, la valeur reste retrouvable par vous, et rien
 5 derniers commits (`26d223d`, `6978f9f`, `eac9621`, `a422495`, `88327e8`) doit passer **en premier**,
 sinon Cirrus construira `624ac02` — c'est-à-dire une version qui ne contient ni le maillon
 `70-appliquer-overlay.sh`, ni la correction des mots de passe.
+
+---
+
+## 6. DÉCISION DU RESPONSABLE — 2026-10-28 : dépôt PUBLIC, coût zéro
+
+> *« et si on fait notre nexbsd visible et le coût est 0 c'est mieux pour moi sans dépense »*
+
+**Route retenue : A1 — le dépôt devient public.** Coût : **0 €**. Cirrus CI devient gratuit
+(50 crédits/mois), sans carte bancaire.
+
+### Ce qui a été fait AVANT de publier (ordre non négociable)
+
+| Action | Résultat mesuré |
+|---|---|
+| masquage des valeurs d'authentification | **30 occurrences** dans **10 documents** → `[mot de passe du banc — masqué]` |
+| idem dans 4 commentaires de `fork/overlay/` | fait |
+| note d'en-tête dans chaque document touché | présente : fond de preuve inchangé, original dans le bundle s055 |
+| `git grep` sur **tout** le contenu courant | ✅ **aucune occurrence** |
+| règle permanente écrite | **R-15** dans `docs/40` |
+| delta du produit après modification | ✅ `DELTA INTACT (26 fichiers)` |
+
+### Ce qu'il faut savoir, et que je ne cache pas : L'HISTORIQUE
+
+Masquer dans la version courante **ne lave pas les commits antérieurs**. Mesuré :
+**10 commits** contiennent encore les valeurs dans l'historique Git.
+
+**Pourquoi je ne réécris pas l'historique** (décision assumée, pas un oubli) :
+- les valeurs sont des mots de passe d'un **banc jetable**, sur un réseau QEMU en mode `user`
+  (`10.0.2.15`, non joignable depuis l'extérieur) ;
+- elles n'ont **jamais** servi ailleurs et le seront **jamais** (R-15 : valeurs **brûlées**) ;
+- réécrire l'historique changerait **tous les identifiants de commit**, invaliderait les 56 bundles
+  déposés et casserait la copie de MINT — un coût réel pour un gain quasi nul ;
+- **notre dépôt ne contient aucun code GPL tiers** : la frontière de licence reste intacte après
+  publication.
+
+**À retenir pour vous** : si ces trois valeurs étaient un jour réutilisées quelque part, il faudrait
+les changer immédiatement. Elles sont publiques à partir du moment où le dépôt l'est.
+
+### Ce que la publication change dans nos règles
+
+1. **R-15 s'applique désormais sans exception** : tout ce qui entre dans ce dépôt est public.
+2. Toute donnée personnelle, tout chemin de machine, toute adresse doivent être assumés publics.
+3. Les 56 bundles Drive restent **privés** : ils contiennent les valeurs en clair. Ils ne doivent pas
+   être rendus publics.
