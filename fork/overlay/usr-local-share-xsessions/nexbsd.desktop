@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=NexBSD
+Comment=Bureau NexBSD (couche C)
+Exec=/usr/local/bin/nexbsd-session
+TryExec=/usr/local/bin/nexbsd-session
+Icon=
+Terminal=false
+DesktopNames=NexBSD

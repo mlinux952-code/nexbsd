@@ -37,7 +37,12 @@ info() { echo "  ...     $*"; }
 #   rend la configuration VIVANTE (paquets, SID lu et non fige, services, annuaire, verifications).
 #   Sans lui, A-02 a A-06 restaient « config ecrite, personne ne l'applique ». C est un maillon de
 #   la chaine de production, pas un outil de banc : sa place est dans le delta produit.
-EXPECTED=27
+# 2026-10-28 (soir) : 27 -> 30 fichiers. Premiere pierre du BUREAU (couche C, A-21) :
+#   fork/bureau/nexbsd-bureau.html      (le bureau lui-meme, autonome, JS valide par node --check)
+#   fork/bureau/nexbsd-session.sh       (la session X : openbox + WebKitGTK en mode application)
+#   fork/overlay/usr-local-share-xsessions/nexbsd.desktop  (entree de session)
+#   Le bureau est le produit le plus VISIBLE : sans lui, NexBSD reste un serveur sans ecran.
+EXPECTED=30
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 

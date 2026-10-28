@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>NexBSD — Bureau</title>
+<!--
+  NexBSD — Bureau (couche C), première pierre. 2026-10-28.
+  Fichier AUTONOME : aucune ressource externe (pas de CDN, pas de police distante, pas d'image
+  distante). C'est une exigence du produit : un bureau doit s'afficher sur une machine sans réseau.
+  Rendu par WebKitGTK (epiphany) dans une session X minimale — voir fork/bureau/nexbsd-session.sh.
+-->
+<style>
+  :root {
+    --fond: #10151c;
+    --fond2: #161d26;
+    --fond3: #1d2632;
+    --bord: #2a3644;
+    --texte: #d8e0ea;
+    --texte2: #8fa0b3;
+    --accent: #3d9df0;
+    --accent2: #2b7fc7;
+    --ok: #3fbf7f;
+    --alerte: #e0a33d;
+    --erreur: #e05a5a;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: #0c1116;
+    color: var(--texte);
+    overflow: hidden;
+    font-size: 14px;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* ---------- barre supérieure ---------- */
+  #barre {
+    position: fixed; top: 0; left: 0; right: 0; height: 34px;
+    background: linear-gradient(#1b2430, #141b24);
+    border-bottom: 1px solid var(--bord);
+    display: flex; align-items: center; padding: 0 12px; gap: 16px;
+    font-size: 12.5px; z-index: 9000;
+  }
+  #marque { font-weight: 700; letter-spacing: .5px; color: #fff; }
+  #marque span { color: var(--accent); }
+  .menu { color: var(--texte2); cursor: default; padding: 4px 8px; border-radius: 4px; }
+  .menu:hover { background: var(--fond3); color: var(--texte); }
+  #barre .droite { margin-left: auto; display: flex; align-items: center; gap: 14px; color: var(--texte2); }
+  .pastille { display: inline-flex; align-items: center; gap: 5px; }
+  .point { width: 7px; height: 7px; border-radius: 50%; background: var(--texte2); }
+  .point.ok { background: var(--ok); }
+  .point.att { background: var(--alerte); }
+  .point.ko { background: var(--erreur); }
+  #horloge { color: var(--texte); font-variant-numeric: tabular-nums; }
+
+  /* ---------- bandeau de démonstration ---------- */
+  #demo {
+    position: fixed; top: 34px; left: 0; right: 0; height: 24px;
+    background: #3a2d12; border-bottom: 1px solid #5a4519;
+    color: #f0c674; font-size: 11.5px; display: flex; align-items: center;
+    justify-content: center; letter-spacing: .3px; z-index: 8900;
+  }
+
+  /* ---------- bureau ---------- */
+  #bureau { position: fixed; top: 58px; left: 0; right: 0; bottom: 0; }
+  #fond {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 22% 18%, #1b2a3a 0%, transparent 45%),
+      radial-gradient(circle at 78% 82%, #16303a 0%, transparent 50%),
+      #0c1116;
+  }
+
+  /* ---------- icônes du bureau ---------- */
+  #icones { position: absolute; top: 24px; left: 20px; display: grid; grid-template-columns: repeat(2, 92px); gap: 8px; }
+  .icone {
+    width: 92px; padding: 10px 4px 8px; border-radius: 6px; text-align: center;
+    cursor: pointer; border: 1px solid transparent;
+  }
+  .icone:hover { background: rgba(61,157,240,.12); border-color: rgba(61,157,240,.3); }
+  .icone svg { display: block; margin: 0 auto 6px; }
+  .icone .nom { font-size: 11.5px; color: var(--texte); line-height: 1.25; word-break: break-word; }
+
+  /* ---------- fenêtres ---------- */
+  .fenetre {
+    position: absolute; min-width: 300px; background: var(--fond2);
+    border: 1px solid var(--bord); border-radius: 7px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.55);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .fenetre.actif { border-color: var(--accent2); box-shadow: 0 18px 48px rgba(0,0,0,.7), 0 0 0 1px rgba(61,157,240,.25); }
+  .titre {
+    height: 32px; display: flex; align-items: center; padding: 0 10px; gap: 8px;
+    background: linear-gradient(#212b38, #1a222c); border-bottom: 1px solid var(--bord);
+    font-size: 12.5px; color: var(--texte); cursor: move;
+  }
+  .titre .fermer {
+    margin-left: auto; width: 18px; height: 18px; border-radius: 4px; border: none;
+    background: transparent; color: var(--texte2); cursor: pointer; font-size: 15px; line-height: 1;
+  }
+  .titre .fermer:hover { background: var(--erreur); color: #fff; }
+  .contenu { padding: 14px; overflow: auto; font-size: 13px; line-height: 1.55; }
+  .contenu h3 { margin: 0 0 10px; font-size: 13.5px; color: #fff; font-weight: 600; }
+  .contenu p { margin: 0 0 9px; color: var(--texte2); }
+
+  .grille { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
+  .carte {
+    background: var(--fond3); border: 1px solid var(--bord); border-radius: 6px; padding: 9px 11px;
+  }
+  .carte .cle { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--texte2); }
+  .carte .val { font-size: 13px; color: var(--texte); margin-top: 3px; }
+  .carte .val.autre { color: var(--texte2); font-style: italic; }
+
+  .terminal {
+    background: #05080b; color: #9fe3b0; font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; margin: 0; padding: 12px;
+  }
+  .terminal .invite { color: var(--accent); }
+
+  /* ---------- barre des tâches ---------- */
+  #taches {
+    position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; background: rgba(22,29,38,.88);
+    border: 1px solid var(--bord); border-radius: 10px; padding: 6px 8px;
+    backdrop-filter: blur(6px); z-index: 9100;
+  }
+  .tache {
+    display: flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 6px;
+    color: var(--texte2); font-size: 12px; cursor: pointer; border: 1px solid transparent;
+  }
+  .tache:hover { background: var(--fond3); color: var(--texte); }
+  .tache.ouverte { color: var(--texte); border-color: var(--bord); background: var(--fond3); }
+</style>
+</head>
+<body>
+
+<div id="barre">
+  <div id="marque">Nex<span>BSD</span></div>
+  <div class="menu" data-ouvre="commandes">Commandes</div>
+  <div class="menu" data-ouvre="systeme">Système</div>
+  <div class="droite">
+    <div class="pastille"><span class="point att"></span> annuaire</div>
+    <div class="pastille"><span class="point att"></span> partages</div>
+    <div class="pastille"><span class="point att"></span> pare-feu</div>
+    <div id="horloge">--:--</div>
+  </div>
+</div>
+
+<div id="demo">DONNÉES DE DÉMONSTRATION — ce bureau n'interroge encore aucun service. Les états affichés ne prouvent rien.</div>
+
+<div id="bureau">
+  <div id="fond"></div>
+
+  <div id="icones">
+    <div class="icone" data-ouvre="commandes">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#3d9df0" stroke-width="1.5">
+        <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 13h4M7 16h7"/>
+      </svg>
+      <div class="nom">Centre de<br>commandes</div>
+    </div>
+    <div class="icone" data-ouvre="fichiers">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#e0a33d" stroke-width="1.5">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      </svg>
+      <div class="nom">Partages</div>
+    </div>
+    <div class="icone" data-ouvre="terminal">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#3fbf7f" stroke-width="1.5">
+        <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/>
+      </svg>
+      <div class="nom">Terminal</div>
+    </div>
+    <div class="icone" data-ouvre="systeme">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#8fa0b3" stroke-width="1.5">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>
+      </svg>
+      <div class="nom">Système</div>
+    </div>
+  </div>
+</div>
+
+<div id="taches"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------------------------------------------------------------
+  // CONTENU DES FENÊTRES
+  // Tout ce qui est affiché ici est ÉCRIT EN DUR et étiqueté comme tel.
+  // Aucune valeur n'est présentée comme un résultat de mesure : le bandeau
+  // de démonstration le rappelle en permanence. Remplacer ces blocs par des
+  // appels réels est l'objet de l'étape suivante (voir docs/51 §5).
+  // ---------------------------------------------------------------------
+  var FENETRES = {
+    commandes: {
+      titre: "Centre de commandes",
+      largeur: 430,
+      html:
+        '<h3>État du système</h3>' +
+        '<p>Les quatre domaines que NexBSD doit savoir piloter. Les valeurs ci-dessous sont ' +
+        '<b>figées pour l\u2019instant</b> : elles décrivent ce que le bureau affichera quand les ' +
+        'services seront installés par l\u2019installeur.</p>' +
+        '<div class="grille">' +
+          '<div class="carte"><div class="cle">Annuaire</div><div class="val autre">non installé</div></div>' +
+          '<div class="carte"><div class="cle">Partages</div><div class="val autre">non installé</div></div>' +
+          '<div class="carte"><div class="cle">Pare-feu</div><div class="val autre">non activé</div></div>' +
+          '<div class="carte"><div class="cle">Identités</div><div class="val autre">locales seulement</div></div>' +
+        '</div>' +
+        '<p style="margin-top:12px">Ces quatre lignes correspondent aux acquis A-02, A-03, A-04 et A-06 ' +
+        'du registre. Tant qu\u2019elles affichent « non installé », le bureau ne ment pas.</p>'
+    },
+    fichiers: {
+      titre: "Partages",
+      largeur: 420,
+      html:
+        '<h3>Partages réseau</h3>' +
+        '<p>Aucun partage n\u2019est monté. Cette fenêtre lister a les partages annoncés par le serveur ' +
+        'Samba de NexBSD, une fois celui-ci installé et démarré.</p>' +
+        '<p><b>Ce que cette fenêtre ne fait pas encore :</b> monter, parcourir, ni ouvrir un fichier. ' +
+        'Elle n\u2019affiche volontairement aucune donnée inventée.</p>'
+    },
+    terminal: {
+      titre: "Terminal",
+      largeur: 470,
+      html:
+        '<pre class="terminal">' +
+        '<span class="invite">omrane@nexbsd:~ $</span> uname -s\n' +
+        'FreeBSD\n' +
+        '<span class="invite">omrane@nexbsd:~ $</span> cat /etc/nexbsd-version\n' +
+        '(sortie réelle non disponible : aucune image NexBSD n\u2019existe encore)\n' +
+        '<span class="invite">omrane@nexbsd:~ $</span> <span style="color:#5d6b7a">_</span>' +
+        '</pre>' +
+        '<p style="margin-top:10px">Ce terminal est une <b>image</b>, pas un terminal : il n\u2019exécute ' +
+        'rien. Un vrai terminal sera lancé comme programme séparé par la session.</p>'
+    },
+    systeme: {
+      titre: "Système",
+      largeur: 400,
+      html:
+        '<h3>À propos</h3>' +
+        '<div class="grille">' +
+          '<div class="carte"><div class="cle">Produit</div><div class="val">NexBSD</div></div>' +
+          '<div class="carte"><div class="cle">Version</div><div class="val autre">0.1 — non assemblée</div></div>' +
+          '<div class="carte"><div class="cle">Socle</div><div class="val">FreeBSD 15.1</div></div>' +
+          '<div class="carte"><div class="cle">Bureau</div><div class="val">couche C (WebKit)</div></div>' +
+        '</div>' +
+        '<p style="margin-top:12px">NexBSD remplace un serveur de fichiers NetWare : annuaire, ' +
+        'partages authentifiés, droits par groupes. Le socle est FreeBSD ; le produit, c\u2019est ce ' +
+        'qui est ajouté par-dessus et que l\u2019utilisateur voit.</p>'
+    }
+  };
+
+  var zone = document.getElementById("bureau");
+  var barreTaches = document.getElementById("taches");
+  var ouvertes = {};   // nom -> element
+  var decalage = 0;
+  var zMax = 100;
+
+  function creer(nom) {
+    var def = FENETRES[nom];
+    if (!def) { return; }
+
+    var f = document.createElement("div");
+    f.className = "fenetre actif";
+    f.style.width = def.largeur + "px";
+    f.style.zIndex = String(++zMax);
+
+    // position en cascade, sans sortir par la droite
+    var maxX = Math.max(20, window.innerWidth - def.largeur - 40);
+    var x = Math.min(120 + decalage * 26, maxX);
+    var y = 30 + decalage * 22;
+    decalage = (decalage + 1) % 6;
+    f.style.left = x + "px";
+    f.style.top = y + "px";
+
+    var t = document.createElement("div");
+    t.className = "titre";
+    t.appendChild(document.createTextNode(def.titre));
+
+    var bouton = document.createElement("button");
+    bouton.className = "fermer";
+    bouton.setAttribute("aria-label", "Fermer");
+    bouton.textContent = "\u00d7";
+    bouton.addEventListener("click", function (e) {
+      e.stopPropagation();
+      fermer(nom);
+    });
+    t.appendChild(bouton);
+
+    var c = document.createElement("div");
+    c.className = "contenu";
+    c.innerHTML = def.html;
+
+    f.appendChild(t);
+    f.appendChild(c);
+    zone.appendChild(f);
+
+    activer(f);
+    rendreTaches();
+
+    // --- déplacement à la souris (souris seulement : le bureau cible un PC) ---
+    var enCours = false, dx = 0, dy = 0;
+    t.addEventListener("mousedown", function (e) {
+      if (e.target === bouton) { return; }
+      enCours = true;
+      dx = e.clientX - f.offsetLeft;
+      dy = e.clientY - f.offsetTop;
+      activer(f);
+      e.preventDefault();
+    });
+    document.addEventListener("mousemove", function (e) {
+      if (!enCours) { return; }
+      var nx = e.clientX - dx;
+      var ny = e.clientY - dy;
+      nx = Math.max(0, Math.min(nx, window.innerWidth - f.offsetWidth));
+      ny = Math.max(58, Math.min(ny, window.innerHeight - 60));
+      f.style.left = nx + "px";
+      f.style.top = ny + "px";
+    });
+    document.addEventListener("mouseup", function () { enCours = false; });
+
+    f.addEventListener("mousedown", function () { activer(f); });
+
+    ouvertes[nom] = f;
+  }
+
+  function activer(f) {
+    var tous = document.querySelectorAll(".fenetre");
+    for (var i = 0; i < tous.length; i++) { tous[i].classList.remove("actif"); }
+    f.classList.add("actif");
+    f.style.zIndex = String(++zMax);
+  }
+
+  function fermer(nom) {
+    var f = ouvertes[nom];
+    if (!f) { return; }
+    f.parentNode.removeChild(f);
+    delete ouvertes[nom];
+    rendreTaches();
+  }
+
+  function ouvrir(nom) {
+    if (ouvertes[nom]) { activer(ouvertes[nom]); return; }
+    creer(nom);
+  }
+
+  function rendreTaches() {
+    barreTaches.innerHTML = "";
+    var noms = Object.keys(FENETRES);
+    for (var i = 0; i < noms.length; i++) {
+      var nom = noms[i];
+      var d = document.createElement("div");
+      d.className = "tache" + (ouvertes[nom] ? " ouverte" : "");
+      d.textContent = FENETRES[nom].titre;
+      (function (n) {
+        d.addEventListener("click", function () {
+          if (ouvertes[n]) { activer(ouvertes[n]); } else { ouvrir(n); }
+        });
+      })(nom);
+      barreTaches.appendChild(d);
+    }
+  }
+
+  // --- déclencheurs : icônes, menus ---
+  var decl = document.querySelectorAll("[data-ouvre]");
+  for (var i = 0; i < decl.length; i++) {
+    (function (el) {
+      el.addEventListener("dblclick", function () { ouvrir(el.getAttribute("data-ouvre")); });
+      el.addEventListener("click", function () { ouvrir(el.getAttribute("data-ouvre")); });
+    })(decl[i]);
+  }
+
+  // --- horloge ---
+  function horloge() {
+    var d = new Date();
+    var h = ("0" + d.getHours()).slice(-2);
+    var m = ("0" + d.getMinutes()).slice(-2);
+    var j = ("0" + d.getDate()).slice(-2);
+    var mo = ("0" + (d.getMonth() + 1)).slice(-2);
+    document.getElementById("horloge").textContent = j + "/" + mo + "  " + h + ":" + m;
+  }
+  horloge();
+  setInterval(horloge, 15000);
+
+  rendreTaches();
+  ouvrir("commandes");   // on ouvre le centre de commandes au démarrage
+})();
+</script>
+</body>
+</html>
