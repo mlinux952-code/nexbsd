@@ -814,3 +814,86 @@ Seule la prochaine exécution GitHub le dira. Rien n'est déclaré acquis.
 `mdp-de-laboratoire-a-remplacer` en clair, alors que R-15 interdit tout mot de passe dans un dépôt
 public. Cirrus étant mort, le fichier est **supprimé**, et le workflow GitHub lit désormais un
 secret (`secrets.NEXBSD_LDAP_ROOTPW`) ou tire un mot de passe au hasard — sans jamais l'afficher.
+
+---
+
+## C-35 — 2026-10-28 — exécution #3 : le vrai problème était l'INFORMATION, pas seulement le code
+
+**Verbatim du responsable (page Actions, exécution #3) :**
+
+```
+NexBSD  C-34 + correctif CI v3 : l execution 2 prouve que la VM DEMARRE ; la …  #3
+
+CONTRÔLES — delta, registre, simulation
+failed 6 minutes ago in 1m 27s
+4s / 10s / 1m 9s
+Run vmactions/freebsd-vm@v1
+  Configuration AnyVM.org / Installing dependencies / Cache / Permissions
+  Starting VM with anyvm.org / Save Cache (Background)
+  Skip cache save (cache was restored or directory missing)
+  SSH Config / Syncing source code to VM / Creating workdir symlink
+  Run 'prepare' in VM
+  Run 'run' in VM
+  Error: ssh exited with code 1
+
+Annotations 1 error
+Tests du bureau
+ssh exited with code 1
+BUREAU — tests de session et d'authentification
+failed 1 minute ago in 1m 2s
+1s / 2s / 56s
+… Starting VM with anyvm.org … Syncing source code to VM
+Creating workdir symlink
+Run 'prepare' in VM
+```
+
+**Ce que cette exécution prouve de bon :**
+
+1. **`pkg` et `git` s'installent** dans la VM : dans CONTRÔLES, l'étape `prepare` est franchie et
+   `run` est atteinte. Le correctif C-34 a donc bien agi sur l'installation des paquets.
+2. Plus aucun avertissement « Node.js 20 is deprecated » : `actions/checkout@v5` est accepté
+   (les annotations ne contiennent plus qu'une erreur).
+3. La durée de la tâche passe de 38 s à 1 min 27 s : il se passe réellement quelque chose dans
+   la machine, au lieu d'un échec immédiat.
+
+**Ce que cette exécution prouve de mauvais :**
+
+- CONTRÔLES échoue **dans** `run` : un des trois garde-fous sort en code ≠ 0, et **on ne sait pas
+  lequel** — le bloc `run` est un seul script, le premier échec masque les deux autres.
+- BUREAU échoue **encore au `prepare`** : `pkg install -y node22` ne va pas au bout.
+
+**Le vrai problème, nommé :** depuis quatre exécutions, le seul texte disponible est
+`Error: ssh exited with code 1`. La cause exacte n'est jamais remontée, parce que le journal
+détaillé vit deux niveaux plus bas (le bloc `run` est dépliable, il ne l'était pas). On corrigeait
+donc à l'aveugle, ce qui est une faute de méthode — pas une faute de code.
+
+**Deux mécanismes de l'action, lus dans sa documentation le 2026-10-28, règlent ce problème :**
+
+| Mécanisme | Ce qu'il apporte |
+|---|---|
+| `shell: freebsd {0}` — la VM démarre **une fois** (`DÉMARRER LA VM`), puis chaque étape suivante s'exécute **dedans** | chaque garde-fou devient une **étape nommée** : « 1/3 — delta », « 2/3 — registre », « 3/3 — simulation ». Un rond rouge nomme le coupable, sans déplier quoi que ce soit |
+| `copyback` (actif par défaut avec `rsync`) : les fichiers créés **dans** la VM reviennent sur l'hôte | la VM écrit `rapport-ci.txt`, une dernière étape l'affiche dans le **résumé de la page d'exécution** : le texte de l'erreur devient lisible **en haut de page** |
+
+**Correctifs v4 :** 3 étapes séparées pour CONTRÔLES, 3 pour BUREAU (dont l'installation de `node`
+isolée et prouvée par `node --version`), et dans chaque tâche une étape finale « Rapport lisible »
+qui copie `rapport-ci.txt` dans le résumé GitHub.
+
+**En plus :** `git config --global --add safe.directory "$PWD"` ajouté aux scripts 70 et 72, car git
+refuse par sécurité un dépôt appartenant à un autre utilisateur (« dubious ownership ») — cas
+classique quand on est root dans une VM sur des fichiers copiés.
+
+**Note versée au dossier — `cirrus-ui.com` n'est PAS Cirrus CI.** Le responsable a signalé que
+« cirrus est de retour » : le site `https://cirrus-ui.com/` répond bien **HTTP 200**, mais c'est un
+**framework CSS/SCSS** (« Cirrus CSS », par Stanley Lim, 17,8 Ko, `yarn add cirrus-ui`). Mesure du
+même jour, depuis ce banc :
+
+```
+200  https://cirrus-ui.com/      <- un framework CSS, sans rapport avec la CI
+000  https://cirrus-ci.com/      <- le service d'intégration continue : TOUJOURS MORT
+000  https://api.cirrus-ci.com/  <- TOUJOURS MORT
+000  https://cirrus-ci.org/      <- TOUJOURS MORT
+200  https://github.com/freebsd  <- le réseau fonctionne
+```
+
+Un nom qui se ressemble n'est pas la même chose. **La bascule vers GitHub Actions reste valable**,
+et ne doit pas être défaite sur la foi d'une homonymie. À ne pas retester avant plusieurs jours.

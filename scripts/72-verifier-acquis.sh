@@ -26,7 +26,12 @@ CSV="matrices/acquis.csv"
 
 # --- C-34 (2026-10-28) : la VM FreeBSD n'a pas git (systeme de base).
 # Sans ce filet, chaque cible « conforme » etait declaree ABSENTE dans la CI. ---
+SUIVI_GIT=non
 if command -v git >/dev/null 2>&1 && [ -d .git ]; then
+    git config --global --add safe.directory "$PWD" >/dev/null 2>&1 || true
+    git rev-parse --git-dir >/dev/null 2>&1 && SUIVI_GIT=oui
+fi
+if [ "$SUIVI_GIT" = oui ]; then
     MODE_SUIVI="git"
     suit_un() { git ls-files --error-unmatch "$1" >/dev/null 2>&1 ; }
 else

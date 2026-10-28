@@ -64,7 +64,14 @@ cd "$DEPOT" || { ko "depot introuvable"; exit 1; }
 # Lance dans la VM de la CI, ce script comptait donc « 0 fichier suivi » et criait
 # « suppression accidentelle probable » alors que rien n'avait disparu.
 # On ne supprime pas le controle : on prend la source de verite disponible, et on DIT laquelle.
+SUIVI_GIT=non
 if command -v git >/dev/null 2>&1 && [ -d .git ]; then
+  # git refuse par securite un depot appartenant a un autre utilisateur ("dubious ownership").
+  # Dans une VM de CI on peut etre root sur des fichiers copies : on l'autorise explicitement.
+  git config --global --add safe.directory "$PWD" >/dev/null 2>&1 || true
+  git rev-parse --git-dir >/dev/null 2>&1 && SUIVI_GIT=oui
+fi
+if [ "$SUIVI_GIT" = oui ]; then
   MODE_SUIVI="git — fichiers suivis par le depot (le plus strict)"
   suivis()   { git ls-files -- "$@" ; }
   suit_un()  { git ls-files --error-unmatch "$1" >/dev/null 2>&1 ; }

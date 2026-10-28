@@ -79,6 +79,32 @@ reçoit déjà nos `push`.
 | **les contrôles passent dans la VM** | ❌ **pas encore** — cause trouvée (C-34), correctif non testé |
 | **une image a été produite** | ❌ **JAMAIS** |
 
+### 5 ter. Exécution #3 — le problème était l'information (C-35)
+
+| | #2 | #3 |
+|---|---|---|
+| durée | 38 s / 53 s | **1 min 27 s / 1 min 2 s** |
+| `prepare` (pkg) | échoue (BUREAU) | **réussit** (CONTRÔLES) |
+| où ça casse | `run` et `prepare` | `run` (CONTRÔLES), `prepare` (BUREAU) |
+| ce qu'on sait de la cause | rien de plus | **rien de plus** |
+
+`Error: ssh exited with code 1` est le seul texte reçu depuis quatre exécutions. Le journal détaillé
+existe, mais il est **deux niveaux plus bas** que ce qui était copié. Corriger sans ce texte, c'est
+corriger à l'aveugle — et c'est précisément ce qui a coûté quatre allers-retours.
+
+**v4 emploie deux mécanismes de l'action, vérifiés dans sa documentation :**
+
+1. `shell: freebsd {0}` : **une** VM démarre, puis chaque contrôle est une **étape nommée**.
+   « 1/3 — delta », « 2/3 — registre », « 3/3 — simulation » : le rond rouge désigne le coupable.
+2. `copyback` (défaut avec rsync) : la VM écrit `rapport-ci.txt`, qui revient sur l'hôte, et une
+   dernière étape l'affiche dans le **résumé de la page d'exécution** — lisible sans rien déplier.
+
+### 5 quater. Une homonymie à ne pas confondre
+
+`https://cirrus-ui.com/` répond **200** : c'est **Cirrus CSS**, un framework de styles.
+`https://cirrus-ci.com/`, `api.cirrus-ci.com` et `cirrus-ci.org` répondent **000** (TLS coupée).
+La bascule vers GitHub Actions reste donc la bonne route.
+
 ### 5 bis. Exécution #2 — le progrès est mesurable
 
 | | Exécution #1 | Exécution #2 |

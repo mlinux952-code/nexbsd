@@ -1,35 +1,36 @@
 # NexBSD — chaîne de production sur GitHub Actions, avec une VRAIE VM FreeBSD
 #
-# HISTORIQUE DES EXÉCUTIONS (aucune n'est verte, aucune n'est cachée) :
+# ═══════════════════════════════════════════════════════════════════════════════
+#  CE QUI A CHANGÉ EN v4 (2026-10-28) — et pourquoi
+# ═══════════════════════════════════════════════════════════════════════════════
 #
-#  #1 (28/10, 1 min 04 s) — 3 tâches en « ssh exited with code 1 ». La VM n'a JAMAIS démarré.
-#      Cause : `ubuntu-latest` a migré vers Ubuntu 26 le 19/10/2026 (avertissement présent
-#      dans le log). Correctif #2 : `ubuntu-24.04` ÉPINGLÉ + `release: "15.1"`.
+#  Nous avions un problème d'INFORMATION, pas seulement de code : à chaque
+#  exécution, le responsable ne pouvait rapporter que la liste des étapes
+#  (« Run 'run' in VM » … « Error: ssh exited with code 1 »), jamais le TEXTE
+#  de l'erreur. On corrigeait donc à l'aveugle. C'est fini.
 #
-#  #2 (28/10, 38 s et 53 s) — PROGRÈS RÉEL : les étapes « Starting VM with anyvm.org »,
-#      « Syncing source code to VM » et « Creating workdir symlink » passent. La VM DÉMARRE.
-#      L'échec est maintenant DANS la machine, sur nos commandes. Deux tâches rouges :
-#        · CONTRÔLES — échoue à « Run 'run' in VM ».
-#        · BUREAU    — échoue dès « Run 'prepare' in VM ».
+#  La documentation de l'action (lue le 2026-10-28) décrit deux mécanismes :
 #
-#  CAUSE TROUVÉE (C-34), et elle est simple : **git n'est pas dans le système de base
-#  FreeBSD**. Or `scripts/70-verifier-delta.sh` comptait les fichiers avec `git ls-files`.
-#  Dans la VM, cette commande n'existe pas : le script comptait 0 fichier au lieu de 33 et
-#  criait « suppression accidentelle probable » alors que rien n'était perdu. Les garde-fous
-#  étaient justes ; c'est leur moyen de comptage qui n'existait pas dans la machine.
-#  Deuxième cause : `pkg` n'est pas amorcé sur une VM FreeBSD neuve — `pkg install node`
-#  échoue donc dans `prepare`, d'où l'échec immédiat de la tâche BUREAU.
+#   1. `shell: freebsd {0}` — UNE SEULE VM démarre (étape « DÉMARRER LA VM »),
+#      puis CHAQUE étape suivante s'exécute DANS cette même VM. Conséquence :
+#      chaque contrôle devient une étape nommée et séparée. Le rond vert/rouge
+#      suffit alors à savoir QUEL contrôle échoue, sans rien déplier.
 #
-#  CORRECTIFS DE CETTE VERSION (v3) :
-#   1. scripts/70 et scripts/72 : si git est absent, on compte les fichiers du DISQUE, et le
-#      script DIT lequel des deux modes il emploie. Vérifié en laboratoire sans git : 70 → 0,
-#      72 → 0, deltas identiques (33 fichiers).
-#   2. `prepare` amorce pkg (`pkg bootstrap`) puis installe git (CONTRÔLES) et node (BUREAU).
-#   3. Le mot de passe d'annuaire n'est PLUS écrit dans le dépôt (R-15, dépôt public) :
-#      il vient d'un secret GitHub, sinon il est tiré au hasard et jamais affiché.
-#   4. `actions/checkout@v4` -> `@v5` : supprime l'avertissement « Node.js 20 is deprecated ».
+#   2. `copyback` (actif par défaut avec rsync) — les fichiers créés DANS la VM
+#      reviennent sur la machine hôte à la fin de chaque étape. Donc la VM écrit
+#      `rapport-ci.txt`, et une dernière étape l'affiche dans le RÉSUMÉ de la
+#      page d'exécution : lisible en haut de page, sans déplier un seul journal.
 #
-# ÉTAT : cette version n'a JAMAIS été exécutée.
+#  C'est exactement l'information qui manquait depuis quatre exécutions.
+#
+#  HISTORIQUE (aucune exécution verte, aucune cachée) :
+#   #1  1 min 04 s — la VM ne démarrait pas (`ubuntu-latest` migré vers Ubuntu 26)
+#   #2  38 s / 53 s — la VM DÉMARRE ; échec dû à `git` absent de FreeBSD (C-34)
+#   #3  1 min 27 s / 1 min 02 s — prepare passe (pkg + git s'installent) ; l'échec
+#      est maintenant DANS `run`, et BUREAU échoue encore au prepare (node).
+#      → on ne devine plus : on instrumente.
+#
+#  ÉTAT : cette version n'a JAMAIS été exécutée.
 
 name: NexBSD
 
@@ -40,36 +41,57 @@ on:
 
 jobs:
 
-  # ---------------------------------------------------------------------------
-  # 0. SONDE — le strict minimum + 3 lignes de diagnostic.
-  #    Aucun script du dépôt n'est appelé : si CETTE tâche échoue, la cause est la VM.
-  #    Les 3 lignes ajoutées répondent d'elles-mêmes à « pourquoi les autres échouent ? ».
-  # ---------------------------------------------------------------------------
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 0. SONDE — la VM démarre-t-elle, et avec quoi ? Ne lance aucun script du
+  #    dépôt. Écrit ses réponses dans le rapport lisible en haut de page.
+  # ═══════════════════════════════════════════════════════════════════════════
   sonde:
-    name: "SONDE — la VM FreeBSD démarre-t-elle ?"
+    name: "SONDE — la VM FreeBSD et son environnement"
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     continue-on-error: true
     steps:
       - uses: actions/checkout@v5
-      - name: "FreeBSD 15.1 : cinq commandes, rien d'autre"
+
+      - name: "DÉMARRER LA VM FreeBSD 15.1"
+        id: vm
         uses: vmactions/freebsd-vm@v1
         with:
           release: "15.1"
-          run: |
+
+      - name: "SONDE — ce que la machine contient réellement"
+        shell: freebsd {0}
+        run: |
+          {
+            echo "### SONDE — environnement de la VM"
+            echo ""
+            echo '```'
             uname -a
             freebsd-version -ku
-            echo "--- git est-il dans le systeme de base ? ---"
-            command -v git || echo "GIT ABSENT — c'est normal, et c'est la cause de l'echec #2"
-            echo "--- le depot est-il arrive complet dans la VM ? ---"
-            echo "scripts : $(ls scripts | wc -l) fichiers"
-            if [ -d .git ]; then echo ".git present"; else echo ".git ABSENT (le mode disque sera utilise)"; fi
-            echo "--- pkg est-il amorce ? ---"
-            command -v pkg || echo "PKG NON AMORCE — cause de l'echec de la tache BUREAU"
+            echo "utilisateur : $(id -un) (uid $(id -u))"
+            echo "repertoire  : $(pwd)"
+            echo ""
+            echo "git  : $(command -v git || echo 'ABSENT (c est normal : git n est pas dans FreeBSD de base)')"
+            echo ".git : $([ -d .git ] && echo 'present dans la copie' || echo 'ABSENT de la copie')"
+            echo "pkg  : $(command -v pkg || echo 'NON AMORCE (il faut pkg bootstrap)')"
+            echo "node : $(command -v node || echo 'ABSENT (a installer par pkg)')"
+            echo ""
+            echo "fichiers dans fork/    : $(find fork -type f 2>/dev/null | wc -l | tr -d ' ') (attendu 33)"
+            echo "scripts en fork/bureau : $(find fork/bureau -type f 2>/dev/null | wc -l | tr -d ' ')"
+            echo "espace libre /usr     : $(df -h /usr | awk 'NR==2 {print $4}')"
+            echo '```'
+          } | tee rapport-ci.txt
 
-  # ---------------------------------------------------------------------------
-  # 1. CONTRÔLES — delta, registre, simulation. Aucune construction.
-  # ---------------------------------------------------------------------------
+      - name: "Rapport lisible (en haut de la page, sans rien déplier)"
+        if: always()
+        run: |
+          echo "## NexBSD — rapport de la SONDE" >> "$GITHUB_STEP_SUMMARY"
+          cat rapport-ci.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "_Aucun rapport : la VM n'a pas démarré._" >> "$GITHUB_STEP_SUMMARY"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 1. CONTRÔLES — trois garde-fous, TROIS ÉTAPES SÉPARÉES dans la même VM.
+  #    Un rond rouge nomme directement le garde-fou en cause.
+  # ═══════════════════════════════════════════════════════════════════════════
   controles:
     name: "CONTRÔLES — delta, registre, simulation"
     runs-on: ubuntu-24.04
@@ -77,27 +99,52 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: "Contrôles dans une vraie VM FreeBSD 15.1"
+      - name: "DÉMARRER LA VM FreeBSD 15.1"
+        id: vm
         uses: vmactions/freebsd-vm@v1
         with:
           release: "15.1"
-          prepare: |
-            env ASSUME_ALWAYS_YES=yes pkg bootstrap -f
-            pkg install -y git
-            git --version
-          run: |
-            uname -a
-            freebsd-version -ku
-            echo "--- 1. le delta du produit est-il intact ? ---"
-            sh scripts/70-verifier-delta.sh
-            echo "--- 2. le registre des acquis est-il conforme ? ---"
-            sh scripts/72-verifier-acquis.sh
-            echo "--- 3. la chaîne de production est-elle simulable ? ---"
-            sh scripts/74-produire-image.sh --simulation
 
-  # ---------------------------------------------------------------------------
-  # 2. BUREAU — les 31 cas de test, sur FreeBSD.
-  # ---------------------------------------------------------------------------
+      - name: "1/3 — le delta du fork est-il intact ? (script 70)"
+        shell: freebsd {0}
+        run: |
+          sh scripts/70-verifier-delta.sh > /tmp/r.txt 2>&1; CODE=$?
+          { echo "### 1/3 — delta du fork — code $CODE"
+            grep -E "mode de comptage|fichiers comptes|VERDICT|\[KO\]" /tmp/r.txt | head -20
+            echo ""; } >> rapport-ci.txt
+          cat /tmp/r.txt
+          exit $CODE
+
+      - name: "2/3 — le registre des acquis est-il conforme ? (script 72)"
+        shell: freebsd {0}
+        run: |
+          sh scripts/72-verifier-acquis.sh > /tmp/r.txt 2>&1; CODE=$?
+          { echo "### 2/3 — registre des acquis — code $CODE"
+            grep -E "mode de verification|VERDICT|\[KO\]" /tmp/r.txt | head -20
+            echo ""; } >> rapport-ci.txt
+          cat /tmp/r.txt
+          exit $CODE
+
+      - name: "3/3 — la production est-elle simulable ? (script 74 --simulation)"
+        shell: freebsd {0}
+        run: |
+          sh scripts/74-produire-image.sh --simulation > /tmp/r.txt 2>&1; CODE=$?
+          { echo "### 3/3 — simulation de production — code $CODE"
+            grep -E "SIMULATION|\[KO\]|ERREUR" /tmp/r.txt | head -20
+            echo ""; } >> rapport-ci.txt
+          cat /tmp/r.txt
+          exit $CODE
+
+      - name: "Rapport lisible (en haut de la page, sans rien déplier)"
+        if: always()
+        run: |
+          echo "## NexBSD — CONTRÔLES dans une vraie VM FreeBSD 15.1" >> "$GITHUB_STEP_SUMMARY"
+          cat rapport-ci.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "_Aucun rapport produit._" >> "$GITHUB_STEP_SUMMARY"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 2. BUREAU — installation de node isolée, puis les tests, étape par étape.
+  #    L'échec #3 venait du `prepare` : on le transforme en étape visible.
+  # ═══════════════════════════════════════════════════════════════════════════
   bureau:
     name: "BUREAU — tests de session et d'authentification"
     runs-on: ubuntu-24.04
@@ -105,23 +152,55 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: "Tests du bureau"
+      - name: "DÉMARRER LA VM FreeBSD 15.1"
+        id: vm
         uses: vmactions/freebsd-vm@v1
         with:
           release: "15.1"
-          prepare: |
-            env ASSUME_ALWAYS_YES=yes pkg bootstrap -f
-            pkg install -y node22
-          run: |
-            node --version
-            echo "--- logique de session (17 cas) ---"
-            node fork/bureau/tester-session.js
-            echo "--- authentification (14 cas, avec un faux su) ---"
-            sh fork/bureau/tester-authentification.sh
 
-  # ---------------------------------------------------------------------------
+      - name: "1/3 — installer node (pkg), et le prouver"
+        shell: freebsd {0}
+        run: |
+          { echo "### 1/3 — installation de node"
+            echo '```'
+            env ASSUME_ALWAYS_YES=yes pkg bootstrap -f 2>&1 | tail -3; echo "bootstrap : code $?"
+            pkg install -y node22 2>&1 | tail -8; echo "install node22 : code $?"
+            echo "node : $(command -v node || echo ABSENT)"
+            command -v node >/dev/null 2>&1 && node --version
+            echo '```'
+            echo ""; } > /tmp/r.txt 2>&1
+          cat /tmp/r.txt >> rapport-ci.txt; cat /tmp/r.txt
+          command -v node >/dev/null 2>&1 || { echo "::error::node n a pas pu etre installe — les 17 cas JS ne peuvent pas tourner"; exit 1; }
+
+      - name: "2/3 — 17 cas de logique de session (node)"
+        shell: freebsd {0}
+        run: |
+          node fork/bureau/tester-session.js > /tmp/r.txt 2>&1; CODE=$?
+          { echo "### 2/3 — session (17 cas) — code $CODE"
+            tail -25 /tmp/r.txt
+            echo ""; } >> rapport-ci.txt
+          cat /tmp/r.txt
+          exit $CODE
+
+      - name: "3/3 — 14 cas d'authentification (sh)"
+        shell: freebsd {0}
+        run: |
+          sh fork/bureau/tester-authentification.sh > /tmp/r.txt 2>&1; CODE=$?
+          { echo "### 3/3 — authentification (14 cas) — code $CODE"
+            tail -25 /tmp/r.txt
+            echo ""; } >> rapport-ci.txt
+          cat /tmp/r.txt
+          exit $CODE
+
+      - name: "Rapport lisible (en haut de la page, sans rien déplier)"
+        if: always()
+        run: |
+          echo "## NexBSD — BUREAU dans une vraie VM FreeBSD 15.1" >> "$GITHUB_STEP_SUMMARY"
+          cat rapport-ci.txt >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || echo "_Aucun rapport produit._" >> "$GITHUB_STEP_SUMMARY"
+
+  # ═══════════════════════════════════════════════════════════════════════════
   # 3. IMAGE — la production réelle. Déclenchement MANUEL uniquement.
-  # ---------------------------------------------------------------------------
+  # ═══════════════════════════════════════════════════════════════════════════
   image:
     name: "IMAGE — buildworld + configuration + media"
     runs-on: ubuntu-24.04
@@ -156,7 +235,6 @@ jobs:
             [ "${GO:-0}" -ge 20 ] || { echo "ERREUR : ${GO} Go libres seulement, 20 Go minimum."; exit 1; }
 
             # R-15 : AUCUN mot de passe dans ce fichier. Le dépôt est public.
-            # Priorité au secret GitHub ; sinon tirage aléatoire local, jamais affiché.
             PW_ROOT="${{ secrets.NEXBSD_LDAP_ROOTPW }}"
             PW_BIND="${{ secrets.NEXBSD_LDAP_BINDPW }}"
             [ -n "$PW_ROOT" ] || PW_ROOT=$(openssl rand -hex 16)
