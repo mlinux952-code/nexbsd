@@ -1235,3 +1235,57 @@ ailleurs) : l'information était là, l'assemblage ne la suivait pas.
 
 **Statut : écrit, syntaxiquement validé, JAMAIS EXÉCUTÉ.** La prochaine tâche IMAGE le mettra à
 l'épreuve. On ne le compte pas comme acquis.
+
+---
+
+## C-40 — 2026-10-28 — exécution #10 : les étapes 1/4 et 2/4 **passent** ; 3/4 tombe en DEUX MINUTES
+
+**Ce qui a été lu, non pas dans un résumé mais dans l'API GitHub** (`/actions/runs/{id}/jobs`),
+l'exécution #10 étant un `workflow_dispatch` lancé par le responsable sur le commit `3ee18dd2` :
+
+```
+IMAGE — buildworld + configuration + media            failure
+  debut 2026-10-28T22:01:55Z  ->  fin 2026-10-28T22:05:19Z
+
+  success  Set up job
+  success  Run actions/checkout@v5
+  success  Libérer de l'espace disque
+  success  DÉMARRER LA VM FreeBSD 15.1 (4 CPU, 8 Go)
+  success  1/4 — la machine peut-elle construire ? (30 secondes)
+  success  2/4 — télécharger, VÉRIFIER l'empreinte, extraire src.txz
+  failure  3/4 — buildworld + buildkernel + release (plusieurs heures)
+  success  4/4 — empreintes des fichiers produits
+```
+
+**Trois faits, et deux bonnes nouvelles.**
+
+1. **L'étape 2/4 passe.** Le correctif C-37 est donc prouvé en conditions réelles : l'empreinte
+   `cf5762da53fd52e1…185a89e1` est acceptée, `src.txz` est téléchargé et extrait. C'était l'échec
+   de l'exécution #7 ; il est **fermé**.
+2. **L'étape 1/4 passe** : la VM satisfait RAM ≥ 7 Go, disque ≥ 20 Go, `fetch` présent.
+3. **L'étape 3/4 échoue en moins de deux minutes.** Une compilation mondiale ne peut pas échouer
+   si vite *pendant* la compilation : elle échoue **avant**, sur un problème de **structure**
+   (arbre incomplet, cible absente, outil manquant). Aucune heure de calcul n'a donc été perdue.
+
+**Ce que la #10 n'a pas pu montrer :** elle a été lancée sur `3ee18dd2`, donc avec l'**ancienne**
+chaîne (`make release`), celle qui ne produisait pas NexBSD (C-39). Ce chemin-là est already
+abandonné : le commit suivant le remplace.
+
+**Correctifs (C-40) :**
+
+1. **Nouvelle étape `2bis — pré-vol de la construction (10 secondes)`** : elle vérifie que les
+   cinq cibles (`buildworld`, `buildkernel`, `installworld`, `distribution`, `installkernel`)
+   existent bien dans le `Makefile` de l'arbre, que `make`, `makefs`, `mkimg`, `sha256` et `fetch`
+   sont présents, que `NEXBSD_L1` est dans l'arbre et que l'overlay est là. Un défaut de structure
+   est ainsi annoncé **en dix secondes**, au lieu d'être découvert au milieu d'un journal.
+2. **Le journal complet de la construction est conservé.** Il est écrit **dans l'espace de
+   travail** (`build.log`), donc `copyback` le ramène sur l'hôte, et il est joint à l'artefact :
+   on pourra le **télécharger** et le lire en entier, même après la mort de la VM.
+3. En cas d'échec, **les 60 dernières lignes** sont affichées dans le journal de l'étape, et le
+   nombre total de lignes du journal est indiqué.
+
+**Enfin, un changement de méthode majeur pour la suite du projet :** le dépôt étant **public**
+(`visibility: public`, vérifié), l'API GitHub permet de lire moi-même les exécutions, les tâches et
+les étapes. Le responsable n'a plus à copier des pages : le diagnostic se fait côté outil, et les
+échecs sont vus **avant** qu'il ait à les signaler. C'est la fin d'un goulot d'étranglement qui a
+coûté plusieurs tours.

@@ -334,6 +334,32 @@ jobs:
       # construction, PUIS à l'application de la configuration NexBSD dans le système,
       # puis au média. C-39 : l'ancienne chaîne appelait `make release`, qui produit un
       # média du SOCLE sans fork/overlay/ — l'image aurait été FreeBSD, pas NexBSD.
+      # C-40 (2026-10-28) : l'exécution #10 a échoué ici en DEUX MINUTES, pas en six heures.
+      # Un échec aussi rapide ne vient pas de la compilation : il vient de la STRUCTURE (arbre
+      # incomplet, cible absente, outil manquant). Un pré-vol de dix secondes le dit avant de
+      # lancer quoi que ce soit, au lieu de le découvrir au milieu du journal.
+      - name: "2bis — pré-vol de la construction (10 secondes)"
+        shell: freebsd {0}
+        run: |
+          PRE=ok
+          for cible in buildworld buildkernel installworld distribution installkernel; do
+            if grep -q "^$cible:" /usr/obj/nexbsd-src/Makefile 2>/dev/null; then
+              echo "cible $cible : presente"
+            else
+              echo "cible $cible : ABSENTE du Makefile — l'arbre source est incomplet"; PRE=echec
+            fi
+          done
+          for outil in make makefs mkimg sha256 fetch; do
+            command -v "$outil" >/dev/null 2>&1 && echo "outil $outil : $(command -v $outil)" \
+              || { echo "outil $outil : ABSENT"; PRE=echec; }
+          done
+          [ -f /usr/obj/nexbsd-src/sys/amd64/conf/NEXBSD_L1 ] \
+            && echo "NEXBSD_L1 : present dans l'arbre" \
+            || { echo "NEXBSD_L1 : ABSENT de l'arbre"; PRE=echec; }
+          [ -f fork/70-appliquer-overlay.sh ] && echo "overlay : present" || { echo "overlay : ABSENT"; PRE=echec; }
+          [ "$PRE" = ok ] || { echo "::error::pre-vol en echec — voir ci-dessus"; exit 1; }
+          echo "pre-vol : tout est en place"
+
       - name: "3/4 — construction + assemblage NexBSD (plusieurs heures)"
         shell: freebsd {0}
         run: |
@@ -353,15 +379,18 @@ jobs:
           NEXBSD_LDAP_ROOTPW="$PW_ROOT" \
           NEXBSD_LDAP_BINDPW="$PW_BIND" \
             sh scripts/74-produire-image.sh \
-              --source /usr/obj/nexbsd-src --sortie images --obj /usr/obj > /tmp/build.log 2>&1
+              --source /usr/obj/nexbsd-src --sortie images --obj /usr/obj > build.log 2>&1
           CODE=$?
+          # build.log est ecrit DANS l espace de travail : copyback le ramene sur l hote a la fin
+          # de l etape, et il sera joint a l artefact. Le journal complet survit donc a la VM.
 
           { echo "### 3/4 — construction — code $CODE"
-            tail -40 /tmp/build.log
+            echo "taille du journal : $(wc -l < build.log 2>/dev/null || echo 0) lignes"
+            tail -40 build.log
             echo ""; } >> rapport-ci.txt
-          # tout est affiché dans le journal de l'étape, pour que le responsable n'ait pas
-          # à chercher : les 40 dernières lignes, puis le manifeste s'il existe.
-          tail -40 /tmp/build.log
+          # les 60 dernières lignes sont affichées dans le journal de l'étape : sur un échec,
+          # c'est là qu'est la raison, sans rien déplier d'autre.
+          tail -60 build.log
           [ -f images/MANIFESTE-*.txt ] && cat images/MANIFESTE-*.txt
           exit $CODE
 
@@ -392,6 +421,8 @@ jobs:
         uses: actions/upload-artifact@v5
         with:
           name: nexbsd-images
-          path: images/**
-          if-no-files-found: warn
+          path: |
+            images/**
+            build.log
+          if-no-files-found: ignore
           retention-days: 30
