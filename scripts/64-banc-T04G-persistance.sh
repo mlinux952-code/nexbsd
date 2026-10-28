@@ -30,8 +30,8 @@ info() { echo "  ...     $*"; }
 SUFFIXE="dc=nexbsd,dc=local"
 ETAT="/root/nexbsd-t04g-etat.txt"
 PHASE="${1:-avant}"
-MDP_OMRANE="omranelab"
-MDP_SARA="saralab"
+MDP_OMRANE="${NEXBSD_MDP_OMRANE:?definir NEXBSD_MDP_OMRANE}"
+MDP_SARA="${NEXBSD_MDP_SARA:?definir NEXBSD_MDP_SARA}"
 
 echo "############## T-04-G : persistance apres redemarrage ##############"
 echo "# date : $(date -u +%FT%TZ) ; hote : $(uname -sr) ; phase : $PHASE"

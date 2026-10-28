@@ -86,11 +86,22 @@ etape "2. aucun secret de laboratoire ne doit partir dans une image"
 # On ignore les LIGNES DE COMMENTAIRE (# et ;) : citer un mot de passe pour expliquer l'histoire
 # du banc n'est pas le faire fuiter. On ne cherche donc que dans les lignes actives.
 # (Leçon M-10 : un garde-fou qui crie à tort finit par être ignoré.)
+# 2026-10-28 : le controle ne couvrait QUE fork/. Il a donc laisse passer des mots de passe en
+# clair dans scripts/60, 62, 63, 64, 65 et tests/harnais.sh pendant quatre jours (constat C-31).
+# Un garde-fou qui ne regarde qu'un dossier protege un dossier, pas le produit ni son depot.
+# Desormais : fork/ + scripts/ + tests/*.sh. Les COMPTES RENDUS (tests/results/) sont exclus
+# volontairement : ce sont des preuves verbatim, on ne les reecrit pas.
+# Les motifs sont ASSEMBLES a l execution pour que ce script ne se detecte pas lui-meme.
+# (2026-10-28 : a la premiere version elargie, le garde-fou s'accusait lui-meme et bloquait tout.
+#  Un garde-fou qui crie a tort finit par etre desactive : lecon M-10 appliquee.)
+MOTIF1="admin""secret"
+MOTIF2="omrane""lab"
+MOTIF3="sara""lab"
 FUITE=0
-for f in $(find "$ICI/fork" -type f 2>/dev/null); do
-    if grep -vE '^[[:space:]]*(#|;)' "$f" 2>/dev/null | grep -qE -e 'adminsecret' -e 'omranelab' -e 'saralab'; then
+for f in $(find "$ICI/fork" "$ICI/scripts" -type f 2>/dev/null) $(ls "$ICI"/tests/*.sh 2>/dev/null); do
+    if grep -vE '^[[:space:]]*(#|;)' "$f" 2>/dev/null | grep -qE -e "$MOTIF1" -e "$MOTIF2" -e "$MOTIF3"; then
         ko "mot de passe de laboratoire dans une ligne ACTIVE : $f"
-        grep -vE '^[[:space:]]*(#|;)' "$f" | grep -nE -e 'adminsecret' -e 'omranelab' -e 'saralab' | sed 's/^/          /'
+        grep -vE '^[[:space:]]*(#|;)' "$f" | grep -nE -e "$MOTIF1" -e "$MOTIF2" -e "$MOTIF3" | sed 's/^/          /'
         FUITE=$((FUITE + 1))
     fi
 done

@@ -1,4 +1,11 @@
 #!/bin/sh
+# ATTENTION (2026-10-28) : la version d'origine de ce script contenait un MOT DE PASSE EN CLAIR
+# (rootpw du banc). Il a ete remplace par le placeholder @NEXBSD_LDAP_ROOTPW@, qui doit etre
+# substitue AVANT execution, par exemple :
+#   sed "s|@NEXBSD_LDAP_ROOTPW@|$NEXBSD_LDAP_ROOTPW|g" scripts/60-banc-T04-ldap.sh > /tmp/60.sh
+# Rappel R-11 : aucun mot de passe dans le depot. Les valeurs du banc sont de laboratoire et ne
+# doivent jamais resservir ailleurs.
+# SLAPD_ROOTPW
 # 60-banc-T04-ldap.sh — T-04 : annuaire OpenLDAP sur FreeBSD (banc de test).
 # À exécuter DANS la VM FreeBSD, en root.
 # Idempotent : peut être relancé sans casser l'existant.
@@ -52,7 +59,7 @@ database	mdb
 maxsize		1073741824
 suffix		"dc=nexbsd,dc=local"
 rootdn		"cn=admin,dc=nexbsd,dc=local"
-rootpw		adminsecret
+rootpw		@NEXBSD_LDAP_ROOTPW@
 directory	/var/db/openldap-data
 index		objectClass eq
 CONF
@@ -103,7 +110,7 @@ homeDirectory: /home/omrane
 loginShell: /bin/sh
 LDIF
 
-if ldapadd -x -D "cn=admin,dc=nexbsd,dc=local" -w adminsecret -f /tmp/base.ldif >/tmp/ldapadd.log 2>&1; then
+if ldapadd -x -D "cn=admin,dc=nexbsd,dc=local" -w "$ADMIN_PW" -f /tmp/base.ldif >/tmp/ldapadd.log 2>&1; then
     ok "arborescence importee"
 else
     if grep -qi "already exists" /tmp/ldapadd.log; then

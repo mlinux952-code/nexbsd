@@ -614,3 +614,44 @@ d'un fichier : écrire un script écrase le mode.
 
 **Garde-fou à ajouter (à faire)** : une ligne dans `scripts/70-verifier-delta.sh` qui refuse un script
 non exécutable — sinon le défaut reviendra à la prochaine réécriture, comme C-16 est revenu (C-18).
+
+---
+
+## C-31 — 2026-10-28 — des MOTS DE PASSE EN CLAIR dans le dépôt, dans 6 fichiers actifs
+
+**Découvert en préparant la question « ce dépôt peut-il devenir public ? ».**
+
+**Constat mesuré** (`git grep` sur les lignes ACTIVES, hors commentaires) :
+
+| Fichier | Ce qui y était |
+|---|---|
+| `scripts/60-banc-T04-ldap.sh` | `rootpw  adminsecret` + `ldapadd … -w adminsecret` |
+| `scripts/62-banc-T04E-samba-ldap.sh` | `ADMIN_PW="adminsecret"`, `MDP_USER="omranelab"` |
+| `scripts/63-banc-T04F-droits-groupes.sh` | `adminsecret`, `omranelab`, `saralab` |
+| `scripts/64-banc-T04G-persistance.sh` | `omranelab`, `saralab` |
+| `scripts/65-resoudre-identites-nss.sh` | `adminsecret` + 3 lignes `smbclient -U 'omrane%omranelab'` |
+| `tests/harnais.sh` | `MDP_OMRANE`, `MDP_SARA` |
+
+**Cause racine — deux défauts cumulés :**
+1. j'ai introduit ces valeurs au banc, en les croyant « sans importance » parce qu'elles sont de
+   laboratoire. Or elles étaient dans le dépôt, donc **copiées et diffusées à chaque bundle** ;
+2. **le garde-fou de `scripts/74` ne regardait QUE `fork/`**. Il a donc dit « aucun mot de passe en
+   clair » pendant quatre jours, en toute bonne foi. Un garde-fou qui ne regarde qu'un dossier
+   protège un dossier, pas le dépôt.
+
+**Correction appliquée :**
+- 6 fichiers modifiés : les valeurs sont remplacées par des variables obligatoires
+  (`${NEXBSD_ADMIN_PW:?…}`), donc **le script refuse de tourner** si le mot de passe n'est pas fourni.
+  Aucune valeur par défaut : pas de retour silencieux à l'ancien comportement ;
+- `scripts/74` : le contrôle couvre désormais `fork/` + `scripts/` + `tests/*.sh` ;
+- testé **dans les deux sens** : mot de passe remis à la main → `[KO] … 10:MDP_SARA="saralab"` ;
+  restauré → `[OK] aucun mot de passe en clair dans le delta`.
+
+**Deuxième leçon (auto-détection)** : à la première version élargie, le garde-fou **s'accusait
+lui-même**, parce qu'il contient les motifs recherchés. Corrigé en assemblant les motifs à
+l'exécution (`MOTIF1="admin""secret"`). Un garde-fou qui crie à tort finit par être désactivé (M-10).
+
+**Ce qui reste, et qui n'est PAS corrigé volontairement** : `tests/results/*.md` contiennent encore
+les valeurs, dans des **preuves verbatim** (ex. `smbclient … -U 'omrane%omranelab'`). **On ne réécrit
+pas un compte rendu de test** : ce serait falsifier une preuve. Conséquence pratique : **ce dépôt
+n'est pas prêt à être rendu public en l'état.** Deux options propres sont écrites dans `docs/50`.

@@ -24,7 +24,7 @@ info() { echo "  ...     $*"; }
 
 SUFFIXE="dc=nexbsd,dc=local"
 ADMIN_DN="cn=admin,$SUFFIXE"
-ADMIN_PW="adminsecret"
+ADMIN_PW="${NEXBSD_ADMIN_PW:?definir NEXBSD_ADMIN_PW (mot de passe de l admin de l annuaire)}"
 NSSWITCH=/etc/nsswitch.conf
 NSLCD_CONF=/usr/local/etc/nslcd.conf
 
@@ -200,7 +200,7 @@ else
 fi
 
 echo "--- authentification reelle : omrane ---"
-if smbclient //127.0.0.1/commun -U 'omrane%omranelab' -c 'ls' >/tmp/fix-omrane.out 2>&1; then
+if smbclient //127.0.0.1/commun -U "omrane%$MDP_OMRANE" -c 'ls' >/tmp/fix-omrane.out 2>&1; then
     ok "omrane s'authentifie et lit [commun]"
     R4=1
 else
@@ -213,7 +213,7 @@ else
 fi
 
 echo "--- authentification reelle : sara ---"
-if smbclient //127.0.0.1/public -U 'sara%saralab' -c 'ls' >/tmp/fix-sara.out 2>&1; then
+if smbclient //127.0.0.1/public -U "sara%$MDP_SARA" -c 'ls' >/tmp/fix-sara.out 2>&1; then
     ok "sara s'authentifie et lit [public]"
     R5=1
 else
@@ -223,7 +223,7 @@ fi
 
 echo "--- les droits tiennent toujours (sara ne doit PAS ecrire dans commun) ---"
 printf 'tentative de sara\n' > /tmp/x-sara.txt
-if smbclient //127.0.0.1/commun -U 'sara%saralab' -c 'put /tmp/x-sara.txt x-sara.txt' >/tmp/fix-sara-commun.out 2>&1; then
+if smbclient //127.0.0.1/commun -U "sara%$MDP_SARA" -c 'put /tmp/x-sara.txt x-sara.txt' >/tmp/fix-sara-commun.out 2>&1; then
     ko "sara a ecrit dans [commun] : les droits ne sont plus appliques"
     R6=0
 else

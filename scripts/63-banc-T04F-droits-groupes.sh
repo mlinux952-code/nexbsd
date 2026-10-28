@@ -33,9 +33,9 @@ info() { echo "  ...     $*"; }
 
 SUFFIXE="dc=nexbsd,dc=local"
 ADMIN_DN="cn=admin,$SUFFIXE"
-ADMIN_PW="adminsecret"
-MDP_OMRANE="omranelab"
-MDP_SARA="saralab"
+ADMIN_PW="${NEXBSD_ADMIN_PW:?definir NEXBSD_ADMIN_PW (mot de passe de l admin de l annuaire)}"
+MDP_OMRANE="${NEXBSD_MDP_OMRANE:?definir NEXBSD_MDP_OMRANE}"
+MDP_SARA="${NEXBSD_MDP_SARA:?definir NEXBSD_MDP_SARA}"
 GID_BUREAU=2001
 GID_STAGIAIRES=2002
 RID_BUREAU=3001

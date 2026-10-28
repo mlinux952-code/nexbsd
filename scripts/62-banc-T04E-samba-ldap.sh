@@ -24,8 +24,8 @@ info() { echo "  ...     $*"; }
 
 SUFFIXE="dc=nexbsd,dc=local"
 ADMIN_DN="cn=admin,$SUFFIXE"
-ADMIN_PW="adminsecret"
-MDP_USER="omranelab"
+ADMIN_PW="${NEXBSD_ADMIN_PW:?definir NEXBSD_ADMIN_PW (mot de passe de l admin de l annuaire)}"
+MDP_USER="${NEXBSD_MDP_OMRANE:?definir NEXBSD_MDP_OMRANE}"
 CONF="/usr/local/etc/smb4.conf"
 SCHEMA_URL="https://git.samba.org/?p=samba.git;a=blob_plain;f=examples/LDAP/samba.schema;hb=HEAD"
 SCHEMA_SHA="b9081b7234762c3fc02861fbb88ed8b52a523dced38e15051dc980f0b34b23dd"
