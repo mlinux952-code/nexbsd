@@ -10,6 +10,8 @@
 # USAGE
 #   sh fork/70-appliquer-overlay.sh -r <racine>            applique pour de vrai
 #   sh fork/70-appliquer-overlay.sh -n -r <racine>         simulation (n'écrit rien)
+#   sh fork/70-appliquer-overlay.sh --systeme -p … -b … -R …
+#        -> racine = / . RESERVE A L'INSTALLEUR : exige d'etre root ET sur FreeBSD.
 #   options de substitution : -p <SID> -b <mot de passe liaison LDAP> -R <mot de passe root LDAP>
 #
 # RÈGLES APPLIQUÉES
@@ -32,6 +34,12 @@ SID=""
 BINDPW=""
 ROOTPW=""
 
+SYSTEME="non"
+for a in "$@"; do
+	[ "$a" = "--systeme" ] && SYSTEME="oui"
+done
+set -- $(printf '%s\n' "$@" | grep -v '^--systeme$')
+
 while getopts "nr:p:b:R:" opt; do
 	case "$opt" in
 		n) SIMULATION="oui" ;;
@@ -47,12 +55,18 @@ ICI=$(cd "$(dirname "$0")" && pwd)
 O="$ICI/overlay"
 [ -d "$O" ] || { echo "ERREUR : $O introuvable." >&2; exit 1; }
 
+if [ "$SYSTEME" = oui ]; then
+	[ "$(uname -s)" = "FreeBSD" ] || { echo "ERREUR : --systeme exige un systeme FreeBSD." >&2; exit 1; }
+	[ "$(id -u)" -eq 0 ] || { echo "ERREUR : --systeme exige root." >&2; exit 1; }
+	RACINE="/"
+fi
 if [ -z "$RACINE" ]; then
 	echo "ERREUR : -r <racine> obligatoire (refus d'écrire dans / par accident)." >&2
 	exit 1
 fi
-RACINE=$(cd "$RACINE" 2>/dev/null && pwd) || { echo "ERREUR : racine '$RACINE' inexistante." >&2; exit 1; }
-[ "$RACINE" != "/" ] || { echo "ERREUR : racine = / refusée par sécurité." >&2; exit 1; }
+if [ "$RACINE" != "/" ]; then
+	RACINE=$(cd "$RACINE" 2>/dev/null && pwd) || { echo "ERREUR : racine '$RACINE' inexistante." >&2; exit 1; }
+fi
 
 echo "########## NexBSD — application de la configuration du produit ##########"
 echo "# racine    : $RACINE"

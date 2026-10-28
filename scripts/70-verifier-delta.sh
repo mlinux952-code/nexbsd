@@ -33,7 +33,11 @@ info() { echo "  ...     $*"; }
 #   de overlay/ existaient dans le depot mais n'arrivaient JAMAIS dans le systeme (build-nexbsd.sh
 #   ne les mentionnait pas). Ce n est pas un script de banc, c est un maillon de la chaine de
 #   production : sa place est dans le delta produit.
-EXPECTED=26
+# 2026-10-28 (soir) : 26 -> 27 fichiers. Ajout de fork/80-installer-nexbsd.sh : l'installeur qui
+#   rend la configuration VIVANTE (paquets, SID lu et non fige, services, annuaire, verifications).
+#   Sans lui, A-02 a A-06 restaient « config ecrite, personne ne l'applique ». C est un maillon de
+#   la chaine de production, pas un outil de banc : sa place est dans le delta produit.
+EXPECTED=27
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 

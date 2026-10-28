@@ -20,11 +20,11 @@
 # Verifie par : sh scripts/72-verifier-acquis.sh
 id;date;acquis;preuve;destination;cible;etat
 A-01;2026-10-23;socle FreeBSD 15.1 amd64 demarre (choix ADR-0001);T-01;PRODUIT;fork/src.conf;FERME
-A-02;2026-10-23;partage SMB authentifie, lu depuis une AUTRE machine;T-03;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;OUVERT
+A-02;2026-10-24;partage SMB authentifie, lu depuis une AUTRE machine (config dans fork/overlay/usr-local-etc-smb4.conf ; l installeur fork/80-installer-nexbsd.sh installe et demarre Samba — JAMAIS EXECUTE);T-04-E;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;OUVERT
 A-03;2026-10-24;annuaire OpenLDAP operationnel (identites centralisees);T-04;PRODUIT;fork/overlay/usr-local-etc-openldap-slapd.conf;OUVERT
 A-04;2026-10-24;Samba authentifie VIA l annuaire (ldapsam);T-04-E;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;OUVERT
 A-05;2026-10-24;droits appliques par groupes de l annuaire;T-04-F;PRODUIT;fork/overlay/install-annuaire-base.ldif;OUVERT
-A-06;2026-10-25;le banc revient seul apres redemarrage (NSS/pam_ldap);T-04-G;PRODUIT;fork/overlay/usr-local-etc-nslcd.conf;OUVERT
+A-06;2026-10-24;le banc revient seul apres redemarrage (NSS/pam_ldap) — config dans fork/overlay/usr-local-etc-nslcd.conf ; l installeur demarre nslcd et verifie getent passwd (JAMAIS EXECUTE);T-04-G;PRODUIT;fork/overlay/usr-local-etc-nslcd.conf;OUVERT
 A-07;2026-10-26;noyau NEXBSD_L1 compile, installe, reproductible a l octet;T-17 + T-11;PRODUIT;fork/sys/amd64/conf/NEXBSD_L1;FERME
 A-08;2026-10-25;identite du systeme : nom d hote nexbsd;T-16;PRODUIT;fork/overlay/etc/nexbsd-version;OUVERT
 A-09;2026-10-27;pare-feu pf : refus par defaut JOURNALISE, 11 regles;T-05;PRODUIT;fork/overlay/etc/pf.conf;FERME
@@ -71,3 +71,4 @@ A-49;2026-10-27;preuve de synchronisation de l horloge;T-20;PREUVE;tests/results
 A-50;2026-10-27;preuve d acces SSH distant par cle;T-21;PREUVE;tests/results/T-21-ssh-acces-distance.md;FERME
 A-51;2026-10-28;la configuration du produit (11 fichiers de fork/overlay/) est APPLIQUEE sur une racine de systeme par fork/70-appliquer-overlay.sh (substitution des 3 placeholders, fusions sans ecrasement, idempotent, 4 essais dont 2 d echec volontaire);tests d execution du 2026-10-28 dans docs/48;PRODUIT;fork/70-appliquer-overlay.sh;FERME
 A-52;2026-10-28;l image produite CONTIENT la configuration NexBSD : build-nexbsd.sh installe le monde dans une racine puis applique overlay AVANT de fabriquer le media;JAMAIS EXECUTE — aucune image n a encore ete produite;PRODUIT;fork/build-nexbsd.sh;OUVERT
+A-53;2026-10-28;fork/80-installer-nexbsd.sh : installeur du produit (paquets, SID lu par net getlocalsid et JAMAIS fige, application de la config, initialisation de l annuaire, demarrage des services, 4 verifications, marqueur d installation) — ecrit et gardes testees, JAMAIS EXECUTE faute de systeme NexBSD;garde scandir de fork/70-appliquer-overlay.sh (verrou FreeBSD+root) teste;PRODUIT;fork/80-installer-nexbsd.sh;OUVERT
