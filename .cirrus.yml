@@ -58,15 +58,25 @@ controles_task:
 
 # ---------------------------------------------------------------------------
 # Tâche 2 — IMAGE : la production réelle. DÉCLENCHEMENT MANUEL.
-#   Pourquoi manuel : une construction coûte plusieurs heures de crédit CI et plusieurs Go.
-#   On ne la lance qu'une fois que (a) les contrôles passent et (b) la question 15.0/15.1
-#   est tranchée par la sonde. Sinon on dépense des heures pour découvrir un nom d'image faux.
-#   Déclenchement : pousser sur la branche `nexbsd-image`, ou poser la variable
-#   CIRRUS_NEXBSD_IMAGE=oui dans les réglages du dépôt.
+#
+# ⚠️ DEUX PLAFONDS DU GRATUIT, VÉRIFIÉS LE 2026-10-28 (ne pas les ignorer) :
+#   1. DURÉE MAXIMALE D'UNE TÂCHE = 2 HEURES pour les tâches gratuites.
+#      J'avais écrit "timeout_in: 300m" : REFUSÉ par la plateforme. Corrigé à 120m, le maximum.
+#      Conséquence : le travail n'est PAS conservé entre deux tâches. Si la construction dépasse
+#      2 h, la machine est détruite et le travail est perdu. Ce n'est donc PAS une construction
+#      « étalée sur plusieurs jours » : c'est UNE exécution continue de 2 h maximum.
+#   2. QUOTA MENSUEL = 50 crédits de calcul (≈ 10 000 minutes-CPU pour du Linux). Une tâche de
+#      8 cœurs pendant 2 h consomme 960 minutes-CPU. Le quota devrait tenir, mais la conversion
+#      exacte pour FreeBSD n'est PAS documentée : on la mesurera sur la première exécution.
+#
+# POURQUOI CETTE TÂCHE MESURE AU LIEU DE PROMETTRE :
+#   Chaque étape imprime l'heure et l'espace disque. Au premier passage, on saura où passent les
+#   minutes et si les 2 h suffisent — au lieu de le supposer. Si ça ne suffit pas, on découpera
+#   (buildworld seule dans une tâche, média dans une autre), mais avec des chiffres, pas des espoirs.
 # ---------------------------------------------------------------------------
 image_task:
-  name: "IMAGE — buildworld + release + empreinte"
-  timeout_in: 300m
+  name: "IMAGE — buildworld + configuration + media (max 2 h)"
+  timeout_in: 120m
   only_if: $CIRRUS_BRANCH == 'nexbsd-image' || $NEXBSD_IMAGE == 'oui'
   freebsd_instance:
     image_family: freebsd-15-0-amd64-ufs
@@ -74,18 +84,34 @@ image_task:
     memory: 16G
   env:
     NEXBSD_SORTIE: ${CIRRUS_WORKING_DIR}/images
+    NEXBSD_SID: S-1-5-21-0000000000-0000000000-0000000000
+    NEXBSD_LDAP_ROOTPW: mdp-de-laboratoire-a-remplacer
+    NEXBSD_LDAP_BINDPW: mdp-de-laboratoire-a-remplacer
   prepare_script: |
     set -e
-    df -h
-    sysctl -n hw.ncpu hw.physmem
+    date -u +"DEBUT %Y-%m-%dT%H:%M:%SZ"
+    uname -a
+    echo "--- CPU ---";  sysctl -n hw.ncpu
+    echo "--- RAM ---";  sysctl -n hw.physmem
+    echo "--- DISQUE ---"; df -h
+    # buildworld exige ~30 Go libres en plus du systeme. Sans ce controle, on decouvrirait
+    # le manque d'espace apres 40 minutes de compilation. On echoue AVANT, en 3 secondes.
+    GO=$(df -k /usr/obj 2>/dev/null | awk 'NR==2 {print int($4/1048576)}')
+    echo "libres dans /usr/obj : ${GO} Go"
+    [ "${GO:-0}" -ge 25 ] || { echo "ERREUR : ${GO} Go libres seulement, 25 Go minimum."; exit 1; }
   build_script: |
     set -e
     mkdir -p "$NEXBSD_SORTIE"
+    date -u +"LANCEMENT %Y-%m-%dT%H:%M:%SZ"
+    sh scripts/70-verifier-delta.sh
     sh scripts/74-produire-image.sh --sortie "$NEXBSD_SORTIE" --obj /usr/obj
+    date -u +"FIN %Y-%m-%dT%H:%M:%SZ"
   manifeste_script: |
     set -e
     ls -l "$NEXBSD_SORTIE"
-    cat "$NEXBSD_SORTIE"/MANIFESTE-*.txt
+    cat "$NEXBSD_SORTIE"/MANIFESTE-*.txt || echo "aucun manifeste : la chaine s'est arretee avant"
+    echo "--- empreinte de l'image ---"
+    sha256 -q "$NEXBSD_SORTIE"/*.img 2>/dev/null || sha256 -q "$NEXBSD_SORTIE"/*.ufs 2>/dev/null || echo "AUCUNE IMAGE"
   images_artifacts:
     path: "images/**"
     expire_in: 30 days
