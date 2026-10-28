@@ -9,7 +9,8 @@
 #
 # CE QU'IL FAIT, DANS CET ORDRE :
 #   1. refuse de démarrer si la machine ne peut pas construire (profil L3, ADR-0010) ;
-#   2. télécharge src.txz et VÉRIFIE son SHA256 (cf5762da…5a89e1, relevé le 2026-10-25) ;
+#   2. télécharge src.txz et VÉRIFIE son SHA256 — valeur recopiée du MANIFEST officiel de
+#      15.1-RELEASE et recontrôlée le 2026-10-28 en téléchargeant le fichier (C-37) ;
 #   3. extrait l'arbre, y applique le delta (src.conf + NEXBSD_L1) ;
 #   4. lance buildworld + buildkernel (plusieurs heures, plusieurs Go) ;
 #   5. lance release.sh avec fork/release.conf → image ;
@@ -32,7 +33,7 @@ set -u
 
 VERSION_FREEBSD="15.1-RELEASE"
 URL_SRC="https://download.freebsd.org/releases/amd64/amd64/${VERSION_FREEBSD}/src.txz"
-SHA_SRC="cf5762da46e4d3a74caef1b4a09b6ab4f7db5a9cfff02e8e1d0cb5e50a5a89e1"
+SHA_SRC="cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1"
 RAM_MIN_MO=7000
 DISQUE_MIN_GO=30
 

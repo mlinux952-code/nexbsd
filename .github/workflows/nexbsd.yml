@@ -286,7 +286,11 @@ jobs:
       - name: "2/4 — télécharger, VÉRIFIER l'empreinte, extraire src.txz (~10 minutes)"
         shell: freebsd {0}
         run: |
-          SHA_ATTENDU="cf5762da46e4d3a74caef1b4a09b6ab4f7db5a9cfff02e8e1d0cb5e50a5a89e1"
+          # C-37 : NE PLUS RECOPIER l'empreinte ici. Elle est lue dans scripts/74, qui est la
+          # SEULE source de verite. La duplication etait la cause racine : deux copies existaient,
+          # l'une fausse, et c'est celle-ci qui etait utilisee.
+          SHA_ATTENDU=$(sed -n 's/^SHA_SRC="\(.*\)"$/\1/p' scripts/74-produire-image.sh)
+          [ -n "$SHA_ATTENDU" ] || { echo "::error::empreinte introuvable dans scripts/74"; exit 1; }
           URL="https://download.freebsd.org/releases/amd64/amd64/15.1-RELEASE/src.txz"
           # Tout est écrit dans /tmp/r.txt, PUIS affiché, PUIS le code de sortie est rendu :
           # ainsi rien n'est perdu même quand ça échoue (leçon de C-35).
@@ -383,7 +387,7 @@ jobs:
 
       - name: "Déposer l'artefact"
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: nexbsd-images
           path: images/**

@@ -1028,3 +1028,92 @@ BUREAU    ✅   node22-22.23.4 · 17 cas 0 échec · 14 cas 0 échec · code de 
 **Ce qui n'est toujours pas prouvé, et qu'aucune exécution verte ne change :** PAM n'a jamais
 vérifié un mot de passe, aucune session graphique n'a été affichée, aucune image n'existe, le noyau
 `NEXBSD_L1` n'a jamais été compilé, l'installeur `fork/80` n'a jamais tourné.
+
+---
+
+## C-37 — 2026-10-28 — exécution #7 : **une empreinte avait été INVENTÉE**, et le garde-fou a refusé
+
+**Verbatim du responsable (page Actions, exécution #7, tâche IMAGE) :**
+
+```
+NexBSD #7
+Annotations
+2 errors and 2 warnings
+
+2/4 — télécharger, VÉRIFIER l'empreinte, extraire src.txz (~10 minutes)
+Process completed with exit code 1.
+2/4 — télécharger, VÉRIFIER l'empreinte, extraire src.txz (~10 minutes)
+etape 2/4 en echec — voir le rapport ci-dessus
+
+Node.js 20 is deprecated... actions/upload-artifact@v4
+Déposer l'artefact
+No files were found with the provided path: images/**.
+
+IMAGE — buildworld + configuration + media
+failed 4 minutes ago in 3m 33s
+2s / 1s / 2m 35s / 43s / 0s / 7s / 0s / 1s / 0s / 0s / 0s / 1s
+```
+
+**Lecture de la durée : 43 secondes pour l'étape 2/4.** Le fichier `src.txz` pèse
+**253 039 000 octets** ; à la vitesse observée, 43 s correspondent au **téléchargement complet**.
+La panne n'est donc **ni le réseau, ni l'URL, ni l'extraction** : elle est à la **vérification de
+l'empreinte**. Le garde-fou a fait exactement son travail : il a refusé.
+
+**La cause, vérifiée à la source le 2026-10-28 :**
+
+```
+MANIFEST officiel de FreeBSD 15.1-RELEASE :
+  src.txz  cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1  118593  src
+
+ce que contenait NOTRE script :
+          cf5762da46e4d3a74caef1b4a09b6ab4f7db5a9cfff02e8e1d0cb5e50a5a89e1
+```
+
+**Les 8 premiers caractères sont exacts. Les 6 derniers sont exacts. Le MILIEU a été inventé.**
+C'est la signature d'une valeur **reconstituée de mémoire** au lieu d'être recopiée : quelqu'un
+(moi) se souvenait du début et de la fin, et a comblé le reste. Une empreinte SHA256 ne se devine
+pas : elle se copie ou se calcule.
+
+**Preuve de bout en bout, faite depuis ce banc, en téléchargeant réellement le fichier :**
+
+```
+taille telechargee : 253039000 octets
+cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1
+```
+
+Cette valeur est **identique au MANIFEST** — et identique à ce que le dépôt contenait **déjà**
+ailleurs, à trois endroits :
+
+| Fichier | Statut de la valeur |
+|---|---|
+| `scripts/67-preparer-construction-noyau.sh` | ✅ **juste** depuis le 2026-10-25 |
+| `tests/results/T-17-noyau-propre.md` (preuve verbatim) | ✅ **juste** |
+| `docs/25-compte-rendu-session.md` (`253 039 000 o`, `cf5762da…a89e1`) | ✅ **juste** |
+| `scripts/74-produire-image.sh` | ❌ **fausse** |
+| `.github/workflows/nexbsd.yml` | ❌ **fausse** (recopiée de la précédente) |
+
+**La cause racine n'est donc pas la distraction : c'est la DUPLICATION.** La bonne valeur existait,
+mais une deuxième copie en a été faite, et c'est cette copie-là que la production utilisait. Une
+valeur présente à cinq endroits n'a pas de source de vérité ; elle a cinq vérités, dont une fausse.
+
+**Correctifs :**
+
+1. `scripts/74-produire-image.sh` : empreinte corrigée, avec la référence au MANIFEST et à la
+   recontrôle du 2026-10-28.
+2. `.github/workflows/nexbsd.yml` : **l'empreinte n'est plus écrite dans le workflow.** Elle est
+   **lue dans `scripts/74`**, qui devient l'unique source :
+   ```sh
+   SHA_ATTENDU=$(sed -n 's/^SHA_SRC="\(.*\)"$/\1/p' scripts/74-produire-image.sh)
+   [ -n "$SHA_ATTENDU" ] || { echo "::error::empreinte introuvable dans scripts/74"; exit 1; }
+   ```
+   Vérifié : le `sed` extrait bien `cf5762da53fd52e1eaf0f9ceee9bf58cbe314c821031d0d9ffa76823185a89e1`,
+   identique au MANIFEST.
+3. `actions/upload-artifact@v4` → `@v5` : supprime l'avertissement Node.js 20.
+
+**Ce que cet échec démontre, et qui est plus important que l'échec lui-même :** le garde-fou
+d'empreinte a **empêché** qu'une image soit construite à partir d'une source non certifiée. Sans
+lui, la chaîne aurait produit une image à partir d'un `src.txz` dont personne n'aurait pu prouver
+l'origine. **C'est exactement pour ce cas qu'il existe.**
+
+**Faute reconnue, sans détour** : inventer une empreinte est une violation directe de la règle
+« ne jamais inventer ni arranger un résultat ». Elle a été commise, elle est écrite ici.
