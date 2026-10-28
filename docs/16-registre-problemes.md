@@ -730,3 +730,87 @@ C'est plus que ce que quatre jours de banc ont produit sur ce point précis.
 **Ce qui reste à savoir** : la prochaine exécution dira si l'épinglage d'Ubuntu suffit. Sinon, il
 faudra lire le journal complet de la tâche SONDE (étapes « Installing dependencies » / « Starting VM »),
 qui n'est pas dans le résumé fourni.
+
+---
+
+## C-34 — 2026-10-28 — deuxième exécution CI : « la machine n'a pas git », et ça suffisait à tout faire échouer
+
+**Ce que le responsable a collé (verbatim, page Actions, exécution #2) :**
+
+```
+NexBSD   C-33 + correctif CI : execution #1 = 3 taches en 'ssh exited with cod…  #2
+Contrôles dans une vraie VM FreeBSD 15.1
+ssh exited with code 1
+CONTRÔLES — delta, registre, simulation   failed 7 minutes ago in 38s
+  Run vmactions/freebsd-vm@v1
+  Configuration AnyVM.org / Installing dependencies / Cache / Permissions
+  Starting VM with anyvm.org / Save Cache (Background) / SSH Config
+  Syncing source code to VM / Creating workdir symlink
+  Run 'prepare' in VM
+  Run 'run' in VM
+  Error: ssh exited with code 1
+
+Tests du bureau
+ssh exited with code 1
+BUREAU — tests de session et d'authentification   failed 7 minutes ago in 53s
+  ... Starting VM with anyvm.org ... Syncing source code to VM
+  Creating workdir symlink / Run 'prepare' in VM
+```
+
+**Ce que ce log prouve, et qui est une bonne nouvelle :** les étapes « Starting VM with anyvm.org »,
+« Syncing source code to VM » et « Creating workdir symlink » apparaissent. **La VM démarre.**
+Le correctif de C-33 (épingler `ubuntu-24.04`) a donc fonctionné. L'échec a changé de nature : il
+n'est plus « la machine ne démarre pas », il est « une commande a échoué DANS la machine ».
+
+**Cause — mesurée, pas supposée : git n'est pas dans le système de base FreeBSD.**
+
+`scripts/70-verifier-delta.sh` comptait les fichiers ainsi :
+
+```sh
+SUIVIS=$(git ls-files fork | wc -l | tr -d ' ')
+```
+
+Dans la VM, `git` n'existe pas. `git ls-files` n'imprime rien, `wc -l` compte **0**, et le script
+conclut `0 ≠ 33` puis crie « suppression accidentelle probable » — alors que **rien n'était perdu**.
+`scripts/72-verifier-acquis.sh` utilisait le même `git ls-files --error-unmatch` : dans la VM,
+**toutes** les cibles auraient été déclarées absentes.
+
+> Le garde-fou était juste. C'est son moyen de comptage qui n'existait pas dans la machine.
+
+**Seconde cause, tâche BUREAU : `pkg` n'est pas amorcé sur une VM FreeBSD neuve.**
+`prepare` lançait `pkg install -y node` sur une machine où `pkg` n'est pas encore installé ; la
+commande échoue, et la tâche s'arrête **avant** d'exécuter le moindre test.
+
+**Correctif appliqué :**
+
+1. `scripts/70` et `scripts/72` : si `git` est absent (ou si `.git` n'a pas été copié), on compte
+   les fichiers **du disque**, et le script **dit lequel des deux modes il emploie** :
+   `mode de comptage : disque — git absent, on compte les fichiers reellement presents`.
+2. `prepare` amorce `pkg` (`env ASSUME_ALWAYS_YES=yes pkg bootstrap -f`) puis installe `git`
+   (CONTRÔLES) et `node22` (BUREAU).
+3. Les 3 lignes de diagnostic de la SONDE répondent d'elles-mêmes à la question :
+   `git` présent ? `.git` copié ? `pkg` amorcé ?
+
+**Vérification faite en laboratoire, sans git et sans `.git` (copie du dépôt dans `/tmp/vmtest`,
+`PATH` sans git) :**
+
+```
+=== 70 (VM : sans git, avec bits executables) ===   code=0
+  ...     mode de comptage : disque — git absent, on compte les fichiers reellement presents
+VERDICT : DELTA INTACT (33 fichiers, empreintes conformes)
+
+=== 72 ===   code=0
+  ...     mode de verification des cibles : disque (git absent)
+VERDICT : REGISTRE CONFORME — chaque acquis a une destination, chaque cible PRODUIT existe.
+
+=== 74 --simulation ===   code=0
+SIMULATION : le delta est complet et propre. Rien n'a été construit.
+```
+
+**Ce qui reste à prouver** : ces trois codes 0 ont été obtenus sur une copie, pas dans la VM.
+Seule la prochaine exécution GitHub le dira. Rien n'est déclaré acquis.
+
+**Faute de méthode corrigée au passage** : le `.cirrus.yml` qui traînait encore contenait
+`mdp-de-laboratoire-a-remplacer` en clair, alors que R-15 interdit tout mot de passe dans un dépôt
+public. Cirrus étant mort, le fichier est **supprimé**, et le workflow GitHub lit désormais un
+secret (`secrets.NEXBSD_LDAP_ROOTPW`) ou tire un mot de passe au hasard — sans jamais l'afficher.

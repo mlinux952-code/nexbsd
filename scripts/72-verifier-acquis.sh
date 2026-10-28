@@ -24,6 +24,16 @@ set -u
 CSV="matrices/acquis.csv"
 [ -f "$CSV" ] || { echo "ERREUR : $CSV introuvable (lancer depuis la racine du depot)" >&2; exit 1; }
 
+# --- C-34 (2026-10-28) : la VM FreeBSD n'a pas git (systeme de base).
+# Sans ce filet, chaque cible « conforme » etait declaree ABSENTE dans la CI. ---
+if command -v git >/dev/null 2>&1 && [ -d .git ]; then
+    MODE_SUIVI="git"
+    suit_un() { git ls-files --error-unmatch "$1" >/dev/null 2>&1 ; }
+else
+    MODE_SUIVI="disque (git absent)"
+    suit_un() { [ -f "$1" ] ; }
+fi
+
 ok()  { echo "  [OK]    $*"; }
 ko()  { echo "  [KO]    $*"; }
 info(){ echo "  ...     $*"; }
@@ -39,6 +49,7 @@ OUVERTS=""; AFAIRE=""
 # lignes de donnees : on saute les commentaires (#) et l'en-tete (id;date;...)
 DONNEES=$(grep -vE '^[[:space:]]*(#|$)' "$CSV" | grep -v '^id;')
 
+info "mode de verification des cibles : $MODE_SUIVI"
 echo "----- 1. controle de chaque acquis -----"
 OLDIFS=$IFS
 IFS='
@@ -68,7 +79,7 @@ for ligne in $DONNEES; do
             if [ -z "$cible" ]; then
                 ko "$id : FERME mais sans cible — un acquis ferme doit pointer un fichier"
                 KO_CIBLE=$((KO_CIBLE + 1))
-            elif git ls-files --error-unmatch "$cible" >/dev/null 2>&1; then
+            elif suit_un "$cible"; then
                 ok "$id ($dest) -> $cible"
             else
                 ko "$id : cible ABSENTE du depot : $cible"

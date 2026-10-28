@@ -155,7 +155,7 @@ if [ "$MODE" = "simulation" ]; then
         ok "cette machine PEUT construire : relancer sans --simulation"
     else
         ko "cette machine NE PEUT PAS construire (voir §3) — c'est exactement pour cela que la CI existe (docs/41)"
-        info "option A : CI FreeBSD (Cirrus, gratuit, voir .cirrus.yml)"
+        info "option A : CI FreeBSD sur GitHub Actions (gratuit, voir .github/workflows/nexbsd.yml)"
         info "option B : machine FreeBSD >= 8 Go de RAM et >= 30 Go libres"
     fi
     echo

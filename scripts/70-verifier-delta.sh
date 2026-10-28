@@ -59,6 +59,21 @@ echo "# date : $(date -u +%FT%TZ)"
 DEPOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$DEPOT" || { ko "depot introuvable"; exit 1; }
 
+# --- C-34 (2026-10-28) : QUI SUIT LES FICHIERS ? -----------------------------
+# Constat MESURE, pas suppose : le systeme de base FreeBSD ne contient PAS git.
+# Lance dans la VM de la CI, ce script comptait donc « 0 fichier suivi » et criait
+# « suppression accidentelle probable » alors que rien n'avait disparu.
+# On ne supprime pas le controle : on prend la source de verite disponible, et on DIT laquelle.
+if command -v git >/dev/null 2>&1 && [ -d .git ]; then
+  MODE_SUIVI="git — fichiers suivis par le depot (le plus strict)"
+  suivis()   { git ls-files -- "$@" ; }
+  suit_un()  { git ls-files --error-unmatch "$1" >/dev/null 2>&1 ; }
+else
+  MODE_SUIVI="disque — git absent, on compte les fichiers reellement presents"
+  suivis()   { find "$@" -type f | sort ; }
+  suit_un()  { [ -f "$1" ] ; }
+fi
+
 echo
 echo "########## BLOC A - presence sur le disque ##########"
 if [ ! -d fork ]; then
@@ -78,14 +93,15 @@ ok "aucun repertoire nomme build/ (nom interdit dans ce depot)"
 
 echo
 echo "########## BLOC B - suivi par Git (pas seulement present sur le disque) ##########"
-SUIVIS=$(git ls-files fork | wc -l | tr -d ' ')
-info "fichiers suivis dans fork/ : $SUIVIS (attendu : $EXPECTED)"
+SUIVIS=$(suivis fork | wc -l | tr -d ' ')
+info "mode de comptage : $MODE_SUIVI"
+info "fichiers comptes dans fork/ : $SUIVIS (attendu : $EXPECTED)"
 if [ "$SUIVIS" -ne "$EXPECTED" ]; then
   ko "le nombre de fichiers suivis est FAUX."
   ko "Suppression accidentelle probable — verifier : git status --short ; git log --diff-filter=D -- fork"
   exit 1
 fi
-ok "$EXPECTED fichiers suivis par Git"
+ok "$EXPECTED fichiers dans fork/ (mode : $MODE_SUIVI)"
 
 echo
 echo "########## BLOC C - les fichiers critiques existent ##########"
@@ -98,7 +114,7 @@ for f in sys/amd64/conf/NEXBSD_L1 sys/amd64/conf/NEXBSD_L1.rapport src.conf rele
          overlay/install-annuaire-base.ldif \
          patches/0001-identite-version.patch tools/generer-kernel-conf.sh \
          reference/GENERIC-15.1 reference/newvers.sh-15.1 exceptions-licence.txt; do
-  if git ls-files --error-unmatch "fork/$f" >/dev/null 2>&1; then
+  if suit_un "fork/$f"; then
     info "present et suivi : fork/$f"
   else
     ko "MANQUANT ou non suivi : fork/$f"

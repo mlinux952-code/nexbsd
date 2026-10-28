@@ -1,22 +1,35 @@
 # NexBSD — chaîne de production sur GitHub Actions, avec une VRAIE VM FreeBSD
 #
-# ÉTAT : la version précédente de ce fichier a ÉCHOUÉ le 2026-10-28 (exécution #1).
-#   Symptôme : les 3 tâches en `ssh exited with code 1`, en 1 min 04 s au total — la VM n'a donc
-#   jamais démarré. Ce n'était pas nos scripts (ils sortent en code 0, vérifié), c'était la VM.
+# HISTORIQUE DES EXÉCUTIONS (aucune n'est verte, aucune n'est cachée) :
 #
-# DEUX CORRECTIONS, appuyées sur des faits vérifiés :
-#  1. `runs-on: ubuntu-latest` -> `ubuntu-24.04` (ÉPINGLÉ). Le log de l'exécution #1 contenait
-#     cet avertissement : "The ubuntu-latest label will migrate to Ubuntu 26 beginning
-#     October 19, 2026". Nous sommes le 28 octobre 2026 : `ubuntu-latest` n'est plus le système
-#     sur lequel l'action a été testée. On ne subit plus une migration silencieuse.
-#  2. `release: "15.1"` — la documentation de vmactions liste **15.1 comme supporté** sur x86_64,
-#     et c'est même la version PAR DÉFAUT de l'action. Plus d'hypothèse 15.0/15.1 : c'est notre cible.
+#  #1 (28/10, 1 min 04 s) — 3 tâches en « ssh exited with code 1 ». La VM n'a JAMAIS démarré.
+#      Cause : `ubuntu-latest` a migré vers Ubuntu 26 le 19/10/2026 (avertissement présent
+#      dans le log). Correctif #2 : `ubuntu-24.04` ÉPINGLÉ + `release: "15.1"`.
 #
-# On supprime aussi tout ce qui n'était pas dans l'exemple documenté (usesh, mem sur les petites
-# tâches) : moins on s'écarte de l'exemple officiel, plus on a de chances que ça démarre. La tâche
-# SONDE est réduite au strict minimum (deux commandes) pour ISOLER le problème si ça échoue encore.
+#  #2 (28/10, 38 s et 53 s) — PROGRÈS RÉEL : les étapes « Starting VM with anyvm.org »,
+#      « Syncing source code to VM » et « Creating workdir symlink » passent. La VM DÉMARRE.
+#      L'échec est maintenant DANS la machine, sur nos commandes. Deux tâches rouges :
+#        · CONTRÔLES — échoue à « Run 'run' in VM ».
+#        · BUREAU    — échoue dès « Run 'prepare' in VM ».
 #
-# JAMAIS EXÉCUTÉ dans cette version.
+#  CAUSE TROUVÉE (C-34), et elle est simple : **git n'est pas dans le système de base
+#  FreeBSD**. Or `scripts/70-verifier-delta.sh` comptait les fichiers avec `git ls-files`.
+#  Dans la VM, cette commande n'existe pas : le script comptait 0 fichier au lieu de 33 et
+#  criait « suppression accidentelle probable » alors que rien n'était perdu. Les garde-fous
+#  étaient justes ; c'est leur moyen de comptage qui n'existait pas dans la machine.
+#  Deuxième cause : `pkg` n'est pas amorcé sur une VM FreeBSD neuve — `pkg install node`
+#  échoue donc dans `prepare`, d'où l'échec immédiat de la tâche BUREAU.
+#
+#  CORRECTIFS DE CETTE VERSION (v3) :
+#   1. scripts/70 et scripts/72 : si git est absent, on compte les fichiers du DISQUE, et le
+#      script DIT lequel des deux modes il emploie. Vérifié en laboratoire sans git : 70 → 0,
+#      72 → 0, deltas identiques (33 fichiers).
+#   2. `prepare` amorce pkg (`pkg bootstrap`) puis installe git (CONTRÔLES) et node (BUREAU).
+#   3. Le mot de passe d'annuaire n'est PLUS écrit dans le dépôt (R-15, dépôt public) :
+#      il vient d'un secret GitHub, sinon il est tiré au hasard et jamais affiché.
+#   4. `actions/checkout@v4` -> `@v5` : supprime l'avertissement « Node.js 20 is deprecated ».
+#
+# ÉTAT : cette version n'a JAMAIS été exécutée.
 
 name: NexBSD
 
@@ -28,9 +41,9 @@ on:
 jobs:
 
   # ---------------------------------------------------------------------------
-  # 0. SONDE — le strict minimum : la VM démarre-t-elle, et quelle version ?
-  #    Aucun script du dépôt n'est appelé. Si CETTE tâche échoue, la cause est la VM,
-  #    pas notre code. C'est le diagnostic le plus court possible.
+  # 0. SONDE — le strict minimum + 3 lignes de diagnostic.
+  #    Aucun script du dépôt n'est appelé : si CETTE tâche échoue, la cause est la VM.
+  #    Les 3 lignes ajoutées répondent d'elles-mêmes à « pourquoi les autres échouent ? ».
   # ---------------------------------------------------------------------------
   sonde:
     name: "SONDE — la VM FreeBSD démarre-t-elle ?"
@@ -38,29 +51,40 @@ jobs:
     timeout-minutes: 25
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - name: "FreeBSD 15.1 : deux commandes, rien d'autre"
+      - uses: actions/checkout@v5
+      - name: "FreeBSD 15.1 : cinq commandes, rien d'autre"
         uses: vmactions/freebsd-vm@v1
         with:
           release: "15.1"
           run: |
             uname -a
             freebsd-version -ku
+            echo "--- git est-il dans le systeme de base ? ---"
+            command -v git || echo "GIT ABSENT — c'est normal, et c'est la cause de l'echec #2"
+            echo "--- le depot est-il arrive complet dans la VM ? ---"
+            echo "scripts : $(ls scripts | wc -l) fichiers"
+            if [ -d .git ]; then echo ".git present"; else echo ".git ABSENT (le mode disque sera utilise)"; fi
+            echo "--- pkg est-il amorce ? ---"
+            command -v pkg || echo "PKG NON AMORCE — cause de l'echec de la tache BUREAU"
 
   # ---------------------------------------------------------------------------
-  # 1. CONTRÔLES — delta, registre, simulation. ~5 minutes, aucune construction.
+  # 1. CONTRÔLES — delta, registre, simulation. Aucune construction.
   # ---------------------------------------------------------------------------
   controles:
     name: "CONTRÔLES — delta, registre, simulation"
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: "Contrôles dans une vraie VM FreeBSD 15.1"
         uses: vmactions/freebsd-vm@v1
         with:
           release: "15.1"
+          prepare: |
+            env ASSUME_ALWAYS_YES=yes pkg bootstrap -f
+            pkg install -y git
+            git --version
           run: |
             uname -a
             freebsd-version -ku
@@ -79,15 +103,17 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: "Tests du bureau"
         uses: vmactions/freebsd-vm@v1
         with:
           release: "15.1"
           prepare: |
-            pkg install -y node >/dev/null 2>&1 || pkg install -y node22 >/dev/null 2>&1 || true
+            env ASSUME_ALWAYS_YES=yes pkg bootstrap -f
+            pkg install -y node22
           run: |
+            node --version
             echo "--- logique de session (17 cas) ---"
             node fork/bureau/tester-session.js
             echo "--- authentification (14 cas, avec un faux su) ---"
@@ -102,7 +128,7 @@ jobs:
     timeout-minutes: 350
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/nexbsd-image'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: "Libérer de l'espace disque"
         run: |
@@ -129,10 +155,18 @@ jobs:
             echo "libres dans /usr/obj : ${GO} Go"
             [ "${GO:-0}" -ge 20 ] || { echo "ERREUR : ${GO} Go libres seulement, 20 Go minimum."; exit 1; }
 
+            # R-15 : AUCUN mot de passe dans ce fichier. Le dépôt est public.
+            # Priorité au secret GitHub ; sinon tirage aléatoire local, jamais affiché.
+            PW_ROOT="${{ secrets.NEXBSD_LDAP_ROOTPW }}"
+            PW_BIND="${{ secrets.NEXBSD_LDAP_BINDPW }}"
+            [ -n "$PW_ROOT" ] || PW_ROOT=$(openssl rand -hex 16)
+            [ -n "$PW_BIND" ] || PW_BIND=$(openssl rand -hex 16)
+            echo "mot de passe annuaire : longueur ${#PW_ROOT} caracteres, NON affiche"
+
             mkdir -p images
             NEXBSD_SID="S-1-5-21-0000000000-0000000000-0000000000" \
-            NEXBSD_LDAP_ROOTPW="mdp-de-laboratoire-a-remplacer" \
-            NEXBSD_LDAP_BINDPW="mdp-de-laboratoire-a-remplacer" \
+            NEXBSD_LDAP_ROOTPW="$PW_ROOT" \
+            NEXBSD_LDAP_BINDPW="$PW_BIND" \
               sh scripts/74-produire-image.sh --sortie images --obj /usr/obj
 
             date -u +"FIN %Y-%m-%dT%H:%M:%SZ"

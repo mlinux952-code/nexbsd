@@ -74,8 +74,26 @@ reçoit déjà nos `push`.
 | `.github/workflows/nexbsd.yml` est un YAML valide | ✅ **vérifié** (analyseur Python) |
 | l'action `vmactions/freebsd-vm` existe et lance FreeBSD 15 | ✅ **documenté** par plusieurs sources indépendantes |
 | KVM fonctionne sur `ubuntu-latest` | ✅ rapporté par d'autres projets (virtualisation imbriquée) |
-| **notre workflow a tourné** | ❌ **JAMAIS** |
+| **notre workflow a tourné** | ✅ **2 exécutions, toutes deux ROUGES** (voir plus bas) |
+| **la VM FreeBSD démarre** | ✅ **PROUVÉ à l'exécution #2** (étapes « Starting VM », « Syncing source code to VM ») |
+| **les contrôles passent dans la VM** | ❌ **pas encore** — cause trouvée (C-34), correctif non testé |
 | **une image a été produite** | ❌ **JAMAIS** |
+
+### 5 bis. Exécution #2 — le progrès est mesurable
+
+| | Exécution #1 | Exécution #2 |
+|---|---|---|
+| durée | 1 min 04 s | 38 s et 53 s |
+| la VM démarre ? | **non** | **oui** |
+| message | `ssh exited with code 1` | `ssh exited with code 1`, mais **après** le démarrage |
+| cause | `ubuntu-latest` migré vers Ubuntu 26 | **git absent du système de base FreeBSD** (C-34) |
+
+`git` n'est pas livré avec FreeBSD. Nos garde-fous comptaient les fichiers avec `git ls-files` :
+dans la VM ils trouvaient **0 fichier sur 33** et accusaient à tort une suppression. Correctif :
+compter le disque quand git n'est pas là, **et dire lequel des deux modes est employé**.
+
+**Fichier `.cirrus.yml` supprimé** : Cirrus est mort (HTTP 000), et il contenait un mot de passe
+de laboratoire en clair, interdit par R-15 dans un dépôt public.
 
 **On ne saura qu'en lançant.** La première exécution de CONTRÔLES coûte ~5 minutes et ne construit
 rien : c'est le meilleur moyen de savoir si la bascule tient, avant de payer une heure de calcul.
