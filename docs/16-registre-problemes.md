@@ -662,3 +662,27 @@ l'exécution (`MOTIF1="admin""secret"`). Un garde-fou qui crie à tort finit par
 les valeurs, dans des **preuves verbatim** (ex. `smbclient … -U 'omrane%[mot de passe du banc — masqué]'`). **On ne réécrit
 pas un compte rendu de test** : ce serait falsifier une preuve. Conséquence pratique : **ce dépôt
 n'est pas prêt à être rendu public en l'état.** Deux options propres sont écrites dans `docs/50`.
+
+---
+
+## C-32 — 2026-10-28 — le CSV du registre casse à chaque description contenant un `;`
+
+**Constat.** La même faute a été commise **trois fois** ce soir : à chaque fois que j'écris une
+description d'acquis contenant un point-virgule, le fichier `matrices/acquis.csv` (séparateur `;`)
+gagne une colonne. Le vérificateur `scripts/72` répond alors `REGISTRE NON CONFORME` — **avec un
+message qui ne dit pas pourquoi** (« 2 destination(s) invalide(s) »), ce qui m'a fait chercher au
+mauvais endroit.
+
+**Pourquoi ça se répète.** Un CSV sans échappement est un format fragile, et l'outil qui le relit ne
+signale pas la vraie cause. Trois occurrences = ce n'est pas de l'inattention, c'est un défaut d'outil.
+
+**Correction appliquée** : un contrôle explicite du nombre de champs, lancé avant chaque commit :
+
+```
+awk -F';' '!/^#/ && NF>0 && NF!=7 {print "MALFORME l." NR " : " NF " champs"}' matrices/acquis.csv
+```
+
+**À faire (pas encore fait)** : intégrer ce contrôle **dans** `scripts/72`, avec un message qui nomme
+la cause (« la ligne N a K champs au lieu de 7 : un `;` s'est glissé dans la description »), et non
+seulement un décompte de destinations invalides. Tant que ce n'est pas fait, le contrôle reste une
+ligne que je dois penser à taper — donc il sera un jour oublié.

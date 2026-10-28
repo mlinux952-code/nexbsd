@@ -39,7 +39,7 @@ A-17;2026-10-27;motd annonce encore FreeBSD (defaut produit visible);constat T-2
 A-18;2026-10-27;comment un administrateur obtient root (su/doas/sudo);question ouverte;PRODUIT;;A-FAIRE
 A-19;2026-10-27;chaine de release + image installable (jalon J5);docs/41;PRODUIT;;A-FAIRE
 A-20;2026-10-27;diagnostic materiel du PC de 2011 (livrable 9);docs/hardware.md;PREUVE;docs/hardware.md;A-FAIRE
-A-21;2026-10-27;bureau et applications NexBSD (couche C);docs/42;PRODUIT;;A-FAIRE
+A-21;2026-10-27;bureau et applications NexBSD — PREMIERE PIERRE : interface autonome fork/bureau/nexbsd-bureau.html (barre, horloge, icones, fenetres, centre de commandes) validee par node --check et analyseur HTML, JAMAIS AFFICHEE dans un vrai X , aucune donnee reelle, aucun terminal vrai, aucune authentification graphique;docs/42;PRODUIT;;A-FAIRE
 A-22;2026-10-27;identite unique PAM/LDAP pour les sessions systeme;constat T-21;PRODUIT;;A-FAIRE
 A-23;2026-10-24;configuration slapd (annuaire) — extraite du script 60 vers le produit;T-04 / T-04-E;PRODUIT;fork/overlay/usr-local-etc-openldap-slapd.conf;FERME
 A-24;2026-10-24;configuration smb4.conf (partages + ldapsam:trusted) — extraite des scripts 62 et 63;T-04-E / T-04-F;PRODUIT;fork/overlay/usr-local-etc-smb4.conf;FERME
@@ -72,3 +72,4 @@ A-50;2026-10-27;preuve d acces SSH distant par cle;T-21;PREUVE;tests/results/T-2
 A-51;2026-10-28;la configuration du produit (11 fichiers de fork/overlay/) est APPLIQUEE sur une racine de systeme par fork/70-appliquer-overlay.sh (substitution des 3 placeholders, fusions sans ecrasement, idempotent, 4 essais dont 2 d echec volontaire);tests d execution du 2026-10-28 dans docs/48;PRODUIT;fork/70-appliquer-overlay.sh;FERME
 A-52;2026-10-28;l image produite CONTIENT la configuration NexBSD : build-nexbsd.sh installe le monde dans une racine puis applique overlay AVANT de fabriquer le media;JAMAIS EXECUTE — aucune image n a encore ete produite;PRODUIT;fork/build-nexbsd.sh;OUVERT
 A-53;2026-10-28;fork/80-installer-nexbsd.sh : installeur du produit (paquets, SID lu par net getlocalsid et JAMAIS fige, application de la config, initialisation de l annuaire, demarrage des services, 4 verifications, marqueur d installation) — ecrit et gardes testees, JAMAIS EXECUTE faute de systeme NexBSD;garde scandir de fork/70-appliquer-overlay.sh (verrou FreeBSD+root) teste;PRODUIT;fork/80-installer-nexbsd.sh;OUVERT
+A-54;2026-10-28;session bureau NexBSD (couche C) : fork/bureau/nexbsd-session.sh demarre X11, openbox et WebKitGTK en mode application , entree xsessions , refuse hors FreeBSD , JAMAIS AFFICHEE dans un vrai serveur X;verifications du 2026-10-28 dans docs/51 §2 (node --check, structure HTML, garde FreeBSD, .desktop lisible);PRODUIT;fork/bureau/nexbsd-session.sh;OUVERT
