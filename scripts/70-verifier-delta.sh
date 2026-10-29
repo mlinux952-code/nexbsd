@@ -49,7 +49,12 @@ info() { echo "  ...     $*"; }
 #   fork/bureau/tester-authentification.sh  (14 cas, execute avec un faux su)
 #   Les deux fichiers de test sont dans le delta produit : un test qui ne voyage pas avec le produit
 #   ne prouve rien sur le produit. Ils ne sont pas installes dans l image, seulement verifiables.
-EXPECTED=33
+# 2026-10-29 : 33 -> 34 fichiers. pkg audit AVANT le bureau (A-67, C-44, intervenant 8) :
+#   fork/bureau/nexbsd-audit-paquets.sh  (refuse la session si un paquet de la chaine
+#   d affichage est PROUVE vulnerable ; distingue INCONNU et SANS OBJET pour ne pas
+#   crier a tort, lecon M-10). Cet ajout est volontaire et documente : la ligne
+#   EXPECTED change parce que le produit change, pas parce qu un fichier a disparu.
+EXPECTED=34
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 
