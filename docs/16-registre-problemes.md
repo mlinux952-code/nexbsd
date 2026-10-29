@@ -1622,3 +1622,38 @@ configuration que rien n'installe serait de la documentation déguisée en produ
 dans `docs/57`.
 
 **Acquis : A-70.**
+
+---
+
+## C-48 — 2026-10-29 — **quatre protections absentes du produit, dont une grave : aucune politique de mot de passe**
+
+**Déclencheur :** nouvelles affiches du responsable (`docs/62`). Elles n'ont pas créé le problème, mais
+la question retournée — *« de quoi aurait besoin quelqu'un qui voudrait nous casser ? »* — a produit
+`scripts/75-verifier-durcissement.sh`, **21 contrôles**, désormais **étape 4/4 du travail CONTRÔLES**.
+
+**Résultat mesuré : 17 protections correctes, 0 faiblesse réelle, 4 éléments absents.**
+
+| Élément absent | Gravité | Pourquoi |
+|---|---|---|
+| **`login.conf` — politique de mot de passe** | 🔴 **la plus grave** | ni longueur minimale, ni limite d'essais, ni expiration. **Rien n'empêche un compte d'annuaire d'avoir le mot de passe `a`** |
+| **`sysctl.conf` — durcissement du noyau** | 🟠 moyenne | pas de `security.bsd.see_other_uids` (énumération des processus), pas de `securelevel` |
+| **`server min protocol` dans `smb4.conf`** | 🟠 moyenne | SMB1 pourrait être accepté ; c'est le protocole de WannaCry |
+| **`AllowUsers`/`AllowGroups` dans `sshd_config`** | 🟡 faible | tout compte valide peut tenter SSH (la clé seule limite déjà beaucoup) |
+
+**Deux faux positifs, corrigés — et c'est l'épisode instructif.** La première version a signalé
+**deux faiblesses qui n'en étaient pas** :
+
+1. *« `ldap ssl = off` : mot de passe en clair »* — faux : la connexion va à **`ldap://127.0.0.1`**,
+   elle ne quitte pas la machine ;
+2. *« un mot de passe de laboratoire subsiste »* — faux : l'occurrence était dans **`docs/16`, où le
+   problème est raconté**, et dans le motif de recherche du script.
+
+**Leçon M-10 appliquée à moi-même :** un garde-fou qui crie à tort sera ignoré, et alors il ne
+protège plus rien. Le contrôle LDAP distingue maintenant **annuaire local / distant** ; la recherche
+de secret **exclut la documentation**.
+
+**Décision de conception importante :** en mode normal, les `[ABSENT]` **ne font pas échouer** la CI.
+Ce sont des travaux à faire, pas des fautes. Le mode `--strict` les comptera pour la publication.
+Sans cette distinction, le contrôle aurait bloqué la chaîne dès son premier jour.
+
+**Acquis : A-71.**

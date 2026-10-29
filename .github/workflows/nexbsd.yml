@@ -93,7 +93,7 @@ jobs:
   #    Un rond rouge nomme directement le garde-fou en cause.
   # ═══════════════════════════════════════════════════════════════════════════
   controles:
-    name: "CONTRÔLES — delta, registre, simulation"
+    name: "CONTRÔLES — delta, registre, simulation, durcissement"
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -105,34 +105,46 @@ jobs:
         with:
           release: "15.1"
 
-      - name: "1/3 — le delta du fork est-il intact ? (script 70)"
+      - name: "1/4 — le delta du fork est-il intact ? (script 70)"
         shell: freebsd {0}
         run: |
           sh scripts/70-verifier-delta.sh > /tmp/r.txt 2>&1; CODE=$?
-          { echo "### 1/3 — delta du fork — code $CODE"
+          { echo "### 1/4 — delta du fork — code $CODE"
             grep -E "mode de comptage|fichiers comptes|VERDICT|\[KO\]" /tmp/r.txt | head -20
             echo ""; } >> rapport-ci.txt
           cat /tmp/r.txt
           exit $CODE
 
-      - name: "2/3 — le registre des acquis est-il conforme ? (script 72)"
+      - name: "2/4 — le registre des acquis est-il conforme ? (script 72)"
         shell: freebsd {0}
         run: |
           sh scripts/72-verifier-acquis.sh > /tmp/r.txt 2>&1; CODE=$?
-          { echo "### 2/3 — registre des acquis — code $CODE"
+          { echo "### 2/4 — registre des acquis — code $CODE"
             grep -E "mode de verification|VERDICT|\[KO\]" /tmp/r.txt | head -20
             echo ""; } >> rapport-ci.txt
           cat /tmp/r.txt
           exit $CODE
 
-      - name: "3/3 — la production est-elle simulable ? (script 74 --simulation)"
+      - name: "3/4 — la production est-elle simulable ? (script 74 --simulation)"
         shell: freebsd {0}
         run: |
           sh scripts/74-produire-image.sh --simulation > /tmp/r.txt 2>&1; CODE=$?
-          { echo "### 3/3 — simulation de production — code $CODE"
+          { echo "### 3/4 — simulation de production — code $CODE"
             grep -E "SIMULATION|\[KO\]|ERREUR" /tmp/r.txt | head -20
             echo ""; } >> rapport-ci.txt
           cat /tmp/r.txt
+          exit $CODE
+      - name: "4/4 — le produit est-il durci ? (script 75)"
+        shell: freebsd {0}
+        run: |
+          sh scripts/75-verifier-durcissement.sh > /tmp/r.txt 2>&1; CODE=$?
+          { echo "### 4/4 — durcissement — code $CODE"
+            grep -E "protections correctes|faiblesses reelles|elements absents|VERDICT" /tmp/r.txt | head -10
+            grep -E "\[FAIBLE\]" /tmp/r.txt | head -10
+            echo ""; } >> rapport-ci.txt
+          cat /tmp/r.txt
+          # Mode NORMAL ici : les elements ABSENTS (login.conf, sysctl.conf) sont du travail a
+          # faire, pas des fautes. Seules les FAIBLESSES reelles font echouer l etape.
           exit $CODE
 
       - name: "Rapport lisible (en haut de la page, sans rien déplier)"
