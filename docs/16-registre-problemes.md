@@ -1689,3 +1689,38 @@ Correction : `kld_list="smbfs"` dans `rc.conf`, chargé **avant** que le niveau 
 `sysctl.conf`, dans `docs/64`, et **à vérifier sur la machine réelle** — le jour où elle démarrera.
 
 Ce piège ne vient d'aucun outil de l'affiche : il vient d'avoir cherché **où** poser un réglage.
+
+---
+
+## C-49 — 2026-10-29 — 🔴 **un jeton d'accès GitHub a été transmis en clair dans la conversation**
+
+**Ce qui s'est passé :** le responsable a collé en clair un **jeton personnel GitHub** (`ghp_…`,
+permission `repo`) pour débloquer le téléchargement de l'image NexBSD. **La valeur n'est reproduite
+ni ici ni ailleurs dans le dépôt** (seul l'historique de la conversation la contient).
+
+**Ma responsabilité est engagée :** c'est **moi** qui lui ai indiqué de créer ce jeton et de
+l'utiliser dans Colab, **sans écrire assez clairement qu'il ne devait jamais me le montrer**. Une
+consigne de sécurité qui laisse place à l'interprétation est une consigne fausse.
+
+**Ce que ce jeton permettait :** lecture et écriture sur **tous** les dépôts du compte, y compris
+**supprimer `nexbsd`**. Aucune confirmation, aucune alerte, agit sans le titulaire.
+
+**Ce qui a été fait :** le jeton **n'a pas été utilisé** — aucune requête. Sa **révocation
+immédiate** a été demandée (https://github.com/settings/tokens → *Delete*). **Elle reste à
+confirmer par le responsable : seul le titulaire peut le faire.**
+
+**La règle qui manquait, désormais écrite (A-76) :**
+> **Aucun secret ne se transmet par la conversation. Jamais.** Pas un mot de passe, pas un jeton,
+> pas une clé SSH. Un secret qui entre dans une conversation est un secret **perdu**, même si rien
+> ne s'est encore produit. **Un secret se saisit là où il est utilisé** — jamais dans un message.
+
+**Pourquoi c'est instructif :** le projet avait déjà **R-15** (« plus aucun mot de passe dans le
+dépôt ni les workflows »). La règle était **trop étroite** : elle parlait du **dépôt**, pas de la
+**conversation**. Un secret peut fuir **sans jamais toucher un fichier**.
+
+**Et la vraie solution n'était pas un jeton :** publier l'image en **Release**
+(`.github/workflows/publier-image.yml`) supprime le besoin de secret, rend le téléchargement
+**public, reprenable et sans expiration**. Le `GITHUB_TOKEN` interne est créé et détruit par GitHub
+lui-même, en une exécution, et personne ne le voit jamais.
+
+**Acquis : A-76.**
