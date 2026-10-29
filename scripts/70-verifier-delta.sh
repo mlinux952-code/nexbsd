@@ -57,9 +57,10 @@ info() { echo "  ...     $*"; }
 # 2026-10-29 (soir) : 34 -> 37 fichiers. LECTEURS RESEAU a la connexion (A-68, C-45, intervenant 5) :
 #   fork/netware/nexbsd-script-connexion.sh    (interpreteur de script de connexion a la NetWare)
 #   fork/netware/script-connexion.systeme     (le script SYSTEME du produit : H, P, C, D)
+#   fork/netware/script-connexion.utilisateur.exemple  (script PERSONNEL d exemple)
 #   fork/netware/tester-script-connexion.sh   (27 cas ; a trouve un vrai defaut : %%UTILISATEUR%%
 #   non developpe dans MAP, donc le meme lecteur vide pour tout le monde)
-EXPECTED=37
+EXPECTED=38
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 
