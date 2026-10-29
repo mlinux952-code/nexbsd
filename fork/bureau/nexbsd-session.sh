@@ -85,6 +85,31 @@ UTILISATEUR=$(sh "$ICI/nexbsd-authentifier.sh" 3) || {
 }
 ok "authentifié : $UTILISATEUR (mot de passe vérifié par PAM via su)"
 
+# --- 3bis. audit de sécurité des paquets (acquis A-67, docs/51 §4) ----------
+# Le bureau est rendu par WebKitGTK, qui a un historique de CVE. On vérifie AVANT de lancer
+# le moteur de rendu. Trois états (voir nexbsd-audit-paquets.sh) : vulnérable -> refus,
+# inconnu -> on continue en l'annonçant, sans objet -> on continue.
+AUDIT="$ICI/nexbsd-audit-paquets.sh"
+if [ -r "$AUDIT" ]; then
+	sh "$AUDIT"
+	AUDIT_CODE=$?
+	case "$AUDIT_CODE" in
+		0) ok "audit de sécurité des paquets : le bureau peut s'ouvrir" ;;
+		3) ko "audit de sécurité : un paquet de la chaîne d'affichage est vulnérable"
+		   info "le bureau ne s'ouvre pas — mettre les paquets à jour, puis relancer la session"
+		   info "dérogation assumée possible : sh $AUDIT --forcer (membres de wheel)"
+		   exit 3 ;;
+		*) ko "audit de sécurité : état indéterminé (code $AUDIT_CODE)"
+		   info "par prudence, le bureau ne s'ouvre pas ; exécuter $AUDIT à la main pour comprendre"
+		   exit "$AUDIT_CODE" ;;
+	esac
+else
+	ko "l'audit de sécurité des paquets est absent : $AUDIT"
+	info "sans lui, on ne peut pas affirmer que le moteur de rendu est sain : on n'ouvre pas."
+	exit 1
+fi
+
+
 # --- 4. gestionnaire de fenêtres ------------------------------------------
 if command -v openbox >/dev/null 2>&1; then
 	openbox >>"$JOURNAL" 2>&1 &

@@ -1473,3 +1473,50 @@ deux chemins sortent en 0 — **non tranchable depuis l'API**), puis `gzip -1`.
    d'image dynamique, `mkimg` non fatal) — parce qu'un essai coûte trois heures sans reprise.
 
 **Prochaine étape, décisive : DÉMARRER ce fichier.** C'est le test T-01 appliqué au produit.
+
+---
+
+## C-44 — 2026-10-29 — **le trou de sécurité nommé le 28/10 est fermé** : `pkg audit` avant le bureau
+
+**Constat d'origine** (`docs/51` §4, 28/10) : *« `pkg audit` doit tourner au démarrage de session et
+REFUSER de lancer le bureau si le paquet est vulnérable — **à écrire, pas encore fait** »*.
+
+Le bureau NexBSD est rendu par **WebKitGTK** (`www/webkit2-gtk`), qui porte **20 CVE corrigées en
+mai 2026**. Un moteur de rendu vulnérable est une porte ouverte **même** si le fichier affiché est
+local : les CVE de moteurs de rendu sont presque toutes des défauts de manipulation de mémoire
+atteignables par une simple page mal formée.
+
+**Ce qui a été écrit aujourd'hui** — `fork/bureau/nexbsd-audit-paquets.sh`, 6 cas testés :
+
+| Cas | Entrée | Comportement obtenu | Code |
+|---|---|---|---|
+| A | `webkit2-gtk-2.48.3 is vulnerable` | **refus**, avec la commande de correction | **3** |
+| B | `0 problem(s) in 0 installed package(s)` | ouverture autorisée | 0 |
+| C | `zip-3.0_2 is vulnerable` | **avertissement**, ouverture autorisée | 0 |
+| D | `pkg` absent | « sans objet », ouverture autorisée | 0 |
+| E | `--forcer` hors wheel / hors FreeBSD | **dérogation refusée** | 4 |
+| F | fichier de simulation illisible | arrêt net | 2 |
+
+**Le point difficile, et c'est la leçon M-10 :** un garde-fou ne doit pas crier à tort. Trois états
+sont distingués, et **seul le premier interdit le démarrage** :
+
+1. **VULNÉRABLE** — un paquet de la chaîne d'affichage est *prouvé* vulnérable → refus ;
+2. **INCONNU** — la base n'a pas pu être mise à jour (pas de réseau) → **on continue, mais on
+   l'annonce à voix haute** : *« l'état de sécurité est INCONNU »* ;
+3. **SANS OBJET** — `pkg` n'est pas installé (le produit en est au socle FreeBSD) → on continue.
+
+Si l'on avait traité l'état 2 comme l'état 1, **le bureau ne se serait jamais ouvert sur une machine
+sans réseau** — un faux refus permanent, exactement la faute de la C-41.
+
+**Branchement dans la session** : `fork/bureau/nexbsd-session.sh`, nouvelle étape **3bis**, placée
+**après l'authentification** (on sait qui demande) et **avant le gestionnaire de fenêtres** (donc
+avant tout lancement du moteur de rendu). Si le script d'audit est absent, **le bureau ne s'ouvre
+pas** : on ne peut pas prétendre que le moteur est sain sans l'avoir vérifié.
+
+**Ce qui reste faux, et qu'il faut dire :** ce script n'a **jamais tourné sur un vrai FreeBSD** — le
+banc est un Linux sans `pkg`. Les six cas sont testés **par simulation**, c'est-à-dire en lisant des
+sorties de `pkg audit` écrites à la main. Le format de ces sorties est celui de `pkg` sur FreeBSD 15 ;
+il n'a pas été confronté à la réalité. **Statut honnête : écrit et testé au banc, non éprouvé sur le
+produit.**
+
+**Acquis : A-67.**
