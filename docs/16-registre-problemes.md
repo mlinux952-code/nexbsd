@@ -1584,3 +1584,41 @@ identiques**. Le fichier reste celui que T-05 et T-05a ont prouvé.
 `pass in on $IFACE inet proto tcp to port 445` accepte SMB **de n'importe quelle source**. Voulu sur
 un réseau de bureau, à **borner** quand l'installeur connaîtra l'adressage. Explicitement noté : **le
 445 ne doit jamais être exposé sur Internet.**
+
+---
+
+## C-47 — 2026-10-29 — **N-08 : NexBSD n'a aucun moyen d'être administré à distance sans terminal**
+
+**Constat :** `docs/54` liste **N-08 « administration unique sans terminal »** comme non commencé.
+Vérification ce soir : c'est exact. NexBSD n'expose aujourd'hui **que SSH en ligne de commande**. Il
+n'y a ni serveur RDP, ni VNC, ni passerelle web. Un administrateur Windows **ne peut pas** voir le
+bureau NexBSD depuis son poste.
+
+**Ce que l'affiche « Free Remote Desktop Tools » a apporté de solide :**
+
+1. elle **mélange clients et serveurs** — 5 des 15 lignes (FreeRDP, Remmina, Windows App…) sont des
+   **clients** : les installer sur le serveur n'apporterait rien ; Remmina apparaît même **deux fois** ;
+2. elle **recommande** les quatre outils qui font passer la session par l'infrastructure du
+   fournisseur (AnyDesk, TeamViewer, RustDesk, HopToDesk) — pour un serveur qui détient l'annuaire des
+   identités, c'est **rédhibitoire** : souveraineté, traçabilité, disponibilité, licence
+   (**RustDesk est GPL-3.0, interdit dans notre dépôt**) ;
+3. elle **omet le seul outil qui convient** : **xrdp**, serveur RDP pour Unix, présent dans les
+   ports FreeBSD sous `net/xrdp`.
+
+**Décision écrite (docs/61) :** **xrdp**, avec trois règles non négociables :
+- jamais 3389 ni 5900 exposés en direct — un RDP sur Internet est scanné en quelques minutes ;
+- accès par **tunnel SSH** (`ssh -L 3389:localhost:3389`) : deux serrures au lieu d'une ;
+- `xrdp.ini` écoute sur **127.0.0.1**, jamais sur `0.0.0.0` ; VNC jamais sans tunnel (mot de passe
+  tronqué à 8 caractères, aucun chiffrement).
+
+**Pourquoi c'est le bon choix et pas un autre :** toute machine Windows possède déjà un client RDP ;
+et `xrdp` démarre `startwm.sh`, que l'on peut brancher sur **`/usr/local/bin/nexbsd-session`** — la
+session de la couche C **déjà écrite**, avec son écran d'ouverture qui exige un mot de passe (A-67
+compris). **Un seul paquet ajouté, quatre pièces déjà testées réutilisées.**
+
+**Ce qui n'a PAS été fait, volontairement :** aucun fichier `xrdp.ini`, aucune règle `pf.conf` pour
+3389. Motif : *« ce qui n'est pas dans l'image n'est pas dans le produit »*. Écrire une
+configuration que rien n'installe serait de la documentation déguisée en produit — la faute dénoncée
+dans `docs/57`.
+
+**Acquis : A-70.**
