@@ -1553,3 +1553,34 @@ partages Samba décrits par le script système **n'existent pas encore**, et le 
 encore appelé** par `nexbsd-session.sh`.
 
 **Acquis : A-68.**
+
+---
+
+## C-46 — 2026-10-29 — une règle **décorative** dans `pf.conf`, et un commentaire qui mentait
+
+**Découverte :** en relisant `fork/overlay/etc/pf.conf` à côté d'une affiche de protocoles envoyée par
+le responsable, deux lignes ont sauté aux yeux :
+
+```pf
+set skip on lo0
+...
+# RESTREINT À LA BOUCLE LOCALE : les identités ne sont pas exposées au réseau.
+pass in on lo0 inet proto tcp to port 389 keep state
+```
+
+`set skip on lo0` **désactive tout filtrage sur la boucle locale**. La règle `pass in on lo0 … 389`
+**ne s'évalue jamais**. Le commentaire attribuait donc la protection de l'annuaire à une règle
+**inopérante**.
+
+**Ce qui protège réellement LDAP :** l'**absence** de toute règle sur `$IFACE` pour le port 389 —
+c'est `block in log all` qui s'applique. **Ce n'était donc pas une faille**, mais une **explication
+fausse** dans un fichier de sécurité. C'est le travers M-10 : un garde-fou qui a l'air de garder.
+
+**Correctif :** commentaire réécrit pour dire la vérité (la règle reste, pour la trace), et aucune
+ligne de règle modifiée — vérifié par `git diff` : **les 11 lignes `pass`/`block`/`set`/`scrub` sont
+identiques**. Le fichier reste celui que T-05 et T-05a ont prouvé.
+
+**Deuxième observation, non corrigée car elle demande une décision :**
+`pass in on $IFACE inet proto tcp to port 445` accepte SMB **de n'importe quelle source**. Voulu sur
+un réseau de bureau, à **borner** quand l'installeur connaîtra l'adressage. Explicitement noté : **le
+445 ne doit jamais être exposé sur Internet.**
