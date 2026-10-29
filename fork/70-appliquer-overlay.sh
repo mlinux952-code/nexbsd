@@ -127,7 +127,20 @@ poser "install-annuaire-base.ldif"   "/root/install-annuaire-base.ldif"   600
 fusionner() {
 	# $1 = source, $2 = destination ; ajoute seulement les lignes absentes
 	src="$1"; dst="$RACINE$2"
-	[ -f "$dst" ] || { echo "  [KO ] $2 absent de la racine : fusion impossible"; return 1; }
+	# C-42 (2026-10-29) : l execution 16 a echoue ICI, apres 3 h 14 de construction.
+	# Cause : `make distribution` ne cree PAS /etc/rc.conf dans la racine. Le script refusait
+	# alors de fusionner, et toute la chaine s'arretait — alors que la racine contenait deja
+	# les neuf autres pieces du produit.
+	# Refuser de remplir un fichier ABSENT n'est pas une precaution : c'est un blocage.
+	# Il n'y a rien a ecraser. On le CREE donc, en le disant clairement.
+	if [ ! -f "$dst" ]; then
+		if [ "$SIMULATION" = oui ]; then
+			echo "  [SIM ] $2 absent de la racine : il serait cree"
+		else
+			: > "$dst" || { echo "  [KO ] $2 absent et impossible a creer"; return 1; }
+			echo "  [CREÉ] $2 (absent de la racine : cree par la configuration NexBSD)"
+		fi
+	fi
 	ajoute=0
 	while IFS= read -r ligne; do
 		case "$ligne" in ''|'#'*) continue ;; esac

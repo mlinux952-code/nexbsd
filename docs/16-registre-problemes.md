@@ -1364,3 +1364,58 @@ Le pré-vol vérifie désormais ce qui existe vraiment :
 
 Le cache de la VM est désormais utilisé (`Cache hit for: freebsd-15.1-2.2.8-amd64-v3`, 976 Mo) :
 le démarrage est passé à une quinzaine de secondes.
+
+---
+
+## C-42 — 2026-10-29 — exécution #16 : **le système a été assemblé**, échec sur un fichier vide
+
+**Verbatim (tâche IMAGE, exécution #16, `3h 18m 27s`, étape `3/4` = `3h 14m 52s`) :**
+
+```
+DEBUT 2026-10-28T22:47:55Z
+>>> Installing kernel NEXBSD_L1 completed on Thu Oct 29 02:02:45 UTC 2026
+→ application de la configuration NexBSD (fork/overlay/)
+  [OK] tous les placeholders ont une valeur
+  [OK ] /etc/motd /etc/nexbsd-version /etc/pam.d/su /etc/pf.conf /etc/ssh/sshd_config
+  [OK ] slapd.conf / smb4.conf / nslcd.conf / install-annuaire-base.ldif
+  [--  ] /etc/nsswitch.conf : déjà à jour
+  [KO ] /etc/rc.conf absent de la racine : fusion impossible
+```
+
+**C'est la plus grande avancée du projet, et c'est un rouge.**
+
+- `buildworld` : **terminé** (le monde FreeBSD compilé avec notre `src.conf`)
+- `buildkernel NEXBSD_L1` : **terminé**, puis **installé** dans la racine
+- `installworld` + `distribution` + `installkernel` : **terminés**
+- les **9 pièces de configuration** du produit : **dans la racine**
+- `makefs` : **jamais atteint**
+
+**Cause exacte :** `make distribution` ne crée pas `/etc/rc.conf` dans une racine `DESTDIR`. Or
+`fusionner()` dans `70-appliquer-overlay.sh` refusait d'écrire dans un fichier absent :
+
+```sh
+[ -f "$dst" ] || { echo "  [KO ] $2 absent de la racine : fusion impossible"; return 1; }
+```
+
+Avec `set -eu` dans `build-nexbsd.sh`, ce `return 1` a **arrêté toute la chaîne**, à dix secondes
+de la fin, après 3 h 14 de calcul.
+
+> Refuser de remplir un fichier absent n'est pas une précaution : c'est un blocage.
+> Il n'y avait rien à écraser.
+
+**Correctifs :**
+
+1. `fusionner()` **crée** le fichier absent et l'annonce (`[CREÉ]`). Vérifié sur une fausse racine
+   dépourvue de `rc.conf` : les **10 réglages NexBSD** y entrent correctement.
+2. **Taille d'image dynamique** : `installworld` installe les fichiers de débogage
+   (`usr/lib/debug`), la racine pèse plusieurs Go, et une image de **4 Go fixes** aurait été
+   refusée par `makefs`. On mesure (`du -sm`) puis on dimensionne (+20 % + 512 Mo).
+3. **`mkimg` n'est plus fatal** : le `.ufs` est le produit, le disque bootable n'est qu'une
+   enveloppe. Si `mkimg` échoue, on garde le système — c'est la route « sûre » de `docs/46`.
+4. **Compression `gzip -1`** en fin de tâche pour rendre l'artefact téléchargeable, l'empreinte du
+   fichier **brut** étant relevée **avant** compression.
+
+**Leçon de méthode, la plus chère du projet :** une tentative coûte **3 h 18** et il n'y a aucune
+reprise possible (chaque exécution repart d'une VM vierge). Il faut donc corriger **tout** ce qui
+peut encore casser **après** le point d'échec avant de relancer. C'est ce qui a été fait ici :
+trois défauts corrigés d'un coup (rc.conf, taille, mkimg), pas un seul.

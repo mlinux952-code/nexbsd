@@ -440,12 +440,42 @@ jobs:
             echo "### 4/4 — ce qui a été produit"
             echo '```'
             ls -l images 2>/dev/null || echo "aucun fichier dans images/"
+            echo ""
+            echo "--- empreintes des fichiers BRUTS (ce sont elles qui font foi) ---"
             for f in images/*; do
               [ -f "$f" ] || continue
               echo "$(sha256 -q "$f")  $(basename "$f")  $(wc -c < "$f") octets"
             done
+          } > /tmp/r.txt 2>&1
+
+          # Une image de plusieurs Go n'est pas telechargeable utilement. On en fait une copie
+          # compressee pour le transport (gzip -1 : rapide, et un systeme de fichiers presque
+          # vide se compresse enormement). Le fichier brut est supprime seulement si la
+          # compression a reussi, et l'empreinte du brut vient d'etre relevee juste au-dessus.
+          for f in images/*.ufs images/*.img; do
+            [ -f "$f" ] || continue
+            [ "$(wc -c < "$f")" -gt 500000000 ] || continue
+            {
+              echo "--- compression pour le transport : $(basename "$f") ---"
+              date -u +"debut %H:%M:%SZ"
+            } >> /tmp/r.txt 2>&1
+            if gzip -1 "$f"; then
+              echo "compresse : $(basename "$f").gz ($(wc -c < "$f.gz") octets)" >> /tmp/r.txt 2>&1
+              rm -f "$f"
+            else
+              echo "echec de compression : on garde le fichier brut" >> /tmp/r.txt 2>&1
+            fi
+            date -u +"fin %H:%M:%SZ" >> /tmp/r.txt 2>&1
+          done
+          { echo ""
+            echo "--- contenu final de images/ ---"
+            ls -l images 2>/dev/null || echo "vide"
+            for f in images/*; do
+              [ -f "$f" ] || continue
+              echo "$(sha256 -q "$f")  $(basename "$f")"
+            done
             echo '```'
-            echo ""; } > /tmp/r.txt 2>&1
+            echo ""; } >> /tmp/r.txt 2>&1
           cat /tmp/r.txt >> rapport-ci.txt; cat /tmp/r.txt
 
       - name: "Rapport lisible (en haut de la page, sans rien déplier)"

@@ -77,15 +77,37 @@ echo "  VERIFIE : /etc/nexbsd-version, /etc/pam.d/su, /etc/pf.conf sont désorma
 # sûre pour un premier essai est de produire `nexbsd.ufs` (makefs) et de le monter/démarrer
 # directement, sans table de partitions — on prouve ainsi que le SYSTÈME est bon avant de
 # prouver que le MÉDIA est bon. Ne pas présenter comme acquis ce qui n'a pas tourné.
-echo "→ makefs + mkimg (image disque UFS, 4 Go)"
-TAILLE_MO=${TAILLE_MO:-4096}
-makefs -t ffs -s "${TAILLE_MO}m" -o version=2 "$RACINE/../nexbsd.ufs" "$RACINE"
-mkimg -s gpt -f raw -b "$RACINE/boot/pmbr" \
-	-p efi:="${RACINE}/../nexbsd.ufs" -o "$RACINE/../nexbsd.img" 2>/dev/null || \
-	mkimg -s mbr -f raw -b "$RACINE/boot/boot0" \
-	-p freebsd:="${RACINE}/../nexbsd.ufs" -o "$RACINE/../nexbsd.img"
-echo "→ image : $RACINE/../nexbsd.img"
-echo "→ ET CE FICHIER EST LE PRODUIT : il contient le noyau NexBSD ET la configuration NexBSD."
+echo "→ makefs + mkimg"
+UFS="$RACINE/../nexbsd.ufs"
+IMG="$RACINE/../nexbsd.img"
+rm -f "$UFS" "$IMG"
+
+# C-42 (2026-10-29) : la taille ne doit plus etre une CONSTANTE. installworld installe aussi
+# les fichiers de debogage (usr/lib/debug) : la racine pese plusieurs Go, et une image de 4 Go
+# fixes serait refusee par makefs (« filesystem too small »). On mesure, puis on dimensionne.
+UTILISE_MO=$(du -sm "$RACINE" | awk '{print $1}')
+TAILLE_MO=${TAILLE_MO:-0}
+[ "$TAILLE_MO" -eq 0 ] && TAILLE_MO=$(( UTILISE_MO + UTILISE_MO / 5 + 512 ))
+echo "→ racine : ${UTILISE_MO} Mo utilises ; image dimensionnee a ${TAILLE_MO} Mo (+20 % + 512 Mo)"
+
+makefs -t ffs -s "${TAILLE_MO}m" -o version=2 "$UFS" "$RACINE" \
+	|| { echo "ERREUR : makefs a echoue — pas d'image du tout" >&2; exit 1; }
+ls -l "$UFS"
+
+# Le .ufs EST le produit : un systeme de fichiers complet, montable et verifiable.
+# Le disque bootable n'est qu'une ENVELOPPE autour de lui. Si l'enveloppe echoue, on ne jette
+# pas le systeme : c'est deja un resultat, et c'est la route que docs/46 decrit comme « sure ».
+echo "→ enveloppe bootable (jamais confrontee a une vraie machine : best effort)"
+if mkimg -s mbr -f raw -b "$RACINE/boot/boot0" -p freebsd:="$UFS" -o "$IMG" 2>/tmp/mkimg.err; then
+	echo "→ image MBR : $IMG ($(wc -c < "$IMG") octets)"
+elif mkimg -s gpt -f raw -b "$RACINE/boot/pmbr" -p freebsd-ufs:="$UFS" -o "$IMG" 2>>/tmp/mkimg.err; then
+	echo "→ image GPT : $IMG ($(wc -c < "$IMG") octets)"
+else
+	echo "AVERTISSEMENT : aucune image disque bootable produite."
+	sed 's/^/    mkimg dit : /' /tmp/mkimg.err 2>/dev/null | head -5
+	echo "    CE N'EST PAS UN ECHEC TOTAL : $UFS existe et contient le systeme complet."
+fi
+echo "→ PRODUIT : $UFS (systeme complet) — il contient le noyau NexBSD ET la configuration NexBSD."
 
 # --- 7. Ancien chemin conservé, mais il ne contient PAS la configuration du produit ---
 echo
