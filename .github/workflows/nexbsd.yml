@@ -504,5 +504,5 @@ jobs:
           path: |
             images/**
             build.log
-          if-no-files-found: ignore
+          if-no-files-found: error   # C-50 : un artefact SANS image a ete produit le 29/10 sans que rien ne le signale
           retention-days: 30

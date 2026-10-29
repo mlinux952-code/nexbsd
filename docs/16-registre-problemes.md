@@ -1724,3 +1724,38 @@ dépôt ni les workflows »). La règle était **trop étroite** : elle parlait 
 lui-même, en une exécution, et personne ne le voit jamais.
 
 **Acquis : A-76.**
+
+---
+
+## C-50 — 2026-10-29 — ⚠️ **la Release est vide : l'artefact `nexbsd-images` ne contient pas l'image**
+
+**Exécution `PUBLIER` #1** (`40967868290`, commit `a9df1e6`) : étapes **1 à 5 vertes**, étape
+**4/4 rouge**. La Release `image-18` **existe** (publique, non brouillon) avec **0 actif**.
+
+**La preuve, et elle est dans la Release elle-même :** ses notes ont été écrites à partir de
+`sha256sum /tmp/img/*`, donc de **tout** ce que l'artefact contenait. Elles ne citent **qu'un
+fichier** :
+
+```
+41fe4de6e0dd5b3d9bae3e8d7c5fe16cfcff23c1c05ca77e4cbda8f83e040fe7  /tmp/img/build.log
+```
+
+> **L'artefact ne contient que `build.log`. L'image NexBSD n'y est pas.**
+
+**Les 1,82 Go téléchargés en vain toute la soirée ne sont probablement pas le système NexBSD.**
+
+**Deux causes possibles, non tranchées** (journaux **403**, « Must have admin rights ») :
+- **A** (probable) : `images/` était vide, et **`if-no-files-found: ignore`** a produit un artefact
+  muet. **C'est la leçon M-10 pour la troisième fois ce soir** : un garde-fou qui ne dit rien quand
+  il ne trouve rien n'est pas un garde-fou ;
+- **B** : `build.log` dépasse la limite de **2 Gio** par actif de Release, et `set -eu` a arrêté.
+
+**Correctifs :** `if-no-files-found: error` dans `nexbsd.yml` ; `publier-image.yml` réécrit en
+**diagnostic d'abord** (1/5 liste tout, échec explicite si aucun fichier > 100 Mo), **découpage**
+au-delà de 1,9 Gio, **envoi un actif à la fois**.
+
+**Ce que cela déplace :** le problème n'est plus le téléchargement, c'est la **production**. Si
+`images/` était vide, la cause est à chercher du côté de `mkimg` (non fatal, `docs/56`) et du
+répertoire où `makefs` écrit réellement.
+
+**Acquis : A-77.**

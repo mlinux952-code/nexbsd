@@ -1,24 +1,26 @@
 name: "PUBLIER — l'image NexBSD en Release (téléchargement public et reprenable)"
 
-# POURQUOI CE WORKFLOW EXISTE (2026-10-29)
+# HISTORIQUE
 #
-# L'artefact « nexbsd-images » (1,78 Gio) est INACCESSIBLE sans authentification : un simple curl
-# reçoit HTTP 401. Le responsable a tenté trois fois de le télécharger et le transfert s'est
-# interrompu à chaque fois, sans pouvoir reprendre — un artefact GitHub ne se reprend pas.
+# v1 (2026-10-29, 22 h 42) — ÉCHEC INSTRUCTIF. Étapes 1 à 3 vertes (artefact récupéré, empreintes
+# calculées, Release créée), étape 4/4 ROUGE. La Release « image-18 » a été créée avec ZÉRO actif.
+# Le corps de la Release, écrit par l'étape 2, ne listait qu'UN fichier : build.log.
 #
-# De plus, un artefact EXPIRE (celui de l'exécution #18 le 2026-11-28). Une Release, non.
+#   >>> L'artefact « nexbsd-images » ne contient pas l'image. <<<
 #
-# Ce workflow prend l'artefact d'une exécution terminée et l'attache à une RELEASE GitHub :
-#   - une release d'un dépôt PUBLIC se télécharge SANS COMPTE, sans jeton, sans gh ;
-#   - curl -C - fonctionne sur un actif de release : le téléchargement REPREND où il s'est arrêté ;
-#   - l'actif n'expire pas.
+# Deux causes possibles, non tranchées (journaux de l'exécution inaccessibles, HTTP 403) :
+#   A. `images/` était vide à l'envoi, et la ligne `if-no-files-found: ignore` du workflow
+#      principal a SILENCIEUSEMENT produit un artefact contenant seulement build.log ;
+#   B. le fichier dépasse la limite de 2 Gio par actif de Release, et `set -eu` a tout arrêté.
 #
-# Il produit aussi, dans son journal, les NOMS et les SHA256 réels des fichiers — deux informations
-# que l'API ne peut pas donner depuis l'extérieur (401 sur l'archive d'artefact).
-#
-# LIMITE À CONNAÎTRE : un actif de release GitHub est plafonné à 2 Gio par fichier. L'image
-# compressée pèse 1,78 Gio, donc cela passe ; mais si une future image dépassait 2 Gio, il faudrait
-# la découper (split) en plusieurs actifs.
+# CORRECTIFS DE LA v2 :
+#   1. DIAGNOSTIC D'ABORD : on liste TOUT ce que contient l'artefact (nom, taille, empreinte),
+#      et cette liste est publiée dans le corps de la Release ET dans le résumé du travail.
+#      Si l'image n'est pas là, on le voit à la première ligne, avant toute publication.
+#   2. UN ACTIF À LA FOIS, avec son propre code de retour : l'échec d'un fichier n'empêche plus
+#      les autres, et le travail ne se termine en rouge que s'il n'y a réellement rien à publier.
+#   3. DÉCOUPAGE au-delà de 1,9 Gio (split), avec un fichier de reconstitution.
+#   4. ÉCHEC EXPLICITE si l'artefact ne contient aucune image — plus de silence.
 
 on:
   workflow_dispatch:
@@ -28,7 +30,7 @@ on:
         required: true
         default: "40826237095"
       tag:
-        description: "Étiquette de la Release à créer (ex. image-18)"
+        description: "Étiquette de la Release à créer ou compléter (ex. image-18)"
         required: true
         default: "image-18"
       titre:
@@ -37,45 +39,75 @@ on:
         default: "NexBSD — image construite (exécution #18)"
 
 permissions:
-  contents: write     # nécessaire pour créer la release et y déposer des actifs
-  actions: read       # nécessaire pour télécharger l'artefact d'une autre exécution
+  contents: write
+  actions: read
 
 jobs:
   publier:
     name: "Publier l'image en Release"
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v5
 
-      - name: "1/4 — télécharger l'artefact de l'exécution indiquée"
+      - name: "1/5 — récupérer l'artefact et DIRE ce qu'il contient"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -eu
+          rm -rf /tmp/img && mkdir -p /tmp/img
           gh run download "${{ inputs.run_id }}" \
              --repo "${{ github.repository }}" \
              --name nexbsd-images \
              -D /tmp/img
-          echo "--- contenu réel de l'artefact ---"
-          ls -lh /tmp/img
-          echo ""
-          echo "### 1/4 — artefact récupéré" >> "$GITHUB_STEP_SUMMARY"
-          ls -lh /tmp/img >> "$GITHUB_STEP_SUMMARY"
 
-      - name: "2/4 — empreintes AVANT publication (la preuve)"
+          echo "=== contenu RÉEL de l'artefact (find, pas ls) ==="
+          find /tmp/img -type f -printf '%10s  %p\n' | sort -rn | tee /tmp/liste.txt
+          echo ""
+          echo "nombre de fichiers : $(wc -l < /tmp/liste.txt)"
+          echo "taille totale      : $(du -sh /tmp/img | cut -f1)"
+
+          # Une image est un fichier de plus de 100 Mo, quel que soit son nom.
+          NIMG=$(find /tmp/img -type f -size +100M | wc -l)
+          echo "fichiers de plus de 100 Mo : $NIMG"
+          if [ "$NIMG" -eq 0 ]; then
+             echo "::error::L'artefact ne contient AUCUN fichier de plus de 100 Mo : l'image n'y est pas."
+             echo "::error::Contenu trouvé : $(cat /tmp/liste.txt | tr '\n' ' ')"
+             exit 1
+          fi
+
+          { echo "### 1/5 — contenu réel de l'artefact"
+            echo '```'; cat /tmp/liste.txt; echo '```'
+            echo ""; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "2/5 — empreintes (la preuve)"
         run: |
           set -eu
-          echo "=== sha256 des fichiers produits ==="
-          sha256sum /tmp/img/* | tee /tmp/empreintes.txt
-          echo ""
-          echo "### 2/4 — empreintes" >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
-          cat /tmp/empreintes.txt >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          find /tmp/img -type f -exec sha256sum {} \; | sort -k2 | tee /tmp/empreintes.txt
+          { echo "### 2/5 — empreintes"; echo '```'; cat /tmp/empreintes.txt; echo '```'; echo ""; } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: "3/4 — créer la Release"
+      - name: "3/5 — découper ce qui dépasse 1,9 Gio"
+        run: |
+          set -eu
+          mkdir -p /tmp/pub
+          LIMITE=$((1900 * 1024 * 1024))
+          for f in $(find /tmp/img -type f); do
+            taille=$(stat -c %s "$f")
+            if [ "$taille" -gt "$LIMITE" ]; then
+              echo "découpage : $f ($taille octets)"
+              split -b 1900M -d -a 2 "$f" "/tmp/pub/$(basename "$f").part"
+              ( cd /tmp/pub && sha256sum "$(basename "$f")".part* > "$(basename "$f").parts.sha256" )
+              echo "  -> $(ls /tmp/pub | grep -c "$(basename "$f").part[0-9]") morceaux"
+              echo "  -> reconstitution : cat $(basename "$f").part* > $(basename "$f")"
+            else
+              cp "$f" /tmp/pub/
+            fi
+          done
+          echo "=== ce qui sera publié ==="
+          ls -lh /tmp/pub
+
+      - name: "4/5 — créer la Release (notes = ce qu'elle contient vraiment)"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -83,20 +115,23 @@ jobs:
           cat > /tmp/notes.md <<NOTES
           Image NexBSD construite par l'exécution **#${{ inputs.run_id }}**.
 
-          Ce fichier est le premier système NexBSD jamais produit : FreeBSD 15.1-RELEASE,
-          noyau \`NEXBSD_L1\`, et les neuf pièces de configuration du produit.
-
           ## Ce que cette image est
-          Un système de fichiers complet, prêt à être démarré.
+          Un système de fichiers complet, construit depuis FreeBSD 15.1-RELEASE avec le noyau
+          \`NEXBSD_L1\` et les neuf pièces de configuration du produit.
 
           ## Ce qu'elle n'est pas
           - elle n'a **jamais été démarrée** ;
           - **Samba, OpenLDAP et nslcd n'y sont pas installés** (le socle FreeBSD seulement) ;
           - aucun mot de passe n'a été vérifié par PAM.
 
+          ## Contenu réel de l'artefact publié
+          \`\`\`
+          $(cat /tmp/liste.txt)
+          \`\`\`
+
           ## Empreintes (vérifiables)
           \`\`\`
-          $(cat /tmp/empreintes.txt)
+          $(cat /tmp/empreintes.txt 2>/dev/null || echo "non calculées")
           \`\`\`
 
           ## Télécharger de façon reprenable
@@ -105,25 +140,38 @@ jobs:
           \`\`\`
           \`-C -\` reprend où le transfert s'est arrêté : c'est fait pour les connexions instables.
           NOTES
-          gh release create "${{ inputs.tag }}" \
-             --repo "${{ github.repository }}" \
-             --title "${{ inputs.titre }}" \
-             --notes-file /tmp/notes.md \
-             --latest=false || echo "la release existe déjà — on y ajoutera les actifs"
+          gh release view "${{ inputs.tag }}" --repo "${{ github.repository }}" >/dev/null 2>&1 \
+            || gh release create "${{ inputs.tag }}" \
+                 --repo "${{ github.repository }}" \
+                 --title "${{ inputs.titre }}" \
+                 --notes-file /tmp/notes.md \
+                 --latest=false
+          # on met TOUJOURS les notes à jour : elles doivent décrire le contenu réel
+          gh release edit "${{ inputs.tag }}" --repo "${{ github.repository }}" --notes-file /tmp/notes.md
 
-      - name: "4/4 — attacher l'image à la Release"
+      - name: "5/5 — envoyer chaque actif, un par un, sans tout faire tomber"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -eu
-          gh release upload "${{ inputs.tag }}" /tmp/img/* \
-             --repo "${{ github.repository }}" \
-             --clobber
+          set -u
+          OK=0; KO=0; ECHECS=""
+          for f in /tmp/pub/*; do
+            [ -f "$f" ] || continue
+            echo "--- envoi : $(basename "$f") ($(stat -c %s "$f") octets)"
+            if gh release upload "${{ inputs.tag }}" "$f" \
+                 --repo "${{ github.repository }}" --clobber; then
+              OK=$((OK+1)); echo "    OK"
+            else
+              KO=$((KO+1)); ECHECS="$ECHECS $(basename "$f")"; echo "    ECHEC"
+            fi
+          done
           echo ""
           echo "=== actifs publiés ==="
           gh release view "${{ inputs.tag }}" --repo "${{ github.repository }}" --json assets \
-             --jq '.assets[] | "\(.name)  \(.size) octets  \(.url)"'
-          echo ""
-          echo "### 4/4 — publication terminée" >> "$GITHUB_STEP_SUMMARY"
-          echo "Téléchargement **sans compte** : page Releases du dépôt." >> "$GITHUB_STEP_SUMMARY"
-          echo "Reprise possible avec \`curl -L -C - -O <url>\`." >> "$GITHUB_STEP_SUMMARY"
+             --jq '.assets[] | "\(.name)  \(.size) octets"'
+          { echo "### 5/5 — publication : $OK réussite(s), $KO échec(s)"
+            echo ""; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$KO" -gt 0 ]; then
+            echo "::error::Actifs en échec :$ECHECS"
+            exit 1
+          fi
