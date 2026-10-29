@@ -1,0 +1,32 @@
+; ============================================================================
+; NexBSD — script de connexion SYSTÈME (appliqué à tout le monde)
+; Posé par l'installeur dans /usr/local/etc/nexbsd/script-connexion
+; La syntaxe est celle de NetWare : MAP, WRITE, IF MEMBER OF, INCLUDE, EXIT
+; ============================================================================
+
+WRITE " "
+WRITE "  Bienvenue sur NexBSD, %NOM_COMPLET%."
+WRITE "  Nous sommes le %JOUR% %MOIS%, il est %HEURE%."
+WRITE " "
+
+; --- les deux lecteurs que tout le monde reçoit -----------------------------
+; H : le dossier personnel de l'utilisateur, sur le serveur, pas sur le poste.
+;     C'est la promesse de NetWare : on retrouve ses fichiers depuis n'importe quel poste.
+MAP H: \\%SERVEUR%\utilisateurs\%UTILISATEUR%
+
+; P : le partage commun de l'entreprise (lecture seule côté serveur).
+MAP P: \\%SERVEUR%\commun%
+
+; --- lecteurs supplémentaires selon le service ------------------------------
+IF MEMBER OF "comptabilite"
+	MAP C: \\%SERVEUR%\comptabilite%
+	WRITE "  Lecteur C : dossier comptabilité."
+ENDIF
+
+IF MEMBER OF "direction"
+	MAP D: \\%SERVEUR%\direction%
+ENDIF
+
+; --- fin -------------------------------------------------------------------
+WRITE "  Vos lecteurs sont prêts. Tapez 'ls ~/Lecteurs' pour les voir."
+EXIT

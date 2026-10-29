@@ -1520,3 +1520,36 @@ il n'a pas été confronté à la réalité. **Statut honnête : écrit et test�
 produit.**
 
 **Acquis : A-67.**
+
+---
+
+## C-45 — 2026-10-29 — **le trou fonctionnel n° 1 est bouché** : les lecteurs réseau (N-06)
+
+**Constat :** `docs/02` EF-N-06 exige que *« les lecteurs réseau se connectent automatiquement selon
+l'utilisateur (esprit script de connexion) »*. `docs/57` le classait **priorité 3** et notait
+*« ❌ rien — l'âme de NetWare, toujours absente »*. Vérification faite ce soir : aucune ligne de
+code nulle part.
+
+**Livré** — `fork/netware/` :
+- `nexbsd-script-connexion.sh` : interpréteur `MAP` / `WRITE` / `IF MEMBER OF` / `INCLUDE` / `EXIT`
+  / `#cmd` / `;commentaire`, avec développement de `%UTILISATEUR%`, `%SERVEUR%`, `%GROUPE%`... ;
+- `script-connexion.systeme` : le script réel du produit — H: dossier personnel, P: commun,
+  C: comptabilité, D: direction ;
+- `tester-script-connexion.sh` : **27 cas**, tous conformes.
+
+**Le défaut trouvé par les tests, et c'est le plus instructif :** au premier passage,
+`%UTILISATEUR%` n'était **pas** développé dans `MAP`. L'appel réel était
+`//omrane@nexbsd/utilisateurs/%UTILISATEUR%`. Le script se serait exécuté **sans erreur**, et tous
+les utilisateurs auraient reçu **le même lecteur, vide**. Un test qui ne compte que les appels ne
+voit pas cela ; il faut **lire le contenu de l'appel**. Corrigé dans `monter()`, pas contourné.
+
+**Décision sur le mot de passe :** `~/.nsmbrc` en 0600, alimenté depuis un fichier de session, lu par
+`mount_smbfs -N`. Le script **refuse** un fichier de mot de passe non privé (testé, cas 11). Le
+mot de passe est en clair dans ce fichier pendant la session : c'est moins bon que Kerberos, c'est
+la première brique de N-05 (mot de passe unique).
+
+**Ce qui reste faux :** aucun montage réel n'a été fait (le `mount_smbfs` du banc est un faux), les
+partages Samba décrits par le script système **n'existent pas encore**, et le script n'est **pas
+encore appelé** par `nexbsd-session.sh`.
+
+**Acquis : A-68.**

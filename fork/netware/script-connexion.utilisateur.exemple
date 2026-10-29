@@ -1,0 +1,9 @@
+; ============================================================================
+; NexBSD — script de connexion PERSONNEL (exemple)
+; Placé dans ~/.nexbsd/script-connexion ; il est exécuté APRÈS le script système.
+; ============================================================================
+
+; un lecteur personnel vers un projet en cours
+MAP S: \\%SERVEUR%\projets\mon-projet%
+
+WRITE "  Bonjour %UTILISATEUR%, votre lecteur S est branché sur votre projet."
