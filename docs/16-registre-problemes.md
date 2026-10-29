@@ -1419,3 +1419,57 @@ de la fin, après 3 h 14 de calcul.
 reprise possible (chaque exécution repart d'une VM vierge). Il faut donc corriger **tout** ce qui
 peut encore casser **après** le point d'échec avant de relancer. C'est ce qui a été fait ici :
 trois défauts corrigés d'un coup (rc.conf, taille, mkimg), pas un seul.
+
+---
+
+## C-43 — 2026-10-29 — exécution #18 : **SUCCESS**, un système NexBSD a été produit
+
+**Faits lus par l'API GitHub le 2026-10-29 (`/actions/runs/40826237095`), commit `30f1d47b` :**
+
+```
+Exécution #18 — workflow_dispatch
+début 2026-10-29T05:56:17Z -> fin 2026-10-29T08:25:08Z   (2 h 29)
+conclusion : SUCCESS
+
+SONDE success · CONTRÔLES success · BUREAU success · IMAGE success
+```
+
+Treize étapes sur treize vertes dans la tâche IMAGE, **y compris `3/4 — construction + assemblage
+NexBSD` et `4/4 — empreintes`**. Une seule annotation sur toute l'exécution : l'avertissement
+Node.js 20 sur `upload-artifact@v5`, sans effet.
+
+**Artefact produit :**
+
+```
+nom    : nexbsd-images
+taille : 1 912 892 702 octets = 1 824,3 Mo (1,82 Go)
+expire : 2026-11-28
+```
+
+**Ce que le vert de `3/4` prouve, par déduction et non par supposition :** `build-nexbsd.sh`
+commence par `set -eu` et chaque étape est chaînée par `||`. L'étape est verte, donc **toutes** les
+commandes ont abouti : `buildworld`, `buildkernel NEXBSD_L1`, `installworld`, `distribution`,
+`installkernel`, `70-appliquer-overlay.sh`, **`makefs`**, puis `mkimg` (abouti ou avertissement, les
+deux chemins sortent en 0 — **non tranchable depuis l'API**), puis `gzip -1`.
+
+> **Un système de fichiers NexBSD complet a été fabriqué**, avec le noyau NEXBSD_L1 et la
+> configuration du produit, puis compressé et déposé en artefact. Première fois du projet.
+
+**Ce que ce vert ne prouve PAS :**
+
+- l'image **n'a jamais démarré** — aucune VM n'a booté ce fichier ;
+- **les paquets réseau ne sont pas installés** : `installworld` pose le socle FreeBSD, pas Samba,
+  OpenLDAP ni nslcd. C'est le rôle de `fork/80-installer-nexbsd.sh`, **jamais exécuté** ;
+- les services sont configurés dans `/etc/rc.conf` mais **leurs binaires sont absents** ;
+- PAM n'a jamais vérifié un mot de passe ; aucune session graphique n'a été affichée ;
+- **les noms et empreintes des fichiers produits ne sont pas vérifiés** : le téléchargement de
+  l'artefact exige une authentification (HTTP **401** depuis ce banc). Seul le titulaire du compte
+  peut l'obtenir.
+
+**Ce qui a rendu cette exécution possible, et ce n'est pas la compilation :**
+
+1. **le pré-vol de 10 secondes** (C-40/C-41) qui refuse une construction vouée à l'échec ;
+2. **la correction de trois défauts d'un coup** avant de relancer (C-42 : `rc.conf` créé, taille
+   d'image dynamique, `mkimg` non fatal) — parce qu'un essai coûte trois heures sans reprise.
+
+**Prochaine étape, décisive : DÉMARRER ce fichier.** C'est le test T-01 appliqué au produit.
