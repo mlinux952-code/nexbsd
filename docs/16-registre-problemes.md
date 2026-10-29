@@ -1657,3 +1657,35 @@ Ce sont des travaux à faire, pas des fautes. Le mode `--strict` les comptera po
 Sans cette distinction, le contrôle aurait bloqué la chaîne dès son premier jour.
 
 **Acquis : A-71.**
+
+---
+
+## C-48 (suite du 2026-10-29) — **un des quatre trous est bouché** : `sysctl.conf` livré
+
+**Ce qui a changé :** une affiche « Linux Security Toolkit » (8ᵉ image du responsable) a posé la
+bonne question — *que font SELinux, Grsecurity, AppArmor ?* — et la réponse FreeBSD est le **cadre
+MAC + Capsicum + les réglages de noyau**. D'où `fork/overlay/etc/sysctl.conf`, **13 réglages**,
+chacun justifié en une phrase.
+
+**Résultat mesuré par `scripts/75` : 19 protections correctes (contre 17), 0 faiblesse,
+3 éléments absents (contre 4).**
+
+| Reste absent | Gravité |
+|---|---|
+| **`login.conf` — politique de mot de passe** | 🔴 toujours **le plus grave** |
+| `server min protocol` dans `smb4.conf` | 🟠 |
+| `AllowUsers`/`AllowGroups` dans `sshd_config` | 🟡 |
+
+**LE PIÈGE DE CETTE LIVRAISON — et il est instructif.** `kern.securelevel` **ne doit pas** être dans
+`sysctl.conf` (il s'appliquerait pendant le démarrage et bloquerait les montages) : il appartient à
+`rc.conf`. **Et au niveau 1, plus aucun module noyau ne peut être chargé après le démarrage.**
+Or `mount_smbfs`, qui porte nos **lecteurs réseau** (A-68, écrit le même jour), a besoin du module
+**`smbfs`**.
+
+> **Deux fonctions écrites le même jour, dans deux documents différents, qui se nuisent l'une
+> l'autre.**
+
+Correction : `kld_list="smbfs"` dans `rc.conf`, chargé **avant** que le niveau ne monte. Noté dans
+`sysctl.conf`, dans `docs/64`, et **à vérifier sur la machine réelle** — le jour où elle démarrera.
+
+Ce piège ne vient d'aucun outil de l'affiche : il vient d'avoir cherché **où** poser un réglage.

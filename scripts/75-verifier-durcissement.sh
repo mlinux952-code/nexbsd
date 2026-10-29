@@ -167,11 +167,32 @@ else
 fi
 SYSCTL="$RACINE/fork/overlay/etc/sysctl.conf"
 if [ -r "$SYSCTL" ]; then
-	contient "$SYSCTL" 'security\.bsd\.see_other_uids[[:space:]]*=[[:space:]]*0' \
-		&& ok "les processus ne voient pas ceux des autres utilisateurs" \
-		|| absent "security.bsd.see_other_uids non désactivé : énumération des processus possible"
+	n=0
+	for reglage in \
+		'security\.bsd\.see_other_uids[[:space:]]*=[[:space:]]*0' \
+		'security\.bsd\.see_other_gids[[:space:]]*=[[:space:]]*0' \
+		'security\.bsd\.unprivileged_read_msgbuf[[:space:]]*=[[:space:]]*0' \
+		'security\.bsd\.unprivileged_proc_debug[[:space:]]*=[[:space:]]*0' \
+		'security\.bsd\.hardlink_check_uid[[:space:]]*=[[:space:]]*1' \
+		'kern\.sugid_coredump[[:space:]]*=[[:space:]]*0' \
+		'net\.inet\.tcp\.blackhole[[:space:]]*=[[:space:]]*2' \
+		'net\.inet\.tcp\.syncookies[[:space:]]*=[[:space:]]*1'
+	do
+		if contient "$SYSCTL" "$reglage"; then
+			n=$((n+1))
+		else
+			faible "sysctl.conf existe mais il manque : $reglage"
+		fi
+	done
+	[ "$n" -ge 8 ] && ok "sysctl.conf couvre les 8 protections de noyau essentielles"
+	# le piège d'ordonnancement : securelevel doit venir de rc.conf, pas de sysctl.conf
+	if contient "$SYSCTL" '^[[:space:]]*kern\.securelevel[[:space:]]*='; then
+		faible "kern.securelevel fixé dans sysctl.conf : il doit l'être dans rc.conf, sinon il bloque montages et modules au démarrage"
+	else
+		ok "securelevel n'est pas fixé dans sysctl.conf (il appartient à rc.conf — voir docs/64)"
+	fi
 else
-	absent "aucun sysctl.conf : pas de durcissement du noyau (securelevel, visibilité des processus)"
+	absent "aucun sysctl.conf : pas de durcissement du noyau (visibilité des processus, réseau, vidages)"
 fi
 
 # ===========================================================================
