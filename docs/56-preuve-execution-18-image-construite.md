@@ -127,3 +127,41 @@ fait. Trois résultats possibles, tous informatifs :
 
 Ensuite seulement : `fork/80-installer-nexbsd.sh` pour poser les paquets, puis N-06 (les lecteurs
 réseau), qui est l'âme de NetWare et n'existe toujours pas.
+
+---
+
+## Annexe (2026-10-29, 23 h) — **l'artefact est inaccessible en pratique : trois téléchargements interrompus**
+
+Le responsable a tenté **trois fois** de télécharger `nexbsd-images` (1,78 Gio) depuis la page de
+l'exécution #18. **Les trois fois, le transfert s'est interrompu et n'a pas pu reprendre.**
+
+**Diagnostic fait sur sa machine :**
+
+| Constat | Interprétation |
+|---|---|
+| `nexbsd-images.zip` = **544 octets** | ce n'est **pas** un téléchargement partiel : c'est une **page HTML d'erreur** enregistrée sous un nom invalide (`[nexbsd-images.zip](http://nexbsd-images.zip)` — crochets littéraux compris) |
+| `df -h` → **58 Go libres** | l'espace **n'est pas** la cause |
+| `gh`, `curl`, `wget` présents ; `aria2c` absent | les outils nécessaires sont là |
+
+**Les deux causes réelles, et elles sont structurelles :**
+
+1. **Un artefact GitHub exige une authentification** (HTTP 401 en anonyme) et **ne se reprend pas** :
+   ni `curl -C -` ni `wget -c` ne fonctionnent sur l'URL d'archive. Une coupure réseau, même d'une
+   seconde, oblige à **recommencer les 1,78 Gio depuis zéro**.
+2. **Un artefact expire** — le 2026-11-28 pour celui-ci.
+
+**Correctif livré ce soir : `.github/workflows/publier-image.yml`.** Il prend l'artefact d'une
+exécution terminée et l'attache à une **Release** GitHub. Trois avantages décisifs :
+
+| | Artefact | Release |
+|---|---|---|
+| téléchargement sans compte | ❌ 401 | ✅ **oui** |
+| reprise après coupure (`curl -C -`) | ❌ | ✅ **oui** |
+| expiration | **2026-11-28** | **jamais** |
+
+**Et un bénéfice inattendu :** le workflow affiche dans son journal **les noms et les sha256 réels**
+des fichiers produits — exactement les deux informations que l'API ne peut pas me donner (401 sur
+l'archive). Dès qu'il aura tourné, la preuve de l'exécution #18 sera complète.
+
+**Limite à connaître :** un actif de release est plafonné à **2 Gio par fichier**. L'image pèse
+1,78 Gio : cela passe. Une image future plus lourde devrait être découpée.

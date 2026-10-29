@@ -1,0 +1,129 @@
+name: "PUBLIER — l'image NexBSD en Release (téléchargement public et reprenable)"
+
+# POURQUOI CE WORKFLOW EXISTE (2026-10-29)
+#
+# L'artefact « nexbsd-images » (1,78 Gio) est INACCESSIBLE sans authentification : un simple curl
+# reçoit HTTP 401. Le responsable a tenté trois fois de le télécharger et le transfert s'est
+# interrompu à chaque fois, sans pouvoir reprendre — un artefact GitHub ne se reprend pas.
+#
+# De plus, un artefact EXPIRE (celui de l'exécution #18 le 2026-11-28). Une Release, non.
+#
+# Ce workflow prend l'artefact d'une exécution terminée et l'attache à une RELEASE GitHub :
+#   - une release d'un dépôt PUBLIC se télécharge SANS COMPTE, sans jeton, sans gh ;
+#   - curl -C - fonctionne sur un actif de release : le téléchargement REPREND où il s'est arrêté ;
+#   - l'actif n'expire pas.
+#
+# Il produit aussi, dans son journal, les NOMS et les SHA256 réels des fichiers — deux informations
+# que l'API ne peut pas donner depuis l'extérieur (401 sur l'archive d'artefact).
+#
+# LIMITE À CONNAÎTRE : un actif de release GitHub est plafonné à 2 Gio par fichier. L'image
+# compressée pèse 1,78 Gio, donc cela passe ; mais si une future image dépassait 2 Gio, il faudrait
+# la découper (split) en plusieurs actifs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Numéro de l'exécution qui détient l'artefact nexbsd-images (ex. 40826237095)"
+        required: true
+        default: "40826237095"
+      tag:
+        description: "Étiquette de la Release à créer (ex. image-18)"
+        required: true
+        default: "image-18"
+      titre:
+        description: "Titre lisible de la Release"
+        required: false
+        default: "NexBSD — image construite (exécution #18)"
+
+permissions:
+  contents: write     # nécessaire pour créer la release et y déposer des actifs
+  actions: read       # nécessaire pour télécharger l'artefact d'une autre exécution
+
+jobs:
+  publier:
+    name: "Publier l'image en Release"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: "1/4 — télécharger l'artefact de l'exécution indiquée"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          gh run download "${{ inputs.run_id }}" \
+             --repo "${{ github.repository }}" \
+             --name nexbsd-images \
+             -D /tmp/img
+          echo "--- contenu réel de l'artefact ---"
+          ls -lh /tmp/img
+          echo ""
+          echo "### 1/4 — artefact récupéré" >> "$GITHUB_STEP_SUMMARY"
+          ls -lh /tmp/img >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "2/4 — empreintes AVANT publication (la preuve)"
+        run: |
+          set -eu
+          echo "=== sha256 des fichiers produits ==="
+          sha256sum /tmp/img/* | tee /tmp/empreintes.txt
+          echo ""
+          echo "### 2/4 — empreintes" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/empreintes.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: "3/4 — créer la Release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          cat > /tmp/notes.md <<NOTES
+          Image NexBSD construite par l'exécution **#${{ inputs.run_id }}**.
+
+          Ce fichier est le premier système NexBSD jamais produit : FreeBSD 15.1-RELEASE,
+          noyau \`NEXBSD_L1\`, et les neuf pièces de configuration du produit.
+
+          ## Ce que cette image est
+          Un système de fichiers complet, prêt à être démarré.
+
+          ## Ce qu'elle n'est pas
+          - elle n'a **jamais été démarrée** ;
+          - **Samba, OpenLDAP et nslcd n'y sont pas installés** (le socle FreeBSD seulement) ;
+          - aucun mot de passe n'a été vérifié par PAM.
+
+          ## Empreintes (vérifiables)
+          \`\`\`
+          $(cat /tmp/empreintes.txt)
+          \`\`\`
+
+          ## Télécharger de façon reprenable
+          \`\`\`
+          curl -L -C - -O <lien de l'actif ci-dessous>
+          \`\`\`
+          \`-C -\` reprend où le transfert s'est arrêté : c'est fait pour les connexions instables.
+          NOTES
+          gh release create "${{ inputs.tag }}" \
+             --repo "${{ github.repository }}" \
+             --title "${{ inputs.titre }}" \
+             --notes-file /tmp/notes.md \
+             --latest=false || echo "la release existe déjà — on y ajoutera les actifs"
+
+      - name: "4/4 — attacher l'image à la Release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          gh release upload "${{ inputs.tag }}" /tmp/img/* \
+             --repo "${{ github.repository }}" \
+             --clobber
+          echo ""
+          echo "=== actifs publiés ==="
+          gh release view "${{ inputs.tag }}" --repo "${{ github.repository }}" --json assets \
+             --jq '.assets[] | "\(.name)  \(.size) octets  \(.url)"'
+          echo ""
+          echo "### 4/4 — publication terminée" >> "$GITHUB_STEP_SUMMARY"
+          echo "Téléchargement **sans compte** : page Releases du dépôt." >> "$GITHUB_STEP_SUMMARY"
+          echo "Reprise possible avec \`curl -L -C - -O <url>\`." >> "$GITHUB_STEP_SUMMARY"
