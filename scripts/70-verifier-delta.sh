@@ -63,7 +63,7 @@ info() { echo "  ...     $*"; }
 #   fork/netware/script-connexion.utilisateur.exemple  (script PERSONNEL d exemple)
 #   fork/netware/tester-script-connexion.sh   (27 cas ; a trouve un vrai defaut : %%UTILISATEUR%%
 #   non developpe dans MAP, donc le meme lecteur vide pour tout le monde)
-EXPECTED=39
+EXPECTED=41
 SHA_CONF="14c86800fa6ae198d0625fdca885966fe9bd90c9f28853ae67991ab2129eb301"
 SHA_GENERIC="02491b53b793cc5e1a3d622675d1aaf32d5da1973832cb13ff6d85d541d84878"
 

@@ -1,0 +1,20 @@
+# NexBSD — /etc/fstab
+#
+# POURQUOI CE FICHIER EXISTE (C-51, 2026-10-30)
+# `make distribution` installe /etc sans /etc/fstab : c'est l'INSTALLEUR qui le fabrique,
+# et nous n'en avons pas. L'image image-18 n'avait donc aucune instruction pour monter la
+# racine. Meme avec une chaine d'amorcage correcte, le noyau se serait arrete sur :
+#     Mounting root from ufs:/dev/...
+#     mountroot>
+#
+# /dev/gpt/rootfs : la partition est nommee « rootfs » par mkimg (voir fork/build-nexbsd.sh).
+#   L'etiquette GPT est stable ; /dev/ada0s1a dependent de la machine et du controleur.
+# fdescfs sur /dev/fd : sans lui, les scripts qui utilisent /dev/fd/3 (dont plusieurs
+#   scripts du produit et de l'installeur) echouent de facon deroutante.
+#
+# Pas d'entree de swap : le produit n'installe pas de partition d'echange, et declarer
+# un peripherique inexistant ferait echouer le demarrage sur un message trompeur.
+#
+# <peripherique>   <point de montage>  <type>    <options>  <dump>  <pass>
+/dev/gpt/rootfs    /                  ufs       rw         1       1
+fdescfs            /dev/fd            fdescfs   rw         0       0

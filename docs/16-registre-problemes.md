@@ -1727,6 +1727,30 @@ lui-même, en une exécution, et personne ne le voit jamais.
 
 ---
 
+### C-51 — l'image publiée ne peut pas démarrer (2026-10-30) — OUVERT, CORRIGÉ SOUS RÉSERVE
+
+**Symptôme attendu à la première tentative de démarrage :** `Invalid Bootblock`, puis arrêt.
+
+**Mesure :** sur les 2 399 142 400 octets de `nexbsd.img` (empreinte conforme, `gzip -t` intact) :
+`boot0` **est** dans le MBR, la slice `0xa5` **est** active, le superbloc **UFS2 est valide**,
+et **les 65 536 premiers octets de la slice sont à zéro** ⇒ ni `boot1`, ni `disklabel`.
+
+**Cause :** les deux invocations de `mkimg` de `fork/build-nexbsd.sh` produisent un disque
+sans chaîne d'amorçage. Le commentaire du script disait déjà « jamais confrontée à une vraie
+machine : best effort ».
+
+**Seconde cause, trouvée en cherchant :** **aucun `/etc/fstab`** — `make distribution` n'en
+installe pas, et l'overlay n'en fournissait pas. Le noyau aurait demandé `mountroot`.
+
+**Correctif :** `mkimg -s gpt -b pmbr -p freebsd-boot/bootfs:=gptboot -p freebsd-ufs/rootfs:=`
+(chaine de `release/tools/vmimage.subr`), `fork/overlay/etc/fstab`,
+`fork/overlay/boot/loader.conf` avec `vfs.root.mountfrom="ufs:/dev/gpt/rootfs"`,
+et un **garde-fou** qui ouvre le disque produit (`mdconfig` + `gpart show`) et **échoue
+explicitement** s'il ne trouve aucune partition `freebsd-boot`.
+
+**Statut :** corrigé **dans le code**, **non prouvé par démarrage**. Le statut ne passera à
+« fermé » que lorsqu'une machine aura affiché un login NexBSD.
+
 ## C-50 — 2026-10-29 — ⚠️ **la Release est vide : l'artefact `nexbsd-images` ne contient pas l'image**
 
 **Exécution `PUBLIER` #1** (`40967868290`, commit `a9df1e6`) : étapes **1 à 5 vertes**, étape

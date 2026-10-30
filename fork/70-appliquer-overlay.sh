@@ -123,6 +123,16 @@ poser "usr-local-etc-smb4.conf"      "/usr/local/etc/smb4.conf"           600
 poser "usr-local-etc-nslcd.conf"     "/usr/local/etc/nslcd.conf"          600
 poser "install-annuaire-base.ldif"   "/root/install-annuaire-base.ldif"   600
 
+# C-51 (2026-10-30) : SANS CES DEUX FICHIERS, L'IMAGE NE DEMARRE PAS.
+#   /etc/fstab        : `make distribution` n'en installe aucun (c'est l'installeur qui le
+#                       fabrique, et nous n'en avons pas). Sans lui, le noyau s'arrete sur
+#                       « mountroot> ».
+#   /boot/loader.conf : designe la racine par ETIQUETTE GPT (/dev/gpt/rootfs) au lieu d'un
+#                       nom de peripherique qui change d'une machine a l'autre.
+# Ils sont poses AVANT les fusions : ce sont des fichiers du produit, pas du socle.
+poser "etc/fstab"                    "/etc/fstab"                         644
+poser "boot/loader.conf"             "/boot/loader.conf"                  644
+
 # --- 4. fusions (on n'écrase pas un fichier du système) -----------------------
 fusionner() {
 	# $1 = source, $2 = destination ; ajoute seulement les lignes absentes

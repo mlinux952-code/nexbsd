@@ -97,16 +97,85 @@ ls -l "$UFS"
 # Le .ufs EST le produit : un systeme de fichiers complet, montable et verifiable.
 # Le disque bootable n'est qu'une ENVELOPPE autour de lui. Si l'enveloppe echoue, on ne jette
 # pas le systeme : c'est deja un resultat, et c'est la route que docs/46 decrit comme « sure ».
-echo "→ enveloppe bootable (jamais confrontee a une vraie machine : best effort)"
-if mkimg -s mbr -f raw -b "$RACINE/boot/boot0" -p freebsd:="$UFS" -o "$IMG" 2>/tmp/mkimg.err; then
-	echo "→ image MBR : $IMG ($(wc -c < "$IMG") octets)"
-elif mkimg -s gpt -f raw -b "$RACINE/boot/pmbr" -p freebsd-ufs:="$UFS" -o "$IMG" 2>>/tmp/mkimg.err; then
-	echo "→ image GPT : $IMG ($(wc -c < "$IMG") octets)"
-else
-	echo "AVERTISSEMENT : aucune image disque bootable produite."
-	sed 's/^/    mkimg dit : /' /tmp/mkimg.err 2>/dev/null | head -5
-	echo "    CE N'EST PAS UN ECHEC TOTAL : $UFS existe et contient le systeme complet."
+# ═══════════════════════════════════════════════════════════════════════════════
+# C-51 (2026-10-30) — L'IMAGE NE DEMARRAIT PAS : AUCUNE CHAINE D'AMORCAGE
+# ═══════════════════════════════════════════════════════════════════════════════
+# Mesure faite sur le disque publie (Release image-18, 478 Mo compresses) :
+#   * secteur 0  : boot0 PRESENT (les chaines « F1 FreeBSD / F6 PXE / Boot: » y sont) ;
+#   * secteur 1  : les 512 premiers octets de la slice FreeBSD sont A ZERO ;
+#   * 0 a 65535  : ZERO octet non nul dans toute la zone d'amorcage de la slice ;
+#   * 65536      : superbloc UFS2 valide (magic 0x19540119) -> le systeme de fichiers EST la.
+# Autrement dit : le disque contenait un systeme, mais rien pour le LANCER.
+# boot0 charge le premier secteur de la slice active et y cherche boot1 : il trouvait des
+# zeros, donc « Invalid Bootblock » et arret. Les deux commandes mkimg essayees jusqu'ici
+#   mkimg -s mbr -b boot0 -p freebsd:=UFS        (pas de boot1, pas de disklabel)
+#   mkimg -s gpt -b pmbr  -p freebsd-ufs:=UFS    (pas de gptboot)
+# produisent toutes deux un disque NON AMORCABLE : c'est une propriete de mkimg, pas un alea.
+#
+# La chaine correcte est celle des images officielles de FreeBSD, lue dans
+# release/tools/vmimage.subr :
+#   mkimg -s gpt -b pmbr -p freebsd-boot/bootfs:=gptboot -p freebsd-ufs/rootfs:=UFS
+# pmbr demarre, lit la table GPT, saute dans gptboot, qui charge /boot/loader.
+#
+# ET ON NE CROIT PAS MKIMG SUR PAROLE : apres fabrication, on OU VRE le disque et on
+# verifie qu'une partition freebsd-boot existe. Un disque sans amorcage ne doit plus
+# jamais sortir d'ici en silence (C-50, encore).
+echo "→ enveloppe bootable (GPT + pmbr + gptboot, la chaine des images officielles)"
+
+MANQUE_AMORCAGE=0
+for f in boot/gptboot boot/pmbr boot/loader; do
+	if [ -f "$RACINE/$f" ]; then
+		echo "  [OK ] $RACINE/$f ($(wc -c < "$RACINE/$f") octets)"
+	else
+		echo "  [KO ] $RACINE/$f ABSENT — le disque ne pourra pas demarrer"
+		MANQUE_AMORCAGE=$((MANQUE_AMORCAGE + 1))
+	fi
+done
+if [ "$MANQUE_AMORCAGE" -ne 0 ]; then
+	echo "ERREUR : $MANQUE_AMORCAGE fichier(s) d'amorcage manquant(s) dans la racine (C-51)" >&2
+	echo "  Sans eux, mkimg fabriquerait un disque qui affiche « Invalid Bootblock »." >&2
+	exit 1
 fi
+
+# verifier_chaine_amorcage : ouvre le disque produit et COMPTE les partitions d'amorcage.
+verifier_chaine_amorcage() {
+	_img="$1"
+	_md=$(mdconfig -a -t vnode -f "$_img" 2>/dev/null) || {
+		echo "  [KO ] mdconfig refuse d'attacher $_img — verification impossible"
+		return 1
+	}
+	_g=$(gpart show -p "$_md" 2>/dev/null)
+	printf '%s\n' "$_g" | sed 's/^/    gpart : /'
+	_n=$(printf '%s\n' "$_g" | grep -c 'freebsd-boot')
+	gpart destroy -F "$_md" >/dev/null 2>&1
+	mdconfig -d -u "$_md" >/dev/null 2>&1
+	[ "$_n" -ge 1 ] || {
+		echo "  [KO ] aucune partition freebsd-boot sur le disque produit"
+		return 1
+	}
+	echo "  [OK ] partition freebsd-boot presente : la chaine gptboot est en place"
+	return 0
+}
+
+if mkimg -s gpt -f raw \
+	-b "$RACINE/boot/pmbr" \
+	-p freebsd-boot/bootfs:="$RACINE/boot/gptboot" \
+	-p freebsd-ufs/rootfs:="$UFS" \
+	-o "$IMG" 2>/tmp/mkimg.err; then
+	echo "→ image GPT : $IMG ($(wc -c < "$IMG") octets)"
+	if ! verifier_chaine_amorcage "$IMG"; then
+		echo "ERREUR : le disque produit n'est PAS amorcable (C-51). Il ne sera pas publie." >&2
+		echo "  $UFS contient le systeme complet : c'est deja un resultat, mais ce n'est pas une image." >&2
+		exit 1
+	fi
+else
+	echo "ERREUR : mkimg a echoue — aucune image disque produite." >&2
+	sed 's/^/    mkimg dit : /' /tmp/mkimg.err 2>/dev/null | head -10
+	echo "  $UFS contient le systeme complet, mais il n'y a PAS de disque amorcable." >&2
+	echo "  On s'arrete ici plutot que de livrer un fichier qui ne demarre pas (C-51)." >&2
+	exit 1
+fi
+
 echo "→ PRODUIT : $UFS (systeme complet) — il contient le noyau NexBSD ET la configuration NexBSD."
 
 # --- 7. Ancien chemin conservé, mais il ne contient PAS la configuration du produit ---
