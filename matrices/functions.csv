@@ -1,29 +1,29 @@
-ID,Fonction,Couche,Besoin exprimé,Candidat,Compatibilité/Dépendances,Risque principal,Test prévu,Priorité,État
-S-01,Démarrage et initialisation,A,démarrer de façon reproductible,FreeBSD 15.1,loader + rc.d ; matériel inconnu,matériel non identifié,T-01,P0,À tester
-S-02,Détection et inventaire matériel,A,connaître le matériel avant d'agir,"FreeBSD (dmesg, pciconf)",lecture seule,confondre disque principal et cible,T-02,P0,À tester
-S-03,Réseau TCP/IP,A,connectivité locale fiable,FreeBSD,Ethernet recommandé,pilote Wi-Fi absent,T-02,P0,À tester
-S-04,Stockage et systèmes de fichiers,A,volumes de test sans toucher au disque interne,UFS (défaut),ZFS écarté du profil L1,choix FS,T-01/T-03,P0,À faire
-S-05,Gestion des utilisateurs,A,comptes et groupes locaux,FreeBSD pw/useradd,natif,erreurs de privilèges,T-03,P0,À faire
-S-06,Journalisation et supervision,A+B,savoir ce qui se passe,syslog/newsyslog,ports disponibles,volume de logs sur disque lent,T-05,P1,À faire
-S-07,Isolation des services,B,limiter la surface d'attaque,jails FreeBSD,réseau jail à configurer,mésconfiguration,T-05,P1,À faire
-S-08,Mises à jour,A+B,mettre à jour de façon contrôlée,pkg upgrade / freebsd-update,pkgbase en tech preview,casser un service,T-06,P1,À faire
-S-09,Sauvegarde et restauration,A+F,revenir à un état connu,snapshot ou rsync,espace disque limité,restauration non testée,T-06,P0,À faire
-N-01,Partages de fichiers,D-1,partager avec droits,Samba >= 4.23,port net/samba423,version obsolète par défaut,T-03,P0,À faire
-N-02,Droits par fichier et répertoire,D-1,droits lisibles et hérités,ACL ZFS/UFS + Samba,cohérence ACL FS / ACL SMB,droits trop larges,T-03,P0,À faire
-N-03,Utilisateurs et groupes (annuaire),D-2,centraliser les identités,OpenLDAP >= 2.6,disponibilité du port à vérifier,exposition LDAP clair,T-04,P1,À étudier
-N-04,Annuaire hiérarchique et réplication,D-2,annuaire extensible,OpenLDAP syncrepl,complexité,non testé,T-04b,P2,À étudier
-N-05,Authentification unique,D-2,un seul mot de passe,LDAP + Kerberos ou Samba AD,complexité ; RAM,surface d'attaque,T-04,P2,À étudier
-N-06,Scripts de connexion,D-1,mapper lecteurs et imprimantes,logon scripts Samba,natif,non testé,T-03b,P1,À faire
-N-07,Impression partagée,D-1,imprimer depuis le réseau,CUPS + Samba,CUPS à vérifier,configuration complexe,T-07,P2,À étudier
-N-08,Administration centralisée (esprit SYSCON),E,un outil unique d'administration,outil NexBSD à écrire,aucune solution clé en main,dérive du périmètre,T-08,P1,À concevoir
-N-09,Supervision et journaux réseau,D-5,savoir ce qui se passe,syslog + moniteur léger,ports,volume,T-05,P1,À faire
-N-10,Découverte de services (esprit SAP),D-4,trouver les services,mDNS/DNS-SD,protocole différent,non prioritaire,—,P3,À étudier
-N-11,Compatibilité protocolaire NCP,D-3,parler NCP à un client,réimplémentation NexBSD (NCP sur UDP/TCP 524),aucun client vérifié,"dérive, documentation incomplète",T-09,P3,Recherche
-C-17,Interface petit écran,C,UI lisible sur petits écrans,WebKitGTK ou Firefox kiosque,moteur à valider,empreinte mémoire,T-10,P2,À étudier
-C-18,Navigation clavier / pavé directionnel,C,utiliser sans souris,à développer par NexBSD,événements clavier du moteur,accessibilité,T-10,P2,À concevoir
-C-19,Lanceur et gestion d'applications Web,C,démarrer des applications Web,à développer par NexBSD,manifeste + permissions,modèle de permissions à inventer,T-10,P2,À concevoir
-C-20,Notifications,C,informer l'utilisateur,à développer,aucun standard hors environnements de bureau,non prioritaire,T-10,P3,À concevoir
-C-21,Gestion d'énergie,C,fonctionner sur batterie,FreeBSD (limité),infrastructure insuffisante,non réalisable à court terme,—,P3,Hors périmètre
-C-22,Téléphonie / SMS / modem,C,fonctions téléphone,pilotes inexistants,blobs OEM et RIL indisponibles,non réalisable,—,P3,Hors périmètre
-F-23,Construction reproductible,F,rejouer une construction,buildworld + release.sh,profil L3 requis,matériel insuffisant,T-11/T-12,P1,À étudier
-F-24,Image de test et récupération,F,distribuer une image,memstick + script,L3 pour construire,effacement accidentel,T-01,P1,À faire
+ID;Fonction;Couche;Besoin exprimé;Candidat;Compatibilité/Dépendances;Risque principal;Test prévu;Priorité;État;Preuve
+S-01;Démarrage et initialisation;A;démarrer de façon reproductible;FreeBSD 15.1;loader + rc.d  + matériel inconnu;matériel non identifié;T-01;P0;BLOQUE;docs/68-incident-image-inamorcable.md
+S-02;Détection et inventaire matériel;A;connaître le matériel avant d'agir;FreeBSD (dmesg, pciconf);lecture seule;confondre disque principal et cible;T-02;P0;A TESTER;—
+S-03;Réseau TCP/IP;A;connectivité locale fiable;FreeBSD;Ethernet recommandé;pilote Wi-Fi absent;T-02;P0;A TESTER;—
+S-04;Stockage et systèmes de fichiers;A;volumes de test sans toucher au disque interne;UFS (défaut);ZFS écarté du profil L1;choix FS;T-01/T-03;P0;PARTIEL;docs/68-incident-image-inamorcable.md
+S-05;Gestion des utilisateurs;A;comptes et groupes locaux;FreeBSD pw/useradd;natif;erreurs de privilèges;T-03;P0;A FAIRE;fork/overlay/etc/pam.d/su
+S-06;Journalisation et supervision;A+B;savoir ce qui se passe;syslog/newsyslog;ports disponibles;volume de logs sur disque lent;T-05;P1;A FAIRE;—
+S-07;Isolation des services;B;limiter la surface d'attaque;jails FreeBSD;réseau jail à configurer;mésconfiguration;T-05;P1;A FAIRE;—
+S-08;Mises à jour;A+B;mettre à jour de façon contrôlée;pkg upgrade / freebsd-update;pkgbase en tech preview;casser un service;T-06;P1;A FAIRE;—
+S-09;Sauvegarde et restauration;A+F;revenir à un état connu;snapshot ou rsync;espace disque limité;restauration non testée;T-06;P0;A FAIRE;—
+N-01;Partages de fichiers;D-1;partager avec droits;Samba >= 4.23;port net/samba423;version obsolète par défaut;T-03;P0;A FAIRE;fork/overlay/usr-local-etc-smb4.conf
+N-02;Droits par fichier et répertoire;D-1;droits lisibles et hérités;ACL ZFS/UFS + Samba;cohérence ACL FS / ACL SMB;droits trop larges;T-03;P0;A FAIRE;—
+N-03;Utilisateurs et groupes (annuaire);D-2;centraliser les identités;OpenLDAP >= 2.6;disponibilité du port à vérifier;exposition LDAP clair;T-04;P1;A FAIRE;fork/overlay/usr-local-etc-openldap-slapd.conf
+N-04;Annuaire hiérarchique et réplication;D-2;annuaire extensible;OpenLDAP syncrepl;complexité;non testé;T-04b;P2;A ETUDIER;—
+N-05;Authentification unique;D-2;un seul mot de passe;LDAP + Kerberos ou Samba AD;complexité  + RAM;surface d'attaque;T-04;P2;A ETUDIER;—
+N-06;Scripts de connexion;D-1;mapper lecteurs et imprimantes;logon scripts Samba;natif;non testé;T-03b;P1;A FAIRE;fork/overlay/install-annuaire-base.ldif
+N-07;Impression partagée;D-1;imprimer depuis le réseau;CUPS + Samba;CUPS à vérifier;configuration complexe;T-07;P2;A ETUDIER;—
+N-08;Administration centralisée (esprit SYSCON);E;un outil unique d'administration;outil NexBSD à écrire;aucune solution clé en main;dérive du périmètre;T-08;P1;A CONCEVOIR;—
+N-09;Supervision et journaux réseau;D-5;savoir ce qui se passe;syslog + moniteur léger;ports;volume;T-05;P1;A FAIRE;—
+N-10;Découverte de services (esprit SAP);D-4;trouver les services;mDNS/DNS-SD;protocole différent;non prioritaire;—;P3;RECHERCHE;—
+N-11;Compatibilité protocolaire NCP;D-3;parler NCP à un client;réimplémentation NexBSD (NCP sur UDP/TCP 524);aucun client vérifié;dérive, documentation incomplète;T-09;P3;RECHERCHE;—
+C-17;Interface petit écran;C;UI lisible sur petits écrans;WebKitGTK ou Firefox kiosque;moteur à valider;empreinte mémoire;T-10;P2;A ETUDIER;—
+C-18;Navigation clavier / pavé directionnel;C;utiliser sans souris;à développer par NexBSD;événements clavier du moteur;accessibilité;T-10;P2;A CONCEVOIR;—
+C-19;Lanceur et gestion d'applications Web;C;démarrer des applications Web;à développer par NexBSD;manifeste + permissions;modèle de permissions à inventer;T-10;P2;A CONCEVOIR;—
+C-20;Notifications;C;informer l'utilisateur;à développer;aucun standard hors environnements de bureau;non prioritaire;T-10;P3;A CONCEVOIR;—
+C-21;Gestion d'énergie;C;fonctionner sur batterie;FreeBSD (limité);infrastructure insuffisante;non réalisable à court terme;—;P3;HORS PERIMETRE;—
+C-22;Téléphonie / SMS / modem;C;fonctions téléphone;pilotes inexistants;blobs OEM et RIL indisponibles;non réalisable;—;P3;HORS PERIMETRE;—
+F-23;Construction reproductible;F;rejouer une construction;buildworld + release.sh;profil L3 requis;matériel insuffisant;T-11/T-12;P1;FAIT;CI:run/40826237095
+F-24;Image de test et récupération;F;distribuer une image;memstick + script;L3 pour construire;effacement accidentel;T-01;P1;PARTIEL;docs/66-incident-release-vide.md
