@@ -87,7 +87,13 @@ rm -f "$UFS" "$IMG"
 # fixes serait refusee par makefs (« filesystem too small »). On mesure, puis on dimensionne.
 UTILISE_MO=$(du -sm "$RACINE" | awk '{print $1}')
 TAILLE_MO=${TAILLE_MO:-0}
-[ "$TAILLE_MO" -eq 0 ] && TAILLE_MO=$(( UTILISE_MO + UTILISE_MO / 5 + 512 ))
+# C-52 (2026-10-30) : 512 Mo de marge ne suffisent PAS. Mesure : racine ~1573 Mo, disque 2400 Mo,
+# donc ~827 Mo libres — alors que fork/80 installe Samba (~90 Mo), OpenLDAP (~25 Mo) et nslcd,
+# et que le bureau de la couche C demande X11 (~350 Mo) plus WebKitGTK (~600 Mo).
+# Une marge de 512 Mo garantissait l'echec de fork/80 APRES des heures de construction : exactement
+# le genre de defaut qui ne se voit qu'a la facture. On porte la marge a 2048 Mo.
+MARGE_MO="${NEXBSD_MARGE_MO:-2048}"
+[ "$TAILLE_MO" -eq 0 ] && TAILLE_MO=$(( UTILISE_MO + UTILISE_MO / 5 + MARGE_MO ))
 echo "→ racine : ${UTILISE_MO} Mo utilises ; image dimensionnee a ${TAILLE_MO} Mo (+20 % + 512 Mo)"
 
 makefs -t ffs -s "${TAILLE_MO}m" -o version=2 "$UFS" "$RACINE" \

@@ -1727,7 +1727,16 @@ lui-même, en une exécution, et personne ne le voit jamais.
 
 ---
 
-### C-51 — l'image publiée ne peut pas démarrer (2026-10-30) — OUVERT, CORRIGÉ SOUS RÉSERVE
+#### C-52 — le disque est trop petit pour le produit (2026-10-30) — FERMÉ
+
+**Mesure :** racine ≈ 1573 Mo, disque 2399 Mo ⇒ **826 Mo libres**.
+**Besoin de `fork/80` :** Samba ~90 Mo + OpenLDAP ~25 Mo + nslcd ; bureau : X11 ~350 Mo +
+WebKitGTK ~600 Mo ⇒ **~1080 Mo**.
+**Conséquence si non corrigé :** `fork/80` échoue **après** une construction complète.
+**Correctif :** marge portée de 512 à **2048 Mo** (réglable par `NEXBSD_MARGE_MO`) ⇒ disque 3935 Mo,
+**2362 Mo libres**.
+
+## C-51 — l'image publiée ne peut pas démarrer (2026-10-30) — OUVERT, CORRIGÉ SOUS RÉSERVE
 
 **Symptôme attendu à la première tentative de démarrage :** `Invalid Bootblock`, puis arrêt.
 
