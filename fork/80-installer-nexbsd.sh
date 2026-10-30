@@ -79,7 +79,7 @@ etape "1. paquets de la plateforme (NON VÉRIFIÉ : noms à confirmer sur 15.1)"
 # openldap-server  : l'annuaire (A-03)
 # samba419         : le partage authentifié (A-02, A-04) — le numéro de version peut changer
 # nss-pam-ldapd    : les identités de l'annuaire côté système (A-06, C-14)
-pkg install -y openldap-server samba419 nss-pam-ldapd || {
+pkg install -y openldap26-server samba423 nss-pam-ldapd || {
 	ko "installation des paquets échouée"
 	echo "          -> vérifier les noms disponibles : pkg search openldap / pkg search samba"
 	exit 1
